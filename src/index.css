@@ -430,6 +430,15 @@ html[data-reduced-motion='true'] *::after {
   z-index: 1;
 }
 
+.st-credit {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+  z-index: 1;
+}
+
 .battle-stub {
   z-index: 1;
 }

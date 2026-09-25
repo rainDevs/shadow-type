@@ -15,8 +15,8 @@ import { buildBackground, EMBER_VENTS } from './Background.js';
 export const ARENA_WIDTH = 1280;
 export const ARENA_HEIGHT = 720;
 const GROUND_Y = 560;
-const PLAYER_HOME = { x: 390, y: GROUND_Y - 84 };
-const CPU_HOME = { x: 890, y: GROUND_Y - 84 };
+const PLAYER_HOME = { x: 390, y: GROUND_Y };
+const CPU_HOME = { x: 890, y: GROUND_Y };
 
 const CYAN = 0x22d3ee;
 const RED = 0xff5252;
@@ -49,6 +49,10 @@ export class PixiGame {
     }
     this.app.canvas.classList.add('arena-canvas');
     container.appendChild(this.app.canvas);
+
+    // Sprite sheets must load before fighters are built.
+    await Fighter.loadSheets();
+    if (this.destroyed) return;
 
     // world shakes; everything visual lives inside it.
     this.world = new Container();
@@ -93,8 +97,8 @@ export class PixiGame {
       }
     }
 
-    this.player.update(this.elapsed, this.paused);
-    this.cpu.update(this.elapsed, this.paused);
+    this.player.update(this.elapsed, this.paused, dt);
+    this.cpu.update(this.elapsed, this.paused, dt);
     this.player.fadeFlash(dt * 4);
     this.cpu.fadeFlash(dt * 4);
 
@@ -221,17 +225,18 @@ export class PixiGame {
     try {
       const step = this.reducedMotion ? 0.4 : 1;
       const fromX = this.player.root.x;
+      this.player.playAttack();
       // Lunge.
       await this.tween(130 * step, (k) => {
         this.player.root.x = fromX + k * 130;
       });
       // Slash + impact on CPU.
+      const target = this.cpu.hitPoint();
       const cx = this.cpu.root.x;
-      const cy = this.cpu.root.y - 40;
-      this.slash(cx - 30, cy, CYAN, false);
-      this.impact(cx, cy, CYAN, false);
-      this.cpu.showFlash(0.85);
-      this.damageText(cx, cy - 90, `-${damage}`, 0xffffff, false);
+      this.slash(cx - 30, target.y, CYAN, false);
+      this.impact(cx, target.y, CYAN, false);
+      this.cpu.showFlash(1);
+      this.damageText(cx, target.y - 70, `-${damage}`, 0xffffff, false);
       const knock = this.tween(140 * step, (k) => {
         this.cpu.root.x = cx + k * 26;
       });
@@ -255,15 +260,16 @@ export class PixiGame {
     try {
       const step = this.reducedMotion ? 0.4 : 1;
       const fromX = this.cpu.root.x;
+      this.cpu.playAttack();
       await this.tween(130 * step, (k) => {
         this.cpu.root.x = fromX - k * 130;
       });
+      const target = this.player.hitPoint();
       const px = this.player.root.x;
-      const py = this.player.root.y - 40;
-      this.slash(px + 30, py, RED, false);
-      this.impact(px, py, RED, false);
-      this.player.showFlash(0.85);
-      this.damageText(px, py - 90, `-${damage}`, 0xffffff, false);
+      this.slash(px + 30, target.y, RED, false);
+      this.impact(px, target.y, RED, false);
+      this.player.showFlash(1);
+      this.damageText(px, target.y - 70, `-${damage}`, 0xffffff, false);
       const knock = this.tween(140 * step, (k) => {
         this.player.root.x = px - k * 26;
       });
@@ -283,14 +289,16 @@ export class PixiGame {
   victory() {
     this.cpu.playDefeat();
     this.player.playVictoryPose();
-    this.impact(CPU_HOME.x, CPU_HOME.y - 60, RED, true);
+    const target = this.cpu.hitPoint();
+    this.impact(this.cpu.root.x, target.y, RED, true);
     this.shake(12);
   }
 
   defeat() {
     this.player.playDefeat();
     this.cpu.playVictoryPose();
-    this.impact(PLAYER_HOME.x, PLAYER_HOME.y - 60, CYAN, true);
+    const target = this.player.hitPoint();
+    this.impact(this.player.root.x, target.y, CYAN, true);
     this.shake(12);
   }
 
