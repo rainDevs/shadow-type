@@ -622,7 +622,7 @@ html[data-reduced-motion='true'] *::after {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 10px;
+  top: 10px;
   width: min(860px, 94%);
   z-index: 5;
 }
@@ -827,7 +827,7 @@ html[data-reduced-motion='true'] *::after {
 /* Floating combat feedback over the arena. */
 .combat-feedback {
   position: absolute;
-  top: 12%;
+  top: 50%;
   left: 50%;
   transform: translateX(-50%);
   font-family: var(--mono);
