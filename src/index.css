@@ -605,17 +605,37 @@ html[data-reduced-motion='true'] *::after {
 
 .arena-wrap {
   position: relative;
-  /* Fill horizontally, but shrink to fit the viewport height so the whole
-     battle stays in one view (HUD + arena + typing, no page scroll). */
-  width: min(1280px, 100%, max(320px, calc((100vh - 400px) * 16 / 9)));
-  margin: 0 auto;
+  /* Hero-sized: typing UI floats over the arena, so nearly the full viewport
+     height (minus HUD) goes to the battle. Still no page scroll. */
+  width: min(1280px, 100%, max(320px, calc((100vh - 170px) * 16 / 9)));
+  margin: auto;
   flex-shrink: 0;
 }
 
 @supports (height: 100dvh) {
   .arena-wrap {
-    width: min(1280px, 100%, max(320px, calc((100dvh - 400px) * 16 / 9)));
+    width: min(1280px, 100%, max(320px, calc((100dvh - 170px) * 16 / 9)));
   }
+}
+
+.battle-overlay {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 10px;
+  width: min(860px, 94%);
+  z-index: 5;
+}
+
+.battle-overlay .typing-panel {
+  margin: 0 auto;
+  background: rgba(10, 10, 20, 0.88);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.battle-overlay .turn-timer {
+  margin: 0 auto 6px;
 }
 
 .arena-mount {

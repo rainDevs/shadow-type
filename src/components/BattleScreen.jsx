@@ -89,19 +89,19 @@ export function BattleScreen({ difficulty, settings, onExit }) {
             {game.feedback.text}
           </div>
         )}
+        {!over && (
+          <div className="battle-overlay">
+            <TurnTimer turn={game.turn} timeLeft={game.timeLeft} turnTotal={game.turnTotal} />
+            <TypingChallenge
+              challenge={game.challenge}
+              typed={game.typed}
+              disabled={status !== 'playing' || game.turn !== 'player'}
+              onType={game.typeText}
+              wordsDone={game.wordsDone}
+            />
+          </div>
+        )}
       </div>
-      {!over && (
-        <>
-          <TurnTimer turn={game.turn} timeLeft={game.timeLeft} turnTotal={game.turnTotal} />
-          <TypingChallenge
-            challenge={game.challenge}
-            typed={game.typed}
-            disabled={status !== 'playing' || game.turn !== 'player'}
-            onType={game.typeText}
-            wordsDone={game.wordsDone}
-          />
-        </>
-      )}
       {over && results &&
         (results.won ? (
           <VictoryScreen results={results} onSubmitScore={game.submitScore} onRematch={game.restart} onMenu={onExit} />
