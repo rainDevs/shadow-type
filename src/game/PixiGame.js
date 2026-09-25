@@ -10,11 +10,12 @@
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { Fighter } from './Fighter.js';
 import { ParticleManager } from './ParticleManager.js';
-import { buildBackground, EMBER_VENTS } from './Background.js';
+import { buildBackground, EMBER_VENTS, EMBER_COLOR } from './Background.js';
 
 export const ARENA_WIDTH = 1280;
 export const ARENA_HEIGHT = 720;
-const GROUND_Y = 560;
+// Grass line of the forest backdrop (layers bottom-aligned).
+const GROUND_Y = 630;
 const PLAYER_HOME = { x: 390, y: GROUND_Y };
 const CPU_HOME = { x: 890, y: GROUND_Y };
 
@@ -58,7 +59,7 @@ export class PixiGame {
     this.world = new Container();
     this.app.stage.addChild(this.world);
 
-    const bg = buildBackground(ARENA_WIDTH, ARENA_HEIGHT, GROUND_Y);
+    const bg = await buildBackground(ARENA_WIDTH, ARENA_HEIGHT, GROUND_Y);
     this.world.addChild(bg.root);
     this.fog = bg.fog;
 
@@ -127,12 +128,12 @@ export class PixiGame {
       this.particles.petal(Math.random() * ARENA_WIDTH, -12 - Math.random() * 120);
     }
 
-    // Embers rising from the ground vents.
+    // Fireflies rising from the undergrowth.
     this.emberTimer -= ticker.deltaMS;
     if (this.emberTimer <= 0) {
       this.emberTimer = 220;
       const vx = EMBER_VENTS[Math.floor(Math.random() * EMBER_VENTS.length)];
-      this.particles.ambient(vx + (Math.random() - 0.5) * 50, GROUND_Y + 10, 0xff9a3c);
+      this.particles.ambient(vx + (Math.random() - 0.5) * 50, GROUND_Y + 10, EMBER_COLOR);
     }
 
     this.particles.update(dt);

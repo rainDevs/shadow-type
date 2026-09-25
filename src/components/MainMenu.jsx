@@ -23,7 +23,7 @@ export function MainMenu({ onNavigate }) {
         </button>
       </nav>
       <p className="st-footer">Every keystroke is an attack</p>
-      <p className="st-credit">Character sprites: Ozzbit Games (non-commercial)</p>
+      <p className="st-credit">Character sprites: Ozzbit Games · Background: Eder Muniz</p>
     </div>
   );
 }

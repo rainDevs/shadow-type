@@ -61,8 +61,8 @@ export class ParticleManager {
     this.particles.push(p);
   }
 
-  // Falling sakura petal with a gentle sideways sway.
-  petal(x, y, color = 0xf0a4cc) {
+  // Falling leaf/spore with a gentle sideways sway.
+  petal(x, y, color = 0x9fd66e) {
     if (this.particles.length >= MAX_PARTICLES) return;
     const p = this.pool.pop() ?? this.createParticle();
     p.x = x;
