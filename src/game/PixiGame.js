@@ -31,6 +31,7 @@ export class PixiGame {
     this.tweens = [];
     this.elapsed = 0;
     this.ambientTimer = 0;
+    this.petalTimer = 200;
   }
 
   async init(container) {
@@ -112,6 +113,13 @@ export class PixiGame {
         GROUND_Y - 60 - Math.random() * 160,
         cyan ? CYAN : RED,
       );
+    }
+
+    // Drifting sakura petals.
+    this.petalTimer -= ticker.deltaMS;
+    if (this.petalTimer <= 0) {
+      this.petalTimer = 550;
+      this.particles.petal(Math.random() * ARENA_WIDTH, -12 - Math.random() * 120);
     }
 
     this.particles.update(dt);

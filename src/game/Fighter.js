@@ -1,11 +1,11 @@
-// Shadow fighter built from PixiJS primitives (PLAN.md section 6).
-// No external assets; the class API makes future sprite-sheet swaps easy:
-// only buildBody() needs to change, states stay the same.
+// Samurai shadow fighters built from PixiJS primitives.
+// No external assets; only buildBody() needs to change for sprite sheets.
 
 import { Container, Graphics } from 'pixi.js';
 
 const BODY = 0x0a0a13;
 const BODY_EDGE = 0x2a2a44;
+const GOLD = 0xd9b36c;
 
 export class Fighter {
   constructor({ side, accent }) {
@@ -21,7 +21,6 @@ export class Fighter {
   }
 
   buildBody() {
-    const g = new Graphics();
     const A = this.accent;
 
     // Ground aura.
@@ -30,67 +29,128 @@ export class Fighter {
     this.aura.fill({ color: A, alpha: 0.28 });
     this.root.addChild(this.aura);
 
-    // Cloak (flowing silhouette).
-    g.moveTo(-30, 62);
-    g.lineTo(30, 62);
-    g.lineTo(20, -30);
-    g.lineTo(10, -66);
-    g.lineTo(-10, -66);
-    g.lineTo(-20, -30);
+    const g = new Graphics();
+
+    // --- Hakama (skirt trousers) ---
+    g.moveTo(-27, 62);
+    g.lineTo(27, 62);
+    g.lineTo(16, 2);
+    g.lineTo(-16, 2);
+    g.closePath();
+    g.fill({ color: BODY });
+    g.stroke({ color: BODY_EDGE, width: 2 });
+    // Pleats.
+    for (const px of [-9, 0, 9]) {
+      g.moveTo(px, 58);
+      g.lineTo(px * 0.7, 6);
+      g.stroke({ color: A, width: 1.2, alpha: 0.4 });
+    }
+
+    // --- Do (cuirass) with lacing ---
+    g.roundRect(-21, -38, 42, 42, 6);
+    g.fill({ color: BODY });
+    g.stroke({ color: BODY_EDGE, width: 2 });
+    for (let i = 0; i < 4; i++) {
+      const ly = -30 + i * 9;
+      g.moveTo(-19, ly);
+      g.lineTo(19, ly);
+      g.stroke({ color: A, width: 1.4, alpha: 0.4 });
+    }
+    // Chest mon (clan crest).
+    g.circle(0, -17, 6);
+    g.stroke({ color: GOLD, width: 2, alpha: 0.9 });
+
+    // --- Sode (shoulder guards) ---
+    g.moveTo(-19, -36);
+    g.lineTo(-45, -28);
+    g.lineTo(-41, -6);
+    g.lineTo(-17, -10);
+    g.closePath();
+    g.fill({ color: BODY });
+    g.stroke({ color: BODY_EDGE, width: 2 });
+    g.moveTo(19, -36);
+    g.lineTo(38, -30);
+    g.lineTo(35, -12);
+    g.lineTo(17, -12);
     g.closePath();
     g.fill({ color: BODY });
     g.stroke({ color: BODY_EDGE, width: 2 });
 
-    // Accent energy seam down the cloak.
-    g.moveTo(0, 58);
-    g.lineTo(0, -58);
-    g.stroke({ color: A, width: 2, alpha: 0.85 });
+    // --- Sashimono (back banner) ---
+    g.moveTo(-13, -30);
+    g.lineTo(-13, -96);
+    g.stroke({ color: 0x1a1a2a, width: 3 });
+    g.rect(-37, -96, 26, 32);
+    g.fill({ color: A, alpha: 0.22 });
+    g.stroke({ color: A, width: 1.5, alpha: 0.7 });
+    g.circle(-24, -80, 6);
+    g.stroke({ color: A, width: 2, alpha: 0.9 });
 
-    // Head.
-    g.circle(0, -82, 15);
-    g.fill({ color: BODY });
-    g.stroke({ color: BODY_EDGE, width: 2 });
-
-    // Hood spikes.
-    g.moveTo(-13, -88);
-    g.lineTo(-26, -104);
-    g.lineTo(-10, -96);
-    g.closePath();
-    g.fill({ color: BODY });
-    g.moveTo(13, -88);
-    g.lineTo(26, -104);
-    g.lineTo(10, -96);
-    g.closePath();
-    g.fill({ color: BODY });
-
-    // Rear arm + sword (energy blade).
-    g.moveTo(10, -40);
-    g.lineTo(44 * this.dir, -58);
+    // --- Arms ---
+    g.moveTo(-10, -28);
+    g.lineTo(-36, -12);
     g.stroke({ color: BODY_EDGE, width: 9, cap: 'round' });
+
+    // --- Katana: handle, tsuba guard, glowing blade ---
+    g.moveTo(12, -30);
+    g.lineTo(40, -48);
+    g.stroke({ color: 0x14141f, width: 7, cap: 'round' });
+    g.circle(40, -48, 7);
+    g.fill({ color: 0x14141f });
+    g.stroke({ color: GOLD, width: 2, alpha: 0.9 });
     // Blade glow (layered strokes).
-    g.moveTo(44 * this.dir, -58);
-    g.lineTo(96 * this.dir, -92);
-    g.stroke({ color: A, width: 9, alpha: 0.25, cap: 'round' });
-    g.moveTo(44 * this.dir, -58);
-    g.lineTo(96 * this.dir, -92);
+    g.moveTo(44, -51);
+    g.lineTo(98, -90);
+    g.stroke({ color: A, width: 10, alpha: 0.22, cap: 'round' });
+    g.moveTo(44, -51);
+    g.lineTo(98, -90);
     g.stroke({ color: A, width: 4, alpha: 0.9, cap: 'round' });
-    // Front arm.
-    g.moveTo(-8, -36);
-    g.lineTo(-34 * this.dir, -20);
-    g.stroke({ color: BODY_EDGE, width: 9, cap: 'round' });
+
+    // --- Menpo (mask) + head ---
+    g.circle(0, -52, 13);
+    g.fill({ color: BODY });
+    g.stroke({ color: BODY_EDGE, width: 2 });
+    // Mask grill lines.
+    g.moveTo(-8, -48);
+    g.lineTo(8, -48);
+    g.stroke({ color: BODY_EDGE, width: 1.5 });
+    g.moveTo(-8, -44);
+    g.lineTo(8, -44);
+    g.stroke({ color: BODY_EDGE, width: 1.5 });
+
+    // --- Kabuto (helmet bowl + crest + horns) ---
+    g.circle(0, -60, 14);
+    g.fill({ color: BODY });
+    g.stroke({ color: GOLD, width: 2, alpha: 0.8 });
+    // Maedate (forehead crest).
+    g.circle(0, -66, 3.5);
+    g.fill({ color: GOLD });
+    // Kuwagata horns.
+    g.moveTo(-8, -70);
+    g.quadraticCurveTo(-22, -84, -30, -98);
+    g.stroke({ color: GOLD, width: 3, cap: 'round' });
+    g.moveTo(8, -70);
+    g.quadraticCurveTo(22, -84, 30, -98);
+    g.stroke({ color: GOLD, width: 3, cap: 'round' });
+    // Shikoro (neck guard plates).
+    for (let i = 0; i < 3; i++) {
+      g.moveTo(-12 + i * 2, -48 + i * 4);
+      g.lineTo(12 - i * 2, -48 + i * 4);
+      g.stroke({ color: BODY_EDGE, width: 2.5 });
+    }
 
     this.body = g;
     this.root.addChild(g);
 
-    // Glowing eyes.
+    // Glowing eyes through the mask.
     this.eyes = new Graphics();
-    this.eyes.circle(-6, -84, 3.2);
-    this.eyes.circle(6, -84, 3.2);
+    this.eyes.circle(-5.5, -54, 2.8);
+    this.eyes.circle(5.5, -54, 2.8);
     this.eyes.fill({ color: A, alpha: 1 });
     this.root.addChild(this.eyes);
     this.eyeGlow = new Graphics();
-    this.eyeGlow.circle(-6, -84, 6);
-    this.eyeGlow.circle(6, -84, 6);
+    this.eyeGlow.circle(-5.5, -54, 5.5);
+    this.eyeGlow.circle(5.5, -54, 5.5);
     this.eyeGlow.fill({ color: A, alpha: 0.3 });
     this.root.addChild(this.eyeGlow);
 
