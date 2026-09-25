@@ -9,9 +9,9 @@ export const CRITICAL_MULTIPLIER = 1.5;
 export const CRITICAL_ACCURACY = 97;
 
 export function calculateWindowDamage({ wpm, accuracy, turnSeconds }) {
-  const safeAcc = Math.min(100, Math.max(0, accuracy)) / 100;
+  // wpm arrives already accuracy-adjusted, so no second multiplier here.
   const minutes = Math.max(1, turnSeconds) / 60;
-  let damage = Math.max(0, wpm) * safeAcc * minutes * 2;
+  let damage = Math.max(0, wpm) * minutes * 2;
   const critical = isCriticalHit({ accuracy });
   if (critical) damage *= CRITICAL_MULTIPLIER;
   damage = Math.round(damage);

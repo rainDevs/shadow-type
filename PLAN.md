@@ -402,10 +402,11 @@ Track:
 
 ### WPM
 
-Calculate:
+Adjusted WPM, leaderboard-style:
 
 ```text
-WPM = (characters typed / 5) / elapsed minutes
+Gross WPM = (characters typed / 5) / elapsed minutes
+Adjusted WPM = Gross WPM × (Accuracy % / 100)
 ```
 
 ### Accuracy

@@ -88,8 +88,9 @@ export function useTypingGame({ difficultyId, pixiRef }) {
 
   const refreshLive = useCallback(() => {
     const elapsedMs = Math.max(1, turnMs - Math.max(0, turnEndsAtRef.current - Date.now()));
-    setLiveWpm(calculateWPM(windowTotalRef.current, elapsedMs));
-    setLiveAcc(calculateAccuracy(keysCorrectRef.current, keysTotalRef.current));
+    const acc = calculateAccuracy(keysCorrectRef.current, keysTotalRef.current);
+    setLiveWpm(calculateWPM(windowTotalRef.current, elapsedMs, acc));
+    setLiveAcc(acc);
   }, [turnMs]);
 
   // --- match end (declared before the turn actions that call it) -------------------
@@ -169,8 +170,8 @@ export function useTypingGame({ difficultyId, pixiRef }) {
       windowTotalRef.current += t.length;
     }
     const total = windowTotalRef.current;
-    const wpm = calculateWPM(total, turnMs);
     const acc = total > 0 ? (windowCorrectRef.current / total) * 100 : 0;
+    const wpm = calculateWPM(total, turnMs, acc);
     const words = windowWordsRef.current;
     wpmSumRef.current += wpm;
 
