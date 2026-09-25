@@ -11,6 +11,9 @@ const SKIN_SHADE = 0xc99868;
 const STEEL = 0x9aa3b8;
 const STEEL_EDGE = 0xd7deee;
 
+// Overall fighter scale (arena is 1280×720).
+const SCALE = 1.35;
+
 // Shared stance joints [x, y], feet near y=+58, facing right
 // (CPU mirrored via scale.x).
 const STANCE = {
@@ -203,7 +206,7 @@ export class Fighter {
     this.flash.fill({ color: 0xffffff, alpha: 0 });
     this.root.addChild(this.flash);
 
-    this.root.scale.x = this.dir;
+    this.root.scale.set(this.dir * SCALE, SCALE);
   }
 
   setBasePosition(x, y) {

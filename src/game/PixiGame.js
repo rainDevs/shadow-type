@@ -15,8 +15,8 @@ import { buildBackground, EMBER_VENTS } from './Background.js';
 export const ARENA_WIDTH = 1280;
 export const ARENA_HEIGHT = 720;
 const GROUND_Y = 560;
-const PLAYER_HOME = { x: 390, y: GROUND_Y - 62 };
-const CPU_HOME = { x: 890, y: GROUND_Y - 62 };
+const PLAYER_HOME = { x: 390, y: GROUND_Y - 84 };
+const CPU_HOME = { x: 890, y: GROUND_Y - 84 };
 
 const CYAN = 0x22d3ee;
 const RED = 0xff5252;
