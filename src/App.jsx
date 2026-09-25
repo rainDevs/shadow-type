@@ -1,122 +1,77 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react';
+import { MainMenu } from './components/MainMenu.jsx';
+import { DifficultySelector } from './components/DifficultySelector.jsx';
+import { HowToPlay } from './components/HowToPlay.jsx';
+import { Settings } from './components/Settings.jsx';
+import { HighScores } from './components/HighScores.jsx';
+import { useLocalStorage } from './hooks/useLocalStorage.js';
+import { DEFAULT_SETTINGS, STORAGE_KEYS } from './utils/storage.js';
+import { audio } from './utils/audioManager.js';
 
+// PixiJS is heavy — split it into its own chunk loaded only for battle.
+const BattleScreen = lazy(() =>
+  import('./components/BattleScreen.jsx').then((m) => ({ default: m.BattleScreen })),
+);
+
+// Screens: menu | difficulty | howto | settings | scores | battle
 function App() {
-  const [count, setCount] = useState(0)
+  const [screen, setScreen] = useState('menu');
+  const [settings, setSettings] = useLocalStorage(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
+  const [difficulty, setDifficulty] = useState(settings.difficulty ?? 'normal');
+
+  // Push settings into the audio engine whenever they change.
+  useEffect(() => {
+    audio.setSettings(settings);
+  }, [settings]);
+
+  // Expose the reduced-motion preference to CSS so all DOM animation
+  // (embers, feedback banners, pulses) honors the in-game setting,
+  // not just the OS-level media query.
+  useEffect(() => {
+    document.documentElement.dataset.reducedMotion = settings.reducedMotion ? 'true' : 'false';
+  }, [settings.reducedMotion]);
+
+  const navigate = useCallback((next) => {
+    audio.unlock();
+    audio.playClick();
+    setScreen(next);
+  }, []);
+
+  const startBattle = useCallback(
+    (difficultyId) => {
+      audio.unlock();
+      audio.playClick();
+      setDifficulty(difficultyId);
+      setSettings((prev) => ({ ...prev, difficulty: difficultyId }));
+      setScreen('battle');
+    },
+    [setSettings],
+  );
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+      {screen === 'menu' && <MainMenu onNavigate={navigate} />}
+      {screen === 'difficulty' && (
+        <DifficultySelector initial={difficulty} onStart={startBattle} onBack={() => navigate('menu')} />
+      )}
+      {screen === 'howto' && <HowToPlay onBack={() => navigate('menu')} />}
+      {screen === 'settings' && (
+        <Settings settings={settings} onChange={setSettings} onBack={() => navigate('menu')} />
+      )}
+      {screen === 'scores' && <HighScores onBack={() => navigate('menu')} />}
+      {screen === 'battle' && (
+        <Suspense
+          fallback={
+            <div className="st-root">
+              <p className="st-subtitle">Entering the arena…</p>
+            </div>
+          }
         >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+          <BattleScreen difficulty={difficulty} settings={settings} onExit={() => navigate('menu')} />
+        </Suspense>
+      )}
     </>
-  )
+  );
 }
 
-export default App
+export default App;
