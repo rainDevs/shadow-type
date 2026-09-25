@@ -1,5 +1,11 @@
 /* Shadow Type — dark cyberpunk/shadow-fighting theme (PLAN.md section 3). */
 
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('/fonts/press-start-2p.woff2') format('woff2');
+  font-display: swap;
+}
+
 :root {
   --bg-0: #06060c;
   --bg-1: #0c0c16;
@@ -1065,4 +1071,158 @@ html[data-reduced-motion='true'] *::after {
   .arena-wrap {
     width: min(1280px, 100%);
   }
+}
+
+/* --- Pixel game theme overrides --- */
+
+:root {
+  --pixel: 'Press Start 2P', ui-monospace, monospace;
+}
+
+.st-title {
+  font-family: var(--pixel);
+  font-size: clamp(26px, 5.5vw, 58px);
+  letter-spacing: 0.04em;
+  text-shadow:
+    4px 4px 0 #000,
+    0 0 24px rgba(34, 211, 238, 0.5);
+}
+
+.st-subtitle {
+  font-family: var(--pixel);
+  font-size: 11px;
+}
+
+.menu-btn {
+  font-family: var(--pixel);
+  font-size: 12px;
+  border-width: 3px;
+  border-radius: 0;
+  box-shadow: 4px 4px 0 #000;
+}
+
+.menu-btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 #000;
+}
+
+.panel {
+  border-width: 3px;
+  border-radius: 0;
+  box-shadow: 6px 6px 0 #000;
+}
+
+.panel h2 {
+  font-family: var(--pixel);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+}
+
+.diff-card {
+  border-radius: 0;
+  border-width: 2px;
+}
+
+.diff-card.selected {
+  box-shadow: 4px 4px 0 #000;
+}
+
+.hud-name {
+  font-family: var(--pixel);
+  font-size: 10px;
+}
+
+.hud-portrait {
+  border-radius: 4px;
+}
+
+.health-track {
+  border-width: 2px;
+  border-radius: 0;
+}
+
+.health-fill {
+  background-image:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.28) 0 2px, transparent 2px 8px),
+    linear-gradient(90deg, #0ea5b7, var(--cyan));
+}
+
+.hud-fighter.cpu .health-fill {
+  background-image:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.28) 0 2px, transparent 2px 8px),
+    linear-gradient(90deg, #ff8a5c, var(--red));
+}
+
+.health-pct,
+.hud-stats,
+.setting-value,
+.scores-table,
+.kbd {
+  font-family: var(--pixel);
+}
+
+.hud-stats {
+  font-size: 9px;
+}
+
+.hud-stats strong {
+  font-family: var(--pixel);
+  font-size: 10px;
+}
+
+.health-pct {
+  font-size: 10px;
+}
+
+.turn-banner {
+  font-family: var(--pixel);
+  font-size: 11px;
+}
+
+.typing-label,
+.words-tally {
+  font-family: var(--pixel);
+  font-size: 9px;
+}
+
+.pause-btn {
+  border-radius: 0;
+  border-width: 2px;
+  box-shadow: 3px 3px 0 #000;
+  font-family: var(--pixel);
+  font-size: 10px;
+}
+
+.result-grid dd {
+  font-family: var(--pixel);
+  font-size: 13px;
+}
+
+.result-grid dt {
+  font-family: var(--pixel);
+  font-size: 8px;
+}
+
+.combat-feedback {
+  font-family: var(--pixel);
+  font-size: clamp(13px, 2vw, 20px);
+}
+
+.score-form-row input {
+  border-radius: 0;
+  border-width: 2px;
+}
+
+.setting-row input[type='range'] {
+  border-radius: 0;
+}
+
+.back-link {
+  font-family: var(--pixel);
+  font-size: 10px;
+}
+
+.btn-row .menu-btn,
+.score-form-row .menu-btn {
+  font-size: 11px;
 }

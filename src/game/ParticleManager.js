@@ -30,7 +30,7 @@ export class ParticleManager {
       p.size = size * (0.6 + Math.random() * 0.8);
       p.color = color;
       p.g.clear();
-      p.g.circle(0, 0, p.size);
+      p.g.rect(-p.size, -p.size, p.size * 2, p.size * 2);
       p.g.fill({ color, alpha: 1 });
       p.g.visible = true;
       this.root.addChild(p.g);
@@ -54,7 +54,7 @@ export class ParticleManager {
     p.size = 1.5 + Math.random() * 2;
     p.color = color;
     p.g.clear();
-    p.g.circle(0, 0, p.size);
+    p.g.rect(-p.size, -p.size, p.size * 2, p.size * 2);
     p.g.fill({ color, alpha: 0.7 });
     p.g.visible = true;
     this.root.addChild(p.g);
@@ -77,7 +77,7 @@ export class ParticleManager {
     p.size = 2 + Math.random() * 2.2;
     p.color = color;
     p.g.clear();
-    p.g.ellipse(0, 0, p.size, p.size * 0.6);
+    p.g.rect(-p.size, -p.size * 0.6, p.size * 2, p.size * 1.2);
     p.g.fill({ color, alpha: 0.85 });
     p.g.visible = true;
     this.root.addChild(p.g);

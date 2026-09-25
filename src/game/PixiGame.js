@@ -166,9 +166,9 @@ export class PixiGame {
     const g = new Graphics();
     const r = big ? 90 : 60;
     g.arc(x, y, r, -Math.PI * 0.7, Math.PI * 0.15);
-    g.stroke({ color, width: big ? 14 : 9, alpha: 0.95, cap: 'round' });
+    g.stroke({ color, width: big ? 14 : 9, alpha: 0.95, cap: 'square' });
     g.arc(x, y, r * 0.8, -Math.PI * 0.7, Math.PI * 0.15);
-    g.stroke({ color: 0xffffff, width: 3, alpha: 0.8, cap: 'round' });
+    g.stroke({ color: 0xffffff, width: 3, alpha: 0.8, cap: 'square' });
     this.fxLayer.addChild(g);
     const duration = this.reducedMotion ? 60 : 200;
     return this.tween(duration, (k) => {
@@ -186,9 +186,8 @@ export class PixiGame {
     const t = new Text({
       text,
       style: {
-        fontFamily: 'ui-monospace, Consolas, monospace',
-        fontSize: big ? 52 : 38,
-        fontWeight: 'bold',
+        fontFamily: "'Press Start 2P', monospace",
+        fontSize: big ? 30 : 22,
         fill: color,
         stroke: { color: 0x000000, width: 5 },
       },
