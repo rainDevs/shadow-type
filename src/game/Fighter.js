@@ -5,7 +5,7 @@
 import { AnimatedSprite, Assets, Container, Graphics, Rectangle, Texture } from 'pixi.js';
 
 const FRAME = 128;
-const SPRITE_SCALE = 2.4;
+const SPRITE_SCALE = 3;
 
 const SHEETS = {
   idle: { file: 'male_hero-idle.png', frames: 10, fps: 10, loop: true },
@@ -143,7 +143,7 @@ export class Fighter {
 
   // Mid-torso impact point in world space.
   hitPoint() {
-    return { x: this.root.x, y: this.root.y - 120 };
+    return { x: this.root.x, y: this.root.y - 135 };
   }
 
   setBasePosition(x, y) {
