@@ -9,6 +9,9 @@ const SPRITE_SCALE = 5;
 // Measured union of non-transparent pixels across all sheets: every clip
 // shares the same feet baseline, so one tight box fits all with no pop.
 const CROP = { x: 42, y: 29, w: 68, h: 50 };
+// Idle stance center within the crop: anchor bodies here so the shadow
+// (drawn at local x=0) sits centered under the fighter in every clip.
+const BODY_ANCHOR_X = (63 - CROP.x) / CROP.w;
 
 const SHEETS = {
   idle: { file: 'male_hero-idle.png', frames: 10, fps: 10, loop: true },
@@ -76,7 +79,7 @@ export class Fighter {
   makeClip(key) {
     const sheet = SHEETS[key];
     const sprite = new AnimatedSprite(sheetCache[key]);
-    sprite.anchor.set(0.5, 1);
+    sprite.anchor.set(BODY_ANCHOR_X, 1);
     sprite.scale.set(this.dir * SPRITE_SCALE, SPRITE_SCALE);
     sprite.animationSpeed = sheet.fps / 60;
     sprite.loop = sheet.loop;
