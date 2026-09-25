@@ -662,7 +662,10 @@ html[data-reduced-motion='true'] *::after {
 }
 
 .passage-scroll {
+  font-size: clamp(19px, 3vw, 26px);
+  line-height: 1.7;
   max-height: calc(1.7em * 3 + 12px);
+  min-height: calc(1.7em * 3 + 12px);
   overflow-y: hidden;
   padding: 6px 4px;
 }
@@ -670,8 +673,6 @@ html[data-reduced-motion='true'] *::after {
 .passage-text {
   margin: 0;
   font-family: var(--mono);
-  font-size: clamp(19px, 3vw, 26px);
-  line-height: 1.7;
   letter-spacing: 0.02em;
   white-space: pre-wrap;
   text-align: left;
