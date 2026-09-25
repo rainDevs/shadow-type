@@ -6,58 +6,33 @@ import { Container, Graphics } from 'pixi.js';
 
 const INK = 0x060609;
 
-// Player: lunging punch stance. CPU: low guard with raised blade.
-// Joints are [x, y] in body space, feet near y=+58, facing right
-// (CPU is mirrored via scale.x).
-const POSES = {
-  player: {
-    hips: [0, 0],
-    chest: [9, -54],
-    neck: [11, -64],
-    head: [13, -77],
-    headR: 11,
-    knot: [4, -89],
-    rearHip: [-5, 0],
-    rearKnee: [-26, 28],
-    rearFoot: [-40, 58],
-    frontHip: [5, 0],
-    frontKnee: [28, 30],
-    frontFoot: [44, 58],
-    shoulder: [9, -48],
-    rearElbow: [-13, -30],
-    rearHand: [-5, -46],
-    frontElbow: [31, -54],
-    frontHand: [54, -47],
-    bladeFrom: [54, -47],
-    bladeTo: [100, -72],
-    bladeW: 6,
-    serrated: true,
-    tails: true,
-  },
-  cpu: {
-    hips: [-2, 6],
-    chest: [0, -44],
-    neck: [1, -54],
-    head: [3, -66],
-    headR: 11,
-    knot: [-6, -78],
-    rearHip: [-6, 6],
-    rearKnee: [-28, 34],
-    rearFoot: [-38, 58],
-    frontHip: [2, 6],
-    frontKnee: [24, 38],
-    frontFoot: [30, 58],
-    shoulder: [0, -38],
-    rearElbow: [-18, -22],
-    rearHand: [-8, -38],
-    frontElbow: [16, -52],
-    frontHand: [12, -70],
-    bladeFrom: [12, -70],
-    bladeTo: [40, -108],
-    bladeW: 13,
-    serrated: false,
-    tails: true,
-  },
+// Both fighters share one lunging stance (mirrored via scale.x) — only
+// blades and accent colors differ. Joints are [x, y] in body space,
+// feet near y=+58, facing right.
+const STANCE = {
+  hips: [0, 0],
+  chest: [9, -54],
+  neck: [11, -64],
+  head: [13, -77],
+  headR: 11,
+  knot: [4, -89],
+  rearHip: [-5, 0],
+  rearKnee: [-26, 28],
+  rearFoot: [-40, 58],
+  frontHip: [5, 0],
+  frontKnee: [28, 30],
+  frontFoot: [44, 58],
+  shoulder: [9, -48],
+  rearElbow: [-13, -30],
+  rearHand: [-5, -46],
+  frontElbow: [31, -54],
+  frontHand: [54, -47],
+  tails: true,
+};
+
+const BLADES = {
+  player: { from: [54, -47], to: [100, -72], w: 6, serrated: true },
+  cpu: { from: [54, -47], to: [100, -72], w: 13, serrated: false },
 };
 
 export class Fighter {
@@ -102,7 +77,8 @@ export class Fighter {
 
   buildBody() {
     const A = this.accent;
-    const P = POSES[this.side];
+    const P = STANCE;
+    const B = BLADES[this.side];
     const g = new Graphics();
 
     // Ground shadow with a faint faction glow.
@@ -148,18 +124,18 @@ export class Fighter {
 
     // Katana: black blade with a neon edge. Player wields a serrated
     // katana, CPU a heavy cleaver.
-    if (P.serrated) {
-      this.serratedBlade(g, P.bladeFrom[0], P.bladeFrom[1], P.bladeTo[0], P.bladeTo[1], 6, P.bladeW);
+    if (B.serrated) {
+      this.serratedBlade(g, B.from[0], B.from[1], B.to[0], B.to[1], 6, B.w);
     } else {
-      g.moveTo(P.bladeFrom[0], P.bladeFrom[1]);
-      g.lineTo(P.bladeTo[0], P.bladeTo[1]);
-      g.stroke({ color: INK, width: P.bladeW, cap: 'round' });
+      g.moveTo(B.from[0], B.from[1]);
+      g.lineTo(B.to[0], B.to[1]);
+      g.stroke({ color: INK, width: B.w, cap: 'round' });
     }
-    g.moveTo(P.bladeFrom[0], P.bladeFrom[1]);
-    g.lineTo(P.bladeTo[0], P.bladeTo[1]);
+    g.moveTo(B.from[0], B.from[1]);
+    g.lineTo(B.to[0], B.to[1]);
     g.stroke({ color: A, width: 2, alpha: 0.85, cap: 'round' });
     // Tsuba guard.
-    g.circle(P.bladeFrom[0], P.bladeFrom[1], 5);
+    g.circle(B.from[0], B.from[1], 5);
     g.fill({ color: INK });
 
     // Neck + head + topknot.
