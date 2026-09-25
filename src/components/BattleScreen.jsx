@@ -98,10 +98,11 @@ export function BattleScreen({ difficulty, settings, onExit }) {
           <TypingChallenge
             challenge={game.challenge}
             typed={game.typed}
-            disabled={status !== 'playing' || game.turn !== 'player'}
+            disabled={status !== 'playing' || game.turn !== 'player' || game.locked}
             onType={game.typeText}
             wordsDone={game.wordsDone}
             enemyTurn={game.turn !== 'player'}
+            locked={game.locked}
           />
         </>
       )}

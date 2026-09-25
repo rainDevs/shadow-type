@@ -15,6 +15,9 @@ import { audio } from '../utils/audioManager.js';
 
 let feedbackId = 0;
 
+// Beat between time-up and the strike (lets the player see TIME!).
+const STRIKE_DELAY_MS = 650;
+
 const PASSAGE_WORDS = 100; // generated per turn; extended as needed
 const EXTEND_THRESHOLD = 30; // chars from the end that trigger extension
 const EXTEND_WORDS = 30;
@@ -58,6 +61,7 @@ export function useTypingGame({ difficultyId, pixiRef }) {
   const [typed, setTyped] = useState('');
   const [timeLeft, setTimeLeft] = useState(config.turnSeconds);
   const [wordsDone, setWordsDone] = useState(0);
+  const [locked, setLocked] = useState(false); // window over, strike pending
   const [feedback, setFeedback] = useState(null);
   const [results, setResults] = useState(null);
   const [liveWpm, setLiveWpm] = useState(0);
@@ -86,10 +90,15 @@ export function useTypingGame({ difficultyId, pixiRef }) {
   const wpmSumRef = useRef(0);
   const windowTimerRef = useRef(null);
   const cpuTimeoutRef = useRef(null);
+  const strikeTimeoutRef = useRef(null);
+  const strikeDueAtRef = useRef(0);
+  const strikeRemainingRef = useRef(0);
+  const struckRef = useRef(false);
   const feedbackTimerRef = useRef(null);
   const aliveRef = useRef(true);
   const matchGenRef = useRef(0);
   const endWindowRef = useRef(null);
+  const doStrikeRef = useRef(null);
   const startCpuTurnRef = useRef(null);
   const startPlayerTurnRef = useRef(null);
 
@@ -139,6 +148,7 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     (won) => {
       if (windowTimerRef.current) clearInterval(windowTimerRef.current);
       if (cpuTimeoutRef.current) clearTimeout(cpuTimeoutRef.current);
+      if (strikeTimeoutRef.current) clearTimeout(strikeTimeoutRef.current);
       const pixi = pixiRef.current;
       if (won) {
         pixi?.victory();
@@ -172,6 +182,8 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     if (!aliveRef.current || statusRef.current !== 'playing') return;
     setTurnBoth('player');
     busyRef.current = false;
+    struckRef.current = false;
+    setLocked(false);
     turnsRef.current += 1;
     const text = buildPassage(pool, PASSAGE_WORDS);
     passageRef.current = text;
@@ -193,11 +205,22 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     }, 100);
   }, [config, pool, setTurnBoth, turnMs]);
 
-  // --- window end: strike from window stats ----------------------------------------------------
+  // --- window end: lock input, beat, then strike -----------------------------------------------
   const endWindow = useCallback(() => {
     if (windowTimerRef.current) clearInterval(windowTimerRef.current);
     if (busyRef.current || statusRef.current !== 'playing') return;
     busyRef.current = true;
+    struckRef.current = false;
+    setLocked(true);
+    showFeedback('info', 'TIME!', 0);
+    if (strikeTimeoutRef.current) clearTimeout(strikeTimeoutRef.current);
+    strikeDueAtRef.current = Date.now() + STRIKE_DELAY_MS;
+    strikeTimeoutRef.current = setTimeout(() => doStrikeRef.current?.(), STRIKE_DELAY_MS);
+  }, [showFeedback]);
+
+  const doStrike = useCallback(() => {
+    if (struckRef.current || statusRef.current !== 'playing') return;
+    struckRef.current = true;
     const { correct, total } = windowTotals();
     const wpm = calculateWPM(total, turnMs, total > 0 ? (correct / total) * 100 : 0);
     const acc = total > 0 ? (correct / total) * 100 : 0;
@@ -288,6 +311,7 @@ export function useTypingGame({ difficultyId, pixiRef }) {
   // Keep the turn-cycle indirection fresh.
   useEffect(() => {
     endWindowRef.current = endWindow;
+    doStrikeRef.current = doStrike;
     startCpuTurnRef.current = startCpuTurn;
     startPlayerTurnRef.current = startPlayerTurn;
   });
@@ -379,6 +403,10 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     remainingRef.current = Math.max(0, turnEndsAtRef.current - Date.now());
     if (windowTimerRef.current) clearInterval(windowTimerRef.current);
     if (cpuTimeoutRef.current) clearTimeout(cpuTimeoutRef.current);
+    if (strikeTimeoutRef.current) {
+      clearTimeout(strikeTimeoutRef.current);
+      strikeRemainingRef.current = Math.max(0, strikeDueAtRef.current - Date.now());
+    }
     pixiRef.current?.setPaused(true);
     setStatusBoth('paused');
   }, [pixiRef, setStatusBoth]);
@@ -388,6 +416,15 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     turnEndsAtRef.current = Date.now() + (remainingRef.current || 0);
     pixiRef.current?.setPaused(false);
     setStatusBoth('playing');
+    if (struckRef.current === false && busyRef.current) {
+      // Strike was pending when paused — resume its countdown.
+      if (strikeTimeoutRef.current) clearTimeout(strikeTimeoutRef.current);
+      strikeTimeoutRef.current = setTimeout(
+        () => doStrikeRef.current?.(),
+        strikeRemainingRef.current || STRIKE_DELAY_MS,
+      );
+      return;
+    }
     if (turnRef.current === 'player') {
       windowTimerRef.current = setInterval(() => {
         if (!aliveRef.current || statusRef.current !== 'playing') return;
@@ -418,6 +455,9 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     matchGenRef.current += 1; // abort any in-flight strike/damage work
     if (windowTimerRef.current) clearInterval(windowTimerRef.current);
     if (cpuTimeoutRef.current) clearTimeout(cpuTimeoutRef.current);
+    if (strikeTimeoutRef.current) clearTimeout(strikeTimeoutRef.current);
+    struckRef.current = false;
+    setLocked(false);
     playerHpRef.current = maxHp;
     cpuHpRef.current = maxHp;
     scoreRef.current = 0;
@@ -468,6 +508,7 @@ export function useTypingGame({ difficultyId, pixiRef }) {
       aliveRef.current = false;
       if (windowTimerRef.current) clearInterval(windowTimerRef.current);
       if (cpuTimeoutRef.current) clearTimeout(cpuTimeoutRef.current);
+      if (strikeTimeoutRef.current) clearTimeout(strikeTimeoutRef.current);
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
       audio.stopMusic();
     };
@@ -487,6 +528,7 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     turnSeconds: config.turnSeconds,
     turnTotal: turn === 'player' ? config.turnSeconds : config.cpuTelegraphMs / 1000,
     wordsDone,
+    locked,
     feedback,
     results,
     wpm: liveWpm,

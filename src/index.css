@@ -891,6 +891,11 @@ html[data-reduced-motion='true'] *::after {
   text-shadow: 0 0 14px rgba(255, 82, 82, 0.8), 0 2px 0 #000;
 }
 
+.combat-feedback.info {
+  color: var(--cyan);
+  text-shadow: 0 0 14px rgba(34, 211, 238, 0.8), 0 2px 0 #000;
+}
+
 @keyframes feedback-rise {
   0% {
     opacity: 0;
