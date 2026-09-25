@@ -548,12 +548,11 @@ html[data-reduced-motion='true'] *::after {
 }
 
 .turn-banner {
-  margin-top: 0;
+  margin-top: 6px;
   font-family: var(--mono);
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.2em;
-  text-align: center;
 }
 
 .turn-banner.player-turn {
@@ -574,12 +573,6 @@ html[data-reduced-motion='true'] *::after {
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.6);
   overflow: hidden;
-}
-
-.turn-timer {
-  width: min(860px, 94vw);
-  margin: 8px auto 0;
-  padding: 0 4px;
 }
 
 .turn-fill {
@@ -607,14 +600,13 @@ html[data-reduced-motion='true'] *::after {
 }
 
 .arena-mount {
+  width: 100%;
   aspect-ratio: 16 / 9;
-  max-height: 62svh;
-  margin: 0 auto;
 }
 
 .arena-mount canvas {
   width: 100%;
-  height: 100%;
+  height: auto;
   display: block;
 }
 
