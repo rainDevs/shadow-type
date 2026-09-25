@@ -30,6 +30,8 @@ const POSES = {
     frontHand: [54, -47],
     bladeFrom: [54, -47],
     bladeTo: [100, -72],
+    bladeW: 6,
+    serrated: true,
     tails: true,
   },
   cpu: {
@@ -52,6 +54,8 @@ const POSES = {
     frontHand: [12, -70],
     bladeFrom: [12, -70],
     bladeTo: [40, -108],
+    bladeW: 13,
+    serrated: false,
     tails: true,
   },
 };
@@ -75,6 +79,24 @@ export class Fighter {
     g.stroke({ color: INK, width: w, cap: 'round' });
     // Fatten joints so limbs read as one silhouette.
     g.circle(x1, y1, w * 0.42);
+    g.fill({ color: INK });
+  }
+
+  // Serrated blade polygon: zigzag teeth along one edge.
+  serratedBlade(g, x1, y1, x2, y2, teeth, w) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+    g.moveTo(x1 + (nx * w) / 2, y1 + (ny * w) / 2);
+    for (let i = 1; i <= teeth; i++) {
+      const t = i / teeth;
+      const off = i % 2 === 0 ? w / 2 : w / 2 + 5;
+      g.lineTo(x1 + dx * t + nx * off, y1 + dy * t + ny * off);
+    }
+    g.lineTo(x2 - (nx * w) / 2, y2 - (ny * w) / 2);
+    g.closePath();
     g.fill({ color: INK });
   }
 
@@ -124,10 +146,15 @@ export class Fighter {
     g.circle(P.frontHand[0], P.frontHand[1], 6);
     g.fill({ color: INK });
 
-    // Katana: black blade with a neon edge.
-    g.moveTo(P.bladeFrom[0], P.bladeFrom[1]);
-    g.lineTo(P.bladeTo[0], P.bladeTo[1]);
-    g.stroke({ color: INK, width: 7, cap: 'round' });
+    // Katana: black blade with a neon edge. Player wields a serrated
+    // katana, CPU a heavy cleaver.
+    if (P.serrated) {
+      this.serratedBlade(g, P.bladeFrom[0], P.bladeFrom[1], P.bladeTo[0], P.bladeTo[1], 6, P.bladeW);
+    } else {
+      g.moveTo(P.bladeFrom[0], P.bladeFrom[1]);
+      g.lineTo(P.bladeTo[0], P.bladeTo[1]);
+      g.stroke({ color: INK, width: P.bladeW, cap: 'round' });
+    }
     g.moveTo(P.bladeFrom[0], P.bladeFrom[1]);
     g.lineTo(P.bladeTo[0], P.bladeTo[1]);
     g.stroke({ color: A, width: 2, alpha: 0.85, cap: 'round' });

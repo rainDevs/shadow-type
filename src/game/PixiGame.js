@@ -10,7 +10,7 @@
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { Fighter } from './Fighter.js';
 import { ParticleManager } from './ParticleManager.js';
-import { buildBackground } from './Background.js';
+import { buildBackground, EMBER_VENTS } from './Background.js';
 
 export const ARENA_WIDTH = 1280;
 export const ARENA_HEIGHT = 720;
@@ -32,6 +32,7 @@ export class PixiGame {
     this.elapsed = 0;
     this.ambientTimer = 0;
     this.petalTimer = 200;
+    this.emberTimer = 0;
   }
 
   async init(container) {
@@ -120,6 +121,14 @@ export class PixiGame {
     if (this.petalTimer <= 0) {
       this.petalTimer = 550;
       this.particles.petal(Math.random() * ARENA_WIDTH, -12 - Math.random() * 120);
+    }
+
+    // Embers rising from the ground vents.
+    this.emberTimer -= ticker.deltaMS;
+    if (this.emberTimer <= 0) {
+      this.emberTimer = 220;
+      const vx = EMBER_VENTS[Math.floor(Math.random() * EMBER_VENTS.length)];
+      this.particles.ambient(vx + (Math.random() - 0.5) * 50, GROUND_Y + 10, 0xff9a3c);
     }
 
     this.particles.update(dt);

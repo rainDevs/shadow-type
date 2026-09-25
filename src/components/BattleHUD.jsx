@@ -22,7 +22,7 @@ function HealthBar({ side, hp, maxHp }) {
   );
 }
 
-export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, wordsDone }) {
+export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, wordsDone, onPause }) {
   return (
     <div className="battle-hud">
       <HealthBar side="player" hp={playerHp} maxHp={maxHp} />
@@ -41,6 +41,9 @@ export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, wordsD
             SCORE <strong>{score.toLocaleString()}</strong>
           </span>
         </div>
+        <button type="button" className="pause-btn" onClick={onPause} aria-label="Pause game">
+          ❚❚
+        </button>
       </div>
       <HealthBar side="cpu" hp={cpuHp} maxHp={maxHp} />
     </div>

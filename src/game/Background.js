@@ -1,17 +1,19 @@
-// Misty ink-wash arena (Shadow Fight style): pale gradient sky, huge pale
-// moon, layered pagoda-rooftop silhouettes in atmospheric perspective and a
-// dark foreground hill. Fog banks animate via PixiGame.
+// Golden Titan battlefield: amber gradient sky, giant flame swirls, floating
+// ember orbs, dark rock spires, glowing ground vents and a blackened ground
+// strip. Fog banks + ember orbs animate via PixiGame.
 
 import { Container, Graphics } from 'pixi.js';
+
+export const EMBER_VENTS = [200, 640, 1080];
 
 export function buildBackground(width, height, groundY) {
   const root = new Container();
 
-  // Pale sky gradient (stacked bands, light at the horizon).
+  // Amber sky gradient (stacked bands).
   const sky = new Graphics();
   const bands = 26;
-  const top = [196, 204, 224];
-  const bottom = [138, 146, 172];
+  const top = [247, 214, 150];
+  const bottom = [150, 84, 44];
   for (let i = 0; i < bands; i++) {
     const t = i / bands;
     const r = Math.round(top[0] + (bottom[0] - top[0]) * t);
@@ -22,111 +24,85 @@ export function buildBackground(width, height, groundY) {
   }
   root.addChild(sky);
 
-  // Huge pale moon, slightly left of center.
-  const moonX = width * 0.42;
-  const moonY = height * 0.3;
-  const halo = new Graphics();
-  halo.circle(moonX, moonY, 170);
-  halo.fill({ color: 0xffffff, alpha: 0.25 });
-  halo.circle(moonX, moonY, 120);
-  halo.fill({ color: 0xffffff, alpha: 0.3 });
-  root.addChild(halo);
-  const moon = new Graphics();
-  moon.circle(moonX, moonY, 95);
-  moon.fill({ color: 0xf2f4fa });
-  root.addChild(moon);
-
-  // Faint Mt Fuji in the mist.
-  const fuji = new Graphics();
-  const fBase = groundY - 130;
-  fuji.moveTo(820, fBase);
-  fuji.lineTo(1020, height * 0.22);
-  fuji.lineTo(1090, height * 0.22);
-  fuji.lineTo(1290, fBase);
-  fuji.closePath();
-  fuji.fill({ color: 0x9aa0b8, alpha: 0.55 });
-  root.addChild(fuji);
-
-  // Pagoda rooftop layers, far → near.
-  const layers = [
-    { color: 0x8f96ae, alpha: 0.75, y: groundY - 190, scale: 0.7, seed: 3 },
-    { color: 0x596078, alpha: 0.9, y: groundY - 120, scale: 0.9, seed: 7 },
-    { color: 0x2c3145, alpha: 1, y: groundY - 60, scale: 1.15, seed: 12 },
+  // Giant flame swirls (layered translucent arcs).
+  const flames = new Graphics();
+  const swirls = [
+    { x: width * 0.52, y: height * 0.42, r: 260, w: 46, a: 0.16 },
+    { x: width * 0.52, y: height * 0.42, r: 190, w: 34, a: 0.2 },
+    { x: width * 0.52, y: height * 0.42, r: 130, w: 24, a: 0.24 },
+    { x: width * 0.2, y: height * 0.55, r: 150, w: 30, a: 0.12 },
+    { x: width * 0.85, y: height * 0.5, r: 170, w: 32, a: 0.12 },
   ];
-  for (const layer of layers) {
-    const g = new Graphics();
-    let x = -40;
-    let n = 0;
-    while (x < width + 40) {
-      const w = (120 + ((n * 53 + layer.seed * 29) % 90)) * layer.scale;
-      const h = (60 + ((n * 37 + layer.seed * 17) % 70)) * layer.scale;
-      // Hall body.
-      g.rect(x + w * 0.18, layer.y - h, w * 0.64, h);
-      g.fill({ color: layer.color, alpha: layer.alpha });
-      // Stacked flared roofs.
-      const roofs = 2 + ((n + layer.seed) % 2);
-      for (let r = 0; r < roofs; r++) {
-        const ry = layer.y - h + (r * h) / roofs;
-        const rw = w * (0.72 + (0.28 * r) / roofs);
-        g.moveTo(x + (w - rw) / 2 - 14 * layer.scale, ry);
-        g.lineTo(x + (w + rw) / 2 + 14 * layer.scale, ry);
-        g.lineTo(x + (w + rw) / 2 - 6 * layer.scale, ry - 16 * layer.scale);
-        g.lineTo(x + (w - rw) / 2 + 6 * layer.scale, ry - 16 * layer.scale);
-        g.closePath();
-        g.fill({ color: layer.color, alpha: layer.alpha });
-      }
-      x += w * 0.82;
-      n += 1;
-    }
-    root.addChild(g);
+  for (const s of swirls) {
+    flames.arc(s.x, s.y, s.r, -Math.PI * 0.85, Math.PI * 0.45);
+    flames.stroke({ color: 0xffd98a, width: s.w, alpha: s.a, cap: 'round' });
+    flames.arc(s.x, s.y, s.r * 0.86, -Math.PI * 0.7, Math.PI * 0.35);
+    flames.stroke({ color: 0xff9a3c, width: s.w * 0.55, alpha: s.a + 0.06, cap: 'round' });
   }
+  root.addChild(flames);
 
-  // Dark pines at both edges.
-  const pines = new Graphics();
-  for (const px of [36, 1244]) {
-    pines.rect(px - 5, groundY - 240, 10, 240);
-    pines.fill({ color: 0x141824 });
-    for (let t = 0; t < 5; t++) {
-      const ty = groundY - 240 + t * 44;
-      const tw = 66 - t * 7;
-      pines.moveTo(px - tw / 2, ty);
-      pines.lineTo(px + tw / 2, ty);
-      pines.lineTo(px, ty - 52);
-      pines.closePath();
-      pines.fill({ color: 0x141824 });
-    }
+  // Floating ember orbs (left cluster + strays).
+  const orbs = new Graphics();
+  const orbSpots = [
+    { x: 70, y: 300, r: 16 },
+    { x: 120, y: 360, r: 11 },
+    { x: 45, y: 420, r: 13 },
+    { x: 150, y: 250, r: 8 },
+    { x: 950, y: 200, r: 9 },
+    { x: 1150, y: 330, r: 12 },
+  ];
+  for (const o of orbSpots) {
+    orbs.circle(o.x, o.y, o.r * 2.2);
+    orbs.fill({ color: 0xff9a3c, alpha: 0.18 });
+    orbs.circle(o.x, o.y, o.r);
+    orbs.fill({ color: 0xffb45e });
+    orbs.circle(o.x - o.r * 0.3, o.y - o.r * 0.3, o.r * 0.45);
+    orbs.fill({ color: 0xffe3ae });
   }
-  root.addChild(pines);
+  root.addChild(orbs);
 
-  // Foreground hill (near-black) with grass tufts. Crest meets the fighters' feet.
-  const hillY = groundY;
-  const hill = new Graphics();
-  hill.moveTo(0, hillY + 40);
-  hill.lineTo(0, hillY);
-  for (let hx = 0; hx <= width; hx += 32) {
-    hill.lineTo(hx + 16, hillY - 8 - ((hx * 7) % 14));
-    hill.lineTo(hx + 32, hillY);
+  // Dark rock spires (right side + far left).
+  const rocks = new Graphics();
+  const spires = [
+    { x: 1120, w: 90, h: 260 },
+    { x: 1210, w: 60, h: 190 },
+    { x: 60, w: 70, h: 170 },
+  ];
+  for (const s of spires) {
+    rocks.moveTo(s.x - s.w / 2, groundY);
+    rocks.lineTo(s.x - s.w * 0.2, groundY - s.h);
+    rocks.lineTo(s.x + s.w * 0.25, groundY - s.h * 0.72);
+    rocks.lineTo(s.x + s.w / 2, groundY);
+    rocks.closePath();
+    rocks.fill({ color: 0x241a12 });
   }
-  hill.lineTo(width, hillY + 40);
-  hill.closePath();
-  hill.fill({ color: 0x0b0e16 });
-  root.addChild(hill);
+  root.addChild(rocks);
 
-  // Stone courtyard strip below the hill crest.
-  const floor = new Graphics();
-  floor.rect(0, hillY + 2, width, height - hillY);
-  floor.fill({ color: 0x141824 });
-  floor.rect(0, hillY + 2, width, 2);
-  floor.fill({ color: 0x8b93b0, alpha: 0.5 });
-  root.addChild(floor);
+  // Scorched ground strip with glowing ember vents.
+  const ground = new Graphics();
+  ground.rect(0, groundY, width, height - groundY);
+  ground.fill({ color: 0x120d09 });
+  ground.rect(0, groundY, width, 3);
+  ground.fill({ color: 0xff9a3c, alpha: 0.55 });
+  for (const vx of EMBER_VENTS) {
+    // Crack.
+    ground.moveTo(vx - 34, groundY + 26);
+    ground.lineTo(vx - 8, groundY + 12);
+    ground.lineTo(vx + 12, groundY + 22);
+    ground.lineTo(vx + 36, groundY + 10);
+    ground.stroke({ color: 0xff7a1e, width: 3, alpha: 0.9 });
+    ground.circle(vx, groundY + 16, 26);
+    ground.fill({ color: 0xff9a3c, alpha: 0.14 });
+  }
+  root.addChild(ground);
 
-  // White mist banks (animated by PixiGame).
+  // Warm haze banks (animated by PixiGame).
   const fog = [];
   for (let i = 0; i < 6; i++) {
     const f = new Graphics();
     f.ellipse(0, 0, 240, 30);
-    f.fill({ color: 0xffffff, alpha: 0.16 });
-    f.position.set(Math.random() * width, groundY - 200 + Math.random() * 220);
+    f.fill({ color: 0xffd98a, alpha: 0.14 });
+    f.position.set(Math.random() * width, groundY - 220 + Math.random() * 220);
     f.userData = { speed: 10 + Math.random() * 16 };
     root.addChild(f);
     fog.push(f);

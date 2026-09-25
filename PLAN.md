@@ -92,46 +92,39 @@ Keep React and PixiJS properly separated.
 
 # 3. Visual Direction
 
-Use a **dark cyberpunk/shadow-fighting aesthetic**.
+Use a **golden Titan battlefield aesthetic** (Shadow Fight style).
 
 The visual style should feel like:
 
-- Shadow warriors
-- Dark arena
-- Neon accents
-- Atmospheric lighting
-- Smoke
-- Energy effects
+- Ink-black silhouette warriors
+- Blazing amber sky with flame swirls
+- Floating ember orbs and rising embers
+- Dark scorched ground with glowing vents
+- Rock spires and atmospheric haze
 - Fast combat
 - Arcade fighting game
 
-Avoid making it look like a generic typing website.
-
 ### Color Direction
 
-Primary background:
+Arena sky:
 
-- Near-black
-- Dark charcoal
-- Deep purple/blue
+- Warm amber/gold gradient
 
-Player:
+Fighters:
 
-- Cool blue/cyan energy
+- Pure black ink silhouettes
 
-Computer:
+Player accents:
+
+- Cool blue/cyan energy (blade edge, rim light)
+
+Computer accents:
 
 - Red/orange energy
 
-Text:
+Text/UI:
 
-- White/light gray
-
-Important UI:
-
-- Neon-style highlights
-
-Use restrained glow effects rather than excessive gradients.
+- White/light gray with the existing neon panel system
 
 ---
 

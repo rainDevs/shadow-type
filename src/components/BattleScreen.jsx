@@ -78,6 +78,7 @@ export function BattleScreen({ difficulty, settings, onExit }) {
             accuracy={game.accuracy}
             score={game.score}
             wordsDone={game.wordsDone}
+            onPause={game.togglePause}
           />
         </div>
         {rendererFailed && (
