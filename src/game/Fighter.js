@@ -5,7 +5,10 @@
 import { AnimatedSprite, Assets, Container, Graphics, Rectangle, Texture } from 'pixi.js';
 
 const FRAME = 128;
-const SPRITE_SCALE = 3.6;
+const SPRITE_SCALE = 4.5;
+// Measured union of non-transparent pixels across all sheets: every clip
+// shares the same feet baseline, so one tight box fits all with no pop.
+const CROP = { x: 42, y: 29, w: 68, h: 50 };
 
 const SHEETS = {
   idle: { file: 'male_hero-idle.png', frames: 10, fps: 10, loop: true },
@@ -44,7 +47,10 @@ export class Fighter {
       const frames = [];
       for (let i = 0; i < sheet.frames; i++) {
         frames.push(
-          new Texture({ source: texture.source, frame: new Rectangle(i * FRAME, 0, FRAME, FRAME) }),
+          new Texture({
+            source: texture.source,
+            frame: new Rectangle(CROP.x + i * FRAME, CROP.y, CROP.w, CROP.h),
+          }),
         );
       }
       sheetCache[key] = frames;
@@ -143,7 +149,7 @@ export class Fighter {
 
   // Mid-torso impact point in world space.
   hitPoint() {
-    return { x: this.root.x, y: this.root.y - 160 };
+    return { x: this.root.x, y: this.root.y - 125 };
   }
 
   setBasePosition(x, y) {
