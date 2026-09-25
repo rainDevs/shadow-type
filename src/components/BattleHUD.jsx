@@ -1,4 +1,4 @@
-// Battle HUD: health bars, live stats, CPU attack countdown (PLAN.md section 42).
+// Battle HUD: health bars, live stats, turn indicator + window timer.
 // Pure React — Pixi owns only the arena canvas below it.
 
 function HealthBar({ side, hp }) {
@@ -15,7 +15,10 @@ function HealthBar({ side, hp }) {
   );
 }
 
-export function BattleHUD({ playerHp, cpuHp, wpm, accuracy, combo, score, countdown }) {
+export function BattleHUD({ playerHp, cpuHp, wpm, accuracy, score, turn, timeLeft, turnSeconds, wordsDone }) {
+  const isPlayer = turn === 'player';
+  const total = isPlayer ? turnSeconds : Math.max(timeLeft, 0.001);
+  const frac = isPlayer ? Math.max(0, Math.min(1, timeLeft / turnSeconds)) : Math.max(0, Math.min(1, timeLeft / total));
   return (
     <div className="battle-hud">
       <HealthBar side="player" hp={playerHp} />
@@ -28,17 +31,18 @@ export function BattleHUD({ playerHp, cpuHp, wpm, accuracy, combo, score, countd
             ACC <strong>{Math.round(accuracy)}%</strong>
           </span>
           <span>
-            COMBO <strong>x{combo}</strong>
+            WORDS <strong>{wordsDone}</strong>
           </span>
           <span>
             SCORE <strong>{score.toLocaleString()}</strong>
           </span>
         </div>
-        {countdown != null && (
-          <div className={`hud-countdown ${countdown <= 1 ? 'imminent' : ''}`} aria-live="polite">
-            ENEMY ATTACK {countdown.toFixed(1)}s
-          </div>
-        )}
+        <div className={`turn-banner ${isPlayer ? 'player-turn' : 'cpu-turn'}`} aria-live="polite">
+          {isPlayer ? `YOUR TURN — ${Math.ceil(timeLeft)}s` : `ENEMY TURN — ${timeLeft.toFixed(1)}s`}
+        </div>
+        <div className="turn-track" aria-hidden="true">
+          <div className={`turn-fill ${isPlayer ? '' : 'enemy'}`} style={{ width: `${frac * 100}%` }} />
+        </div>
       </div>
       <HealthBar side="cpu" hp={cpuHp} />
     </div>

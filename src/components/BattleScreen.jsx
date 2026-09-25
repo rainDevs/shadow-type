@@ -72,9 +72,11 @@ export function BattleScreen({ difficulty, settings, onExit }) {
         cpuHp={game.cpuHp}
         wpm={game.wpm}
         accuracy={game.accuracy}
-        combo={game.combo}
         score={game.score}
-        countdown={game.countdown}
+        turn={game.turn}
+        timeLeft={game.timeLeft}
+        turnSeconds={game.turnSeconds}
+        wordsDone={game.wordsDone}
       />
       <div className="arena-wrap">
         <div ref={containerRef} className="arena-mount" aria-label="Combat arena" />
@@ -94,8 +96,9 @@ export function BattleScreen({ difficulty, settings, onExit }) {
         <TypingChallenge
           challenge={game.challenge}
           typed={game.typed}
-          disabled={status !== 'playing'}
+          disabled={status !== 'playing' || game.turn !== 'player'}
           onType={game.typeText}
+          wordsDone={game.wordsDone}
         />
       )}
       {over && results &&

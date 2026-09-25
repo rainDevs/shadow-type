@@ -17,17 +17,17 @@ The player attacks the computer by correctly typing the words/sentences displaye
 
 ### Core Gameplay Loop
 
-1. A typing challenge appears.
-2. The player types the displayed text.
+1. A timed turn begins and words stream endlessly.
+2. The player types as many words as possible before time expires.
 3. The game evaluates:
    - Correct characters
    - Incorrect characters
    - Typing speed
    - Accuracy
-   - Combo
+   - Words completed
    - Score
-4. The player's typing performance determines the damage dealt to the computer.
-5. The computer periodically attacks the player automatically.
+4. The player's turn performance determines the strike damage.
+5. The computer answers with a quick strike after a short telegraph.
 6. Both health bars decrease as attacks land.
 7. The fight continues until one fighter reaches **0% HP**.
 8. Display a dramatic **Victory** or **Defeat** screen.
@@ -196,7 +196,7 @@ The battle screen is the primary gameplay interface.
 │                                                            │
 │                    [typing input]                          │
 │                                                            │
-│       WPM: 72       ACCURACY: 96%       COMBO: x8          │
+│       WPM: 72       ACCURACY: 96%       WORDS: 12          │
 │                                                            │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -299,9 +299,13 @@ Use:
 
 # 8. Typing System
 
-Typing is the primary combat mechanic.
+Typing is the primary combat mechanic. Combat runs in **timed turns**
+(Monkeytype-style): Easy turns last 15 seconds, Normal 30 seconds, Hard 60
+seconds. During a player turn, an endless stream of words appears — finishing
+one word instantly serves the next. When time expires, the fighter strikes and
+damage is computed from the turn's WPM and accuracy.
 
-Display a random typing challenge.
+Display a random word from the difficulty pool.
 
 Examples:
 
@@ -369,7 +373,7 @@ As the user types:
 - Correct characters become highlighted.
 - Incorrect characters are visibly marked.
 - Current character is clearly indicated.
-- Do not allow the player to progress incorrectly unless the intended game mode allows corrections.
+- The word completes when its full length is typed, mistakes included.
 
 Recommended behavior:
 
@@ -380,13 +384,15 @@ Current → highlighted
 Remaining → muted
 ```
 
-When the complete phrase is correctly typed:
+When the complete word is typed (full length entered, correct or not):
 
 ```text
 ATTACK!
 ```
 
-The player's fighter immediately attacks.
+The player's fighter immediately attacks. Mistakes never block the strike —
+they lower accuracy and therefore damage. Backspacing to fix errors costs time
+(lower WPM) but restores accuracy.
 
 ---
 
@@ -411,33 +417,19 @@ total characters typed
 × 100
 ```
 
-### Combo
+### Words Completed
 
-Increase combo when the player completes challenges successfully.
+Count every finished word in the turn. Words are the score tally and feed the
+window damage scaling.
 
-Example:
-
-```text
-x1
-x2
-x3
-x4
-...
-```
-
-Incorrect typing can:
-
-- Reset combo
-- Reduce combo
-- Or temporarily reduce attack power
-
-Choose a balanced implementation.
+Incorrect typing lowers accuracy and therefore weakens the coming strike.
+Speed alone does not dominate accuracy.
 
 ---
 
 # 11. Damage System
 
-Typing performance determines damage.
+Typing performance over the turn window determines damage.
 
 Do NOT make damage purely random.
 
@@ -446,20 +438,11 @@ Create a deterministic formula.
 Example:
 
 ```text
-baseDamage = 5
-
-speedBonus = WPM / 20
-
-accuracyMultiplier = accuracy / 100
-
-comboBonus = combo * 0.5
-
 damage =
-baseDamage
-+ speedBonus
-+ comboBonus
-
-damage *= accuracyMultiplier
+WPM
+× (accuracy / 100)
+× (turnSeconds / 60)
+× 2
 ```
 
 Clamp damage to reasonable values.
@@ -467,24 +450,24 @@ Clamp damage to reasonable values.
 Example:
 
 ```text
-minimum damage: 3
-maximum damage: 25
+minimum damage: 5
+maximum damage: 40
 ```
+
+Critical hits (97%+ accuracy) multiply damage by 1.5 before clamping.
 
 A player typing:
 
 ```text
-90 WPM
+70 WPM
 98% accuracy
-x10 combo
 ```
 
-should deal significantly more damage than:
+over a full window should deal significantly more damage than:
 
 ```text
 25 WPM
 75% accuracy
-x1 combo
 ```
 
 Display the calculated damage after each successful attack.
@@ -502,27 +485,16 @@ CRITICAL HIT!
 
 Add a critical hit system.
 
-Critical hit probability should depend on:
-
-- Accuracy
-- WPM
-- Combo
-
-Example:
-
-```text
-accuracy >= 95%
-AND
-combo >= 5
-```
-
-increases critical-hit probability.
+Critical hit is deterministic: a turn window with 97%+ accuracy (and at
+least one typed character) is critical.
 
 Critical hit:
 
 ```text
 damage × 1.5
 ```
+
+applied before clamping.
 
 Display:
 
@@ -540,29 +512,28 @@ The computer should not simply attack randomly.
 
 Create a simple difficulty-based AI.
 
+The computer answers each player turn with a quick strike after a short
+telegraph (no full mirrored window — no dead air).
+
 ## Easy
 
-Computer attacks slowly.
-
-Example:
-
 ```text
-attack interval: 8–12 seconds
-damage: 4–7
+telegraph: ~2.5 seconds
+damage: 6–10
 ```
 
 ## Normal
 
 ```text
-attack interval: 5–9 seconds
-damage: 6–10
+telegraph: ~2.5 seconds
+damage: 10–16
 ```
 
 ## Hard
 
 ```text
-attack interval: 3–7 seconds
-damage: 8–14
+telegraph: ~2 seconds
+damage: 14–22
 ```
 
 The AI should create pressure without making the game impossible.
@@ -575,21 +546,17 @@ The CPU attack should be visually synchronized with the attack timer.
 
 Avoid situations where both fighters continuously attack simultaneously.
 
-Use a simple combat state machine:
+Use a simple turn state machine:
 
 ```text
-READY
-→ PLAYER_TYPING
+PLAYER_TURN (timed typing window)
 → PLAYER_ATTACK
-→ CPU_HIT
-→ PLAYER_TYPING
+→ CPU_TURN (short telegraph)
+→ CPU_ATTACK
+→ PLAYER_TURN
 ```
 
-CPU attacks can interrupt the player's typing only when appropriate.
-
-Do not destroy the current typing challenge when the CPU attacks.
-
-The typing challenge should remain available.
+Pause freezes the active turn timer and resumes it exactly.
 
 ---
 
@@ -678,7 +645,7 @@ SHADOW DEFEATED
 
 WPM       78
 ACCURACY  97%
-COMBO     x12
+TURNS     6
 DAMAGE    146
 
 [ REMATCH ]
@@ -700,7 +667,7 @@ THE SHADOW HAS FALLEN
 
 WPM       64
 ACCURACY  91%
-COMBO     x4
+TURNS     4
 DAMAGE    83
 
 [ TRY AGAIN ]
@@ -716,7 +683,7 @@ Create a score system based on:
 - Characters typed
 - WPM
 - Accuracy
-- Combo
+- Words completed
 - Damage
 - Critical hits
 
@@ -724,9 +691,8 @@ Example:
 
 ```text
 Score =
-typingScore
-+ accuracyBonus
-+ comboBonus
+wordScore (per completed word)
++ windowAccuracyBonus
 + damageScore
 + criticalBonus
 ```
@@ -937,7 +903,6 @@ Example:
     hp: 100,
     maxHp: 100,
     score: 0,
-    combo: 0,
     wpm: 0,
     accuracy: 100
   },
@@ -948,6 +913,8 @@ Example:
   },
 
   currentChallenge: "...",
+  currentWord: "...",
+  wordsCompletedThisTurn: 0,
 
   typing: {
     typedText: "",
@@ -1298,9 +1265,9 @@ The intended gameplay relationship is:
 ```text
 Typing Accuracy
        +
-Typing Speed
+Typing Speed (words per window)
        +
-Combo
+Words completed
        ↓
    Damage
        ↓
@@ -1309,63 +1276,18 @@ Enemy HP
 
 ---
 
-# 39. Initial Typing Dataset
+# 39. Timed Word Datasets
 
-Create at least:
+Create endless word pools, one per difficulty:
 
-### 50 Easy Words
+### Easy Words (short, 60)
 
-Examples:
+### Normal Words (medium, 60+)
 
-```text
-shadow
-dark
-fight
-type
-strike
-power
-speed
-focus
-skill
-attack
-defend
-warrior
-battle
-energy
-force
-...
-```
+### Hard Words (long/tricky, 55+)
 
-### 50 Normal Sentences
-
-Examples:
-
-```text
-The shadow moves quickly.
-Speed creates power.
-Focus wins the fight.
-Strike before the enemy attacks.
-The darkness hides the warrior.
-Precision is more important than speed.
-Never lose your focus.
-The battle begins now.
-```
-
-### 30 Hard Sentences
-
-Include:
-
-- punctuation
-- commas
-- periods
-- apostrophes
-- numbers where appropriate
-
-Example:
-
-```text
-The warrior's final strike begins at midnight.
-```
+Words stream one at a time during a turn window; finishing a word instantly
+serves the next.
 
 ---
 
@@ -1378,27 +1300,27 @@ Example:
 ```javascript
 const difficulties = {
   easy: {
-    cpuAttackMin: 8000,
-    cpuAttackMax: 12000,
-    cpuDamageMin: 4,
-    cpuDamageMax: 7,
-    challengeType: "word"
+    turnSeconds: 15,
+    cpuTelegraphMs: 2500,
+    cpuDamageMin: 6,
+    cpuDamageMax: 10,
+    wordPool: "easy"
   },
 
   normal: {
-    cpuAttackMin: 5000,
-    cpuAttackMax: 9000,
-    cpuDamageMin: 6,
-    cpuDamageMax: 10,
-    challengeType: "sentence"
+    turnSeconds: 30,
+    cpuTelegraphMs: 2500,
+    cpuDamageMin: 10,
+    cpuDamageMax: 16,
+    wordPool: "normal"
   },
 
   hard: {
-    cpuAttackMin: 3000,
-    cpuAttackMax: 7000,
-    cpuDamageMin: 8,
-    cpuDamageMax: 14,
-    challengeType: "hard_sentence"
+    turnSeconds: 60,
+    cpuTelegraphMs: 2000,
+    cpuDamageMin: 14,
+    cpuDamageMax: 22,
+    wordPool: "hard"
   }
 };
 ```
@@ -1443,16 +1365,23 @@ WPM: 74                             ENEMY
 
 ACCURACY: 96%
 
-COMBO: x8
+WORDS: 12
 
 SCORE: 4,820
 ```
 
-Also display CPU attack status:
+Also display the turn timer:
 
 ```text
-NEXT ATTACK
-██████░░░░ 2.4s
+YOUR TURN
+████████░░ 12s
+```
+
+On the CPU turn:
+
+```text
+ENEMY TURN
+███░░░░░░░ 1.8s
 ```
 
 This gives the player strategic awareness.
@@ -1510,7 +1439,6 @@ For errors:
 
 ```text
 MISS
-- COMBO
 ```
 
 Keep feedback visible only briefly.
@@ -1523,12 +1451,12 @@ At the end of the match calculate:
 
 ```text
 Final Score
-Average WPM
+Average WPM (per turn)
 Average Accuracy
-Highest Combo
+Turns Played
 Total Damage
 Critical Hits
-Typing Challenges Completed
+Words Completed
 ```
 
 Display them in a polished results screen.
@@ -1696,7 +1624,7 @@ The implementation is complete only when:
 - Incorrect typing is tracked.
 - WPM is calculated.
 - Accuracy is calculated.
-- Combo works.
+- Words-completed tally works.
 - Damage is calculated from typing performance.
 - Player attacks visually.
 - CPU takes damage.

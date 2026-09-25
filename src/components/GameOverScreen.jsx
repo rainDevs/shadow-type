@@ -32,8 +32,8 @@ export function GameOverScreen({ results, onSubmitScore, onRematch, onMenu }) {
             <dd>{Math.round(results.accuracy)}%</dd>
           </div>
           <div>
-            <dt>Best combo</dt>
-            <dd>x{results.maxCombo}</dd>
+            <dt>Turns</dt>
+            <dd>{results.turns}</dd>
           </div>
           <div>
             <dt>Damage dealt</dt>

@@ -1,10 +1,10 @@
-// Typing challenge display + input (PLAN.md section 9).
-// Correct → cyan, incorrect → red with strikethrough (not color alone),
+// Typing panel for timed turns: endless single-word stream.
+// Correct → cyan, incorrect → red with underline (not color alone),
 // current char underlined, remaining muted.
 
 import { useEffect, useRef } from 'react';
 
-export function TypingChallenge({ challenge, typed, disabled, onType }) {
+export function TypingChallenge({ challenge, typed, disabled, onType, wordsDone }) {
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -13,7 +13,9 @@ export function TypingChallenge({ challenge, typed, disabled, onType }) {
 
   return (
     <div className="typing-panel">
-      <p className="typing-label">Type this</p>
+      <p className="typing-label">
+        Type the word <span className="words-tally" aria-live="polite">{wordsDone} done</span>
+      </p>
       <p className="challenge-text" aria-label={`Type: ${challenge}`}>
         {challenge.split('').map((ch, i) => {
           let cls = 'ch-remaining';

@@ -1,76 +1,79 @@
-// Central typing-combat state machine (PLAN.md sections 14, 25).
-// React owns ALL game logic; PixiGame only plays animations on command.
+// Central timed-turn combat state machine.
+// Player turn: type endless words for turnSeconds; damage comes from window
+// WPM + accuracy. Then a quick CPU strike. React owns ALL game logic;
+// PixiGame only plays animations on command.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DIFFICULTIES } from '../data/difficulty.js';
-import { EASY_WORDS } from '../data/typingWords.js';
-import { NORMAL_SENTENCES } from '../data/typingSentences.js';
-import { HARD_SENTENCES } from '../data/hardSentences.js';
+import { TIMED_WORDS } from '../data/timedWords.js';
 import { calculateWPM, calculateAccuracy } from '../utils/typingMetrics.js';
-import { calculateDamage } from '../utils/damageCalculator.js';
-import { calculateChallengeScore } from '../utils/scoreCalculator.js';
+import { calculateWindowDamage } from '../utils/damageCalculator.js';
+import { calculateWordScore, calculateWindowBonus } from '../utils/scoreCalculator.js';
 import { pickChallenge, randomInt } from '../utils/random.js';
 import { qualifiesForHighScores, addHighScore } from '../utils/storage.js';
 import { audio } from '../utils/audioManager.js';
-
-const POOLS = {
-  word: EASY_WORDS,
-  sentence: NORMAL_SENTENCES,
-  hard_sentence: HARD_SENTENCES,
-};
 
 let feedbackId = 0;
 
 export function useTypingGame({ difficultyId, pixiRef }) {
   const config = DIFFICULTIES[difficultyId] ?? DIFFICULTIES.normal;
-  const pool = POOLS[config.challengeType];
+  const pool = TIMED_WORDS[config.wordPool];
+  const turnMs = config.turnSeconds * 1000;
 
   const [status, setStatus] = useState('playing'); // playing | paused | won | lost
+  const [turn, setTurn] = useState('player'); // player | cpu
   const [playerHp, setPlayerHp] = useState(100);
   const [cpuHp, setCpuHp] = useState(100);
   const [score, setScore] = useState(0);
-  const [combo, setCombo] = useState(0);
-  const [challenge, setChallenge] = useState(() => pickChallenge(pool, ''));
+  const [word, setWord] = useState(() => pickChallenge(pool, ''));
   const [typed, setTyped] = useState('');
-  const [countdown, setCountdown] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(config.turnSeconds);
+  const [wordsDone, setWordsDone] = useState(0);
   const [feedback, setFeedback] = useState(null);
   const [results, setResults] = useState(null);
   const [liveWpm, setLiveWpm] = useState(0);
   const [liveAcc, setLiveAcc] = useState(100);
 
-  // Mutable mirrors for timer callbacks.
   const statusRef = useRef('playing');
+  const turnRef = useRef('player');
   const playerHpRef = useRef(100);
   const cpuHpRef = useRef(100);
-  const comboRef = useRef(0);
   const scoreRef = useRef(0);
-  const challengeRef = useRef('');
-  const attackingRef = useRef(false);
-  const matchStartRef = useRef(0);
-  const challengeStartRef = useRef(0);
-  const pausedAccumRef = useRef(0); // total ms spent paused
+  const wordRef = useRef('');
+  const typedRef = useRef('');
+  const busyRef = useRef(false);
+  const turnEndsAtRef = useRef(0);
   const pauseStartRef = useRef(0);
-  const totalCorrectRef = useRef(0);
-  const totalTypedRef = useRef(0);
-  const maxComboRef = useRef(0);
+  const remainingRef = useRef(0);
+  // Window accumulators (final-text per word).
+  const windowWordsRef = useRef(0);
+  const windowCorrectRef = useRef(0);
+  const windowTotalRef = useRef(0);
+  // Match totals (keystroke accuracy).
+  const keysCorrectRef = useRef(0);
+  const keysTotalRef = useRef(0);
   const totalDamageRef = useRef(0);
   const critsRef = useRef(0);
-  const doneRef = useRef(0);
+  const turnsRef = useRef(0);
   const wpmSumRef = useRef(0);
+  const windowTimerRef = useRef(null);
   const cpuTimeoutRef = useRef(null);
-  const cpuNextAtRef = useRef(0);
-  const cpuRemainingRef = useRef(0);
-  const countdownTimerRef = useRef(null);
   const feedbackTimerRef = useRef(null);
   const aliveRef = useRef(true);
-  const matchGenRef = useRef(0); // bumped on restart; stale async work aborts
-  // Indirection for the mutually-recursive CPU scheduler.
-  const fireCpuRef = useRef(null);
-  const scheduleCpuRef = useRef(null);
+  const matchGenRef = useRef(0);
+  // Indirection for the turn cycle (avoids declaration-order cycles).
+  const endWindowRef = useRef(null);
+  const startCpuTurnRef = useRef(null);
+  const startPlayerTurnRef = useRef(null);
 
   const setStatusBoth = useCallback((s) => {
     statusRef.current = s;
     setStatus(s);
+  }, []);
+
+  const setTurnBoth = useCallback((t) => {
+    turnRef.current = t;
+    setTurn(t);
   }, []);
 
   const showFeedback = useCallback((kind, text, amount) => {
@@ -84,16 +87,16 @@ export function useTypingGame({ difficultyId, pixiRef }) {
   }, []);
 
   const refreshLive = useCallback(() => {
-    setLiveWpm(calculateWPM(totalTypedRef.current, Date.now() - matchStartRef.current - pausedAccumRef.current));
-    setLiveAcc(calculateAccuracy(totalCorrectRef.current, totalTypedRef.current));
-  }, []);
+    const elapsedMs = Math.max(1, turnMs - Math.max(0, turnEndsAtRef.current - Date.now()));
+    setLiveWpm(calculateWPM(windowTotalRef.current, elapsedMs));
+    setLiveAcc(calculateAccuracy(keysCorrectRef.current, keysTotalRef.current));
+  }, [turnMs]);
 
-  // --- match end (declared before the CPU/player actions that call it) ------------
+  // --- match end (declared before the turn actions that call it) -------------------
   const endMatch = useCallback(
     (won) => {
+      if (windowTimerRef.current) clearInterval(windowTimerRef.current);
       if (cpuTimeoutRef.current) clearTimeout(cpuTimeoutRef.current);
-      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-      setCountdown(null);
       const pixi = pixiRef.current;
       if (won) {
         pixi?.victory();
@@ -103,18 +106,17 @@ export function useTypingGame({ difficultyId, pixiRef }) {
         audio.playDefeat();
       }
       audio.stopMusic();
-      const avgWpm = doneRef.current > 0 ? wpmSumRef.current / doneRef.current : 0;
-      const accuracy = calculateAccuracy(totalCorrectRef.current, totalTypedRef.current);
+      const avgWpm = turnsRef.current > 0 ? wpmSumRef.current / turnsRef.current : 0;
+      const accuracy = calculateAccuracy(keysCorrectRef.current, keysTotalRef.current);
       const finalScore = scoreRef.current;
       setResults({
         won,
         score: finalScore,
         avgWpm,
         accuracy,
-        maxCombo: maxComboRef.current,
         totalDamage: totalDamageRef.current,
         crits: critsRef.current,
-        challenges: doneRef.current,
+        turns: turnsRef.current,
         difficulty: difficultyId,
         qualifies: qualifiesForHighScores(finalScore),
       });
@@ -123,94 +125,68 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     [difficultyId, pixiRef, setStatusBoth],
   );
 
-  // --- CPU AI ------------------------------------------------------------------
-  const scheduleCpu = useCallback((delayMs) => {
-    if (cpuTimeoutRef.current) clearTimeout(cpuTimeoutRef.current);
-    cpuNextAtRef.current = Date.now() + delayMs;
-    cpuTimeoutRef.current = setTimeout(() => fireCpuRef.current?.(), delayMs);
-  }, []);
-
-  const fireCpu = useCallback(async () => {
+  // --- player turn ---------------------------------------------------------------------------
+  const startPlayerTurn = useCallback(() => {
     if (!aliveRef.current || statusRef.current !== 'playing') return;
-    const damage = randomInt(config.cpuDamageMin, config.cpuDamageMax);
-    const myGen = matchGenRef.current;
-    const pixi = pixiRef.current;
-    // Damage lands with the visual impact.
-    setTimeout(() => {
-      if (!aliveRef.current || myGen !== matchGenRef.current || statusRef.current !== 'playing') return;
-      playerHpRef.current = Math.max(0, playerHpRef.current - damage);
-      setPlayerHp(playerHpRef.current);
-      showFeedback('cpu', `ENEMY STRIKE -${damage}`, damage);
-    }, 220);
-    audio.playAttack();
-    try {
-      await pixi?.cpuAttack({ damage });
-    } catch {
-      /* arena unavailable — logic continues */
-    }
-    if (!aliveRef.current) return;
-    if (myGen !== matchGenRef.current) return;
-    if (statusRef.current !== 'playing') return;
-    audio.playHit();
-    if (playerHpRef.current <= 0) {
-      endMatch(false);
-    } else {
-      scheduleCpuRef.current?.(randomInt(config.cpuAttackMin, config.cpuAttackMax));
-    }
-  }, [config, endMatch, pixiRef, showFeedback]);
-
-  const startCountdownTicker = useCallback(() => {
-    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-    countdownTimerRef.current = setInterval(() => {
+    setTurnBoth('player');
+    busyRef.current = false;
+    windowWordsRef.current = 0;
+    windowCorrectRef.current = 0;
+    windowTotalRef.current = 0;
+    turnsRef.current += 1;
+    const first = pickChallenge(pool, wordRef.current);
+    wordRef.current = first;
+    typedRef.current = '';
+    setWord(first);
+    setTyped('');
+    setWordsDone(0);
+    setLiveWpm(0);
+    turnEndsAtRef.current = Date.now() + turnMs;
+    setTimeLeft(config.turnSeconds);
+    if (windowTimerRef.current) clearInterval(windowTimerRef.current);
+    windowTimerRef.current = setInterval(() => {
       if (!aliveRef.current || statusRef.current !== 'playing') return;
-      setCountdown(Math.max(0, (cpuNextAtRef.current - Date.now()) / 1000));
+      const remain = turnEndsAtRef.current - Date.now();
+      setTimeLeft(Math.max(0, remain / 1000));
+      if (remain <= 0) endWindowRef.current?.();
     }, 100);
-  }, []);
+  }, [config, pool, setTurnBoth, turnMs]);
 
-  // Keep the scheduler indirection fresh.
-  useEffect(() => {
-    fireCpuRef.current = fireCpu;
-    scheduleCpuRef.current = scheduleCpu;
-  });
-
-  // --- player attack ----------------------------------------------------------------
-  const completeChallenge = useCallback(async (finalTyped) => {
-    if (attackingRef.current || statusRef.current !== 'playing') return;
-    attackingRef.current = true;
-    const text = challengeRef.current;
-    const challengeMs = Date.now() - challengeStartRef.current - pausedAccumRef.current;
-    const wpm = calculateWPM(text.length, challengeMs);
-    // Strike accuracy judges the final text: correcting mistakes (Backspace)
-    // costs time (lower WPM) but restores accuracy. Sloppy keys still reset
-    // combo and drag down match accuracy at the moment they are pressed.
-    let correctChars = 0;
-    for (let i = 0; i < text.length; i++) {
-      if (finalTyped[i] === text[i]) correctChars += 1;
+  // --- window end: bank partial word, strike ---------------------------------------------------
+  const endWindow = useCallback(() => {
+    if (windowTimerRef.current) clearInterval(windowTimerRef.current);
+    if (busyRef.current || statusRef.current !== 'playing') return;
+    busyRef.current = true;
+    // Bank the in-progress word by its typed portion.
+    const w = wordRef.current;
+    const t = typedRef.current;
+    if (t.length > 0) {
+      let correct = 0;
+      for (let i = 0; i < t.length; i++) {
+        if (t[i] === w[i]) correct += 1;
+      }
+      windowCorrectRef.current += correct;
+      windowTotalRef.current += t.length;
     }
-    const strikeAcc = text.length === 0 ? 100 : (correctChars / text.length) * 100;
-    const comboNow = comboRef.current + 1;
-    comboRef.current = comboNow;
-    maxComboRef.current = Math.max(maxComboRef.current, comboNow);
-    setCombo(comboNow);
-
-    const { damage, critical } = calculateDamage({ wpm, accuracy: strikeAcc, combo: comboNow });
-    const gained = calculateChallengeScore({
-      charsTyped: text.length,
-      accuracy: strikeAcc,
-      combo: comboNow,
-      damage,
-      critical,
-    });
-    scoreRef.current += gained;
-    setScore(scoreRef.current);
+    const total = windowTotalRef.current;
+    const wpm = calculateWPM(total, turnMs);
+    const acc = total > 0 ? (windowCorrectRef.current / total) * 100 : 0;
+    const words = windowWordsRef.current;
     wpmSumRef.current += wpm;
-    doneRef.current += 1;
+
+    const { damage, critical } = calculateWindowDamage({ wpm, accuracy: acc, turnSeconds: config.turnSeconds });
+    const bonus = calculateWindowBonus({ accuracy: acc, words, damage, critical });
+    scoreRef.current += bonus;
+    setScore(scoreRef.current);
     if (critical) critsRef.current += 1;
 
-    showFeedback(critical ? 'crit' : 'attack', critical ? `CRITICAL! -${damage}` : `+${gained}  -${damage} DMG`, damage);
+    showFeedback(
+      critical ? 'crit' : 'attack',
+      critical ? `CRITICAL! -${damage}` : `+${bonus}  -${damage} DMG`,
+      damage,
+    );
     audio.playAttack();
     const myGen = matchGenRef.current;
-    const pixi = pixiRef.current;
     setTimeout(() => {
       if (!aliveRef.current || myGen !== matchGenRef.current) return;
       const dealt = Math.min(damage, cpuHpRef.current);
@@ -218,128 +194,197 @@ export function useTypingGame({ difficultyId, pixiRef }) {
       totalDamageRef.current += dealt;
       setCpuHp(cpuHpRef.current);
     }, 200);
-    try {
-      await pixi?.playerAttack({ damage, critical });
-    } catch {
-      /* arena unavailable — logic continues */
-    }
-    if (!aliveRef.current) return;
-    if (myGen !== matchGenRef.current) {
-      attackingRef.current = false;
-      return;
-    }
-    if (critical) audio.playCritical();
-    else audio.playHit();
-    if (cpuHpRef.current <= 0 && statusRef.current === 'playing') {
-      endMatch(true);
-      return;
-    }
-    // Next challenge.
-    const next = pickChallenge(pool, text);
-    challengeRef.current = next;
-    challengeStartRef.current = Date.now();
-    setChallenge(next);
-    setTyped('');
-    refreshLive();
-    attackingRef.current = false;
-  }, [endMatch, pixiRef, pool, refreshLive, showFeedback]);
+    const strike = pixiRef.current?.playerAttack({ damage, critical }) ?? Promise.resolve();
+    strike
+      .catch(() => {
+        /* arena unavailable — logic continues */
+      })
+      .finally(() => {
+        if (!aliveRef.current || myGen !== matchGenRef.current) {
+          busyRef.current = false;
+          return;
+        }
+        if (critical) audio.playCritical();
+        else audio.playHit();
+        if (cpuHpRef.current <= 0 && statusRef.current === 'playing') {
+          endMatch(true);
+          return;
+        }
+        startCpuTurnRef.current?.();
+      });
+  }, [config, endMatch, pixiRef, showFeedback, turnMs]);
 
-  // --- typing input -------------------------------------------------------------------
+  // --- CPU turn: short telegraph, then strike --------------------------------------------------
+  const fireCpuStrike = useCallback(
+    (myGen) => {
+      if (windowTimerRef.current) clearInterval(windowTimerRef.current);
+      if (!aliveRef.current || myGen !== matchGenRef.current || statusRef.current !== 'playing') return;
+      const damage = randomInt(config.cpuDamageMin, config.cpuDamageMax);
+      const pixi = pixiRef.current;
+      setTimeout(() => {
+        if (!aliveRef.current || myGen !== matchGenRef.current || statusRef.current !== 'playing') return;
+        playerHpRef.current = Math.max(0, playerHpRef.current - damage);
+        setPlayerHp(playerHpRef.current);
+        showFeedback('cpu', `ENEMY STRIKE -${damage}`, damage);
+      }, 220);
+      audio.playAttack();
+      const strike = pixi?.cpuAttack({ damage }) ?? Promise.resolve();
+      strike
+        .catch(() => {
+          /* arena unavailable — logic continues */
+        })
+        .finally(() => {
+          if (!aliveRef.current || myGen !== matchGenRef.current || statusRef.current !== 'playing') return;
+          audio.playHit();
+          if (playerHpRef.current <= 0) {
+            endMatch(false);
+          } else {
+            startPlayerTurnRef.current?.();
+          }
+        });
+    },
+    [config, endMatch, pixiRef, showFeedback],
+  );
+
+  const startCpuTurn = useCallback(() => {
+    if (!aliveRef.current || statusRef.current !== 'playing') return;
+    setTurnBoth('cpu');
+    setTimeLeft(config.cpuTelegraphMs / 1000);
+    turnEndsAtRef.current = Date.now() + config.cpuTelegraphMs;
+    if (windowTimerRef.current) clearInterval(windowTimerRef.current);
+    windowTimerRef.current = setInterval(() => {
+      if (!aliveRef.current || statusRef.current !== 'playing') return;
+      setTimeLeft(Math.max(0, (turnEndsAtRef.current - Date.now()) / 1000));
+    }, 100);
+    const myGen = matchGenRef.current;
+    if (cpuTimeoutRef.current) clearTimeout(cpuTimeoutRef.current);
+    cpuTimeoutRef.current = setTimeout(() => fireCpuStrike(myGen), config.cpuTelegraphMs);
+  }, [config, fireCpuStrike, setTurnBoth]);
+
+  // Keep the turn-cycle indirection fresh.
+  useEffect(() => {
+    endWindowRef.current = endWindow;
+    startCpuTurnRef.current = startCpuTurn;
+    startPlayerTurnRef.current = startPlayerTurn;
+  });
+
+  // --- typing input -------------------------------------------------------------------------------
   const typeText = useCallback(
     (value) => {
-      if (statusRef.current !== 'playing' || attackingRef.current) return;
-      const target = challengeRef.current;
+      if (statusRef.current !== 'playing' || turnRef.current !== 'player' || busyRef.current) return;
+      const target = wordRef.current;
       const next = value.slice(0, target.length);
       const prevLen = typed.length;
-      // Count newly added characters.
       if (next.length > prevLen) {
         for (let i = prevLen; i < next.length; i++) {
-          totalTypedRef.current += 1;
+          keysTotalRef.current += 1;
           if (next[i] === target[i]) {
-            totalCorrectRef.current += 1;
+            keysCorrectRef.current += 1;
             audio.playKey();
           } else {
-            comboRef.current = 0;
-            setCombo(0);
             audio.playError();
-            showFeedback('miss', 'MISS — COMBO LOST', 0);
+            showFeedback('miss', 'MISS', 0);
           }
         }
       }
+      typedRef.current = next;
       setTyped(next);
       refreshLive();
-      // Attack as soon as the full length is typed — mistakes don't block
-      // the strike, they reduce its accuracy (and reset combo above).
-      if (next.length === target.length) completeChallenge(next);
+      if (next.length === target.length) {
+        // Word complete: bank final-text accuracy, pay per-character score.
+        let correct = 0;
+        for (let i = 0; i < target.length; i++) {
+          if (next[i] === target[i]) correct += 1;
+        }
+        windowCorrectRef.current += correct;
+        windowTotalRef.current += target.length;
+        windowWordsRef.current += 1;
+        const gained = calculateWordScore(target.length);
+        scoreRef.current += gained;
+        setScore(scoreRef.current);
+        setWordsDone(windowWordsRef.current);
+        const following = pickChallenge(pool, target);
+        wordRef.current = following;
+        typedRef.current = '';
+        setWord(following);
+        setTyped('');
+        refreshLive();
+      }
     },
-    [completeChallenge, refreshLive, showFeedback, typed],
+    [pool, refreshLive, showFeedback, typed],
   );
 
-  // --- pause ------------------------------------------------------------------------------
+  // --- pause ------------------------------------------------------------------------------------------
   const pause = useCallback(() => {
     if (statusRef.current !== 'playing') return;
     pauseStartRef.current = Date.now();
-    cpuRemainingRef.current = Math.max(0, cpuNextAtRef.current - Date.now());
+    remainingRef.current = Math.max(0, turnEndsAtRef.current - Date.now());
+    if (windowTimerRef.current) clearInterval(windowTimerRef.current);
     if (cpuTimeoutRef.current) clearTimeout(cpuTimeoutRef.current);
-    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
     pixiRef.current?.setPaused(true);
     setStatusBoth('paused');
   }, [pixiRef, setStatusBoth]);
 
   const resume = useCallback(() => {
     if (statusRef.current !== 'paused') return;
-    pausedAccumRef.current += Date.now() - pauseStartRef.current;
+    turnEndsAtRef.current = Date.now() + (remainingRef.current || 0);
     pixiRef.current?.setPaused(false);
     setStatusBoth('playing');
-    scheduleCpu(cpuRemainingRef.current || randomInt(config.cpuAttackMin, config.cpuAttackMax));
-    startCountdownTicker();
-  }, [config, pixiRef, scheduleCpu, setStatusBoth, startCountdownTicker]);
+    if (turnRef.current === 'player') {
+      windowTimerRef.current = setInterval(() => {
+        if (!aliveRef.current || statusRef.current !== 'playing') return;
+        const remain = turnEndsAtRef.current - Date.now();
+        setTimeLeft(Math.max(0, remain / 1000));
+        if (remain <= 0) endWindowRef.current?.();
+      }, 100);
+    } else {
+      windowTimerRef.current = setInterval(() => {
+        if (!aliveRef.current || statusRef.current !== 'playing') return;
+        setTimeLeft(Math.max(0, (turnEndsAtRef.current - Date.now()) / 1000));
+      }, 100);
+      if (cpuTimeoutRef.current) clearTimeout(cpuTimeoutRef.current);
+      cpuTimeoutRef.current = setTimeout(
+        () => fireCpuStrike(matchGenRef.current),
+        remainingRef.current || config.cpuTelegraphMs,
+      );
+    }
+  }, [config, fireCpuStrike, pixiRef, setStatusBoth]);
 
   const togglePause = useCallback(() => {
     if (statusRef.current === 'playing') pause();
     else if (statusRef.current === 'paused') resume();
   }, [pause, resume]);
 
-  // --- restart ------------------------------------------------------------------------------
+  // --- restart ------------------------------------------------------------------------------------------
   const restart = useCallback(() => {
-    matchGenRef.current += 1; // abort any in-flight attack/damage work
+    matchGenRef.current += 1; // abort any in-flight strike/damage work
+    if (windowTimerRef.current) clearInterval(windowTimerRef.current);
     if (cpuTimeoutRef.current) clearTimeout(cpuTimeoutRef.current);
-    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
     playerHpRef.current = 100;
     cpuHpRef.current = 100;
-    comboRef.current = 0;
     scoreRef.current = 0;
-    totalCorrectRef.current = 0;
-    totalTypedRef.current = 0;
-    maxComboRef.current = 0;
+    keysCorrectRef.current = 0;
+    keysTotalRef.current = 0;
     totalDamageRef.current = 0;
     critsRef.current = 0;
-    doneRef.current = 0;
+    turnsRef.current = 0;
     wpmSumRef.current = 0;
-    pausedAccumRef.current = 0;
-    attackingRef.current = false;
-    matchStartRef.current = Date.now();
-    challengeStartRef.current = Date.now();
-    const first = pickChallenge(pool, '');
-    challengeRef.current = first;
+    busyRef.current = false;
+    typedRef.current = '';
     setPlayerHp(100);
     setCpuHp(100);
     setScore(0);
-    setCombo(0);
-    setChallenge(first);
     setTyped('');
     setResults(null);
     setFeedback(null);
-    setCountdown(null);
     setLiveWpm(0);
     setLiveAcc(100);
     pixiRef.current?.setPaused(false);
     pixiRef.current?.reset();
     setStatusBoth('playing');
     audio.startMusic();
-    scheduleCpu(randomInt(config.cpuAttackMin, config.cpuAttackMax));
-    startCountdownTicker();
-  }, [config, pixiRef, pool, scheduleCpu, setStatusBoth, startCountdownTicker]);
+    startPlayerTurn();
+  }, [pixiRef, setStatusBoth, startPlayerTurn]);
 
   const submitScore = useCallback(
     (name) => {
@@ -357,19 +402,15 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     [results],
   );
 
-  // --- lifecycle: start CPU + music on mount ---------------------------------------------------
+  // --- lifecycle ------------------------------------------------------------------------------------------
   useEffect(() => {
     aliveRef.current = true;
-    challengeRef.current = challenge;
-    matchStartRef.current = Date.now();
-    challengeStartRef.current = Date.now();
     audio.startMusic();
-    scheduleCpu(randomInt(config.cpuAttackMin, config.cpuAttackMax));
-    startCountdownTicker();
+    startPlayerTurn();
     return () => {
       aliveRef.current = false;
+      if (windowTimerRef.current) clearInterval(windowTimerRef.current);
       if (cpuTimeoutRef.current) clearTimeout(cpuTimeoutRef.current);
-      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
       audio.stopMusic();
     };
@@ -378,13 +419,15 @@ export function useTypingGame({ difficultyId, pixiRef }) {
 
   return {
     status,
+    turn,
     playerHp,
     cpuHp,
     score,
-    combo,
-    challenge,
+    challenge: word,
     typed,
-    countdown,
+    timeLeft,
+    turnSeconds: config.turnSeconds,
+    wordsDone,
     feedback,
     results,
     wpm: liveWpm,

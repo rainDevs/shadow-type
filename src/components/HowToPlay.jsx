@@ -9,24 +9,24 @@ export function HowToPlay({ onBack }) {
         <p className="lede">Type fast. Strike hard. Survive.</p>
         <ul className="howto-list">
           <li>
-            A typing challenge appears. <strong>Type it out</strong> — correct characters glow
-            cyan, mistakes burn red. <strong>Mistakes never block your attack</strong>, but each
-            one lowers accuracy, resets your combo, and weakens the strike.
+            Fights run in <strong>timed turns</strong> — 15s on Easy, 30s on Normal, 60s on Hard.
+            When your turn starts, type as many words as you can before time runs out.
           </li>
           <li>
-            Finish a challenge to unleash an attack. <strong>Faster, more accurate typing with a
-            higher combo deals more damage</strong> (up to 25 per strike).
+            Correct characters glow cyan, mistakes burn red. <strong>Mistakes never block
+            you</strong>, but each one lowers accuracy and weakens the coming strike.
+            Backspace to fix errors — it costs time but restores accuracy.
           </li>
           <li>
-            <strong>95%+ accuracy with a 5+ combo can land CRITICAL hits</strong> for 1.5× damage.
+            When time expires, your fighter strikes. <strong>Damage scales with your turn's
+            WPM and accuracy</strong> — more words, cleaner typing, bigger hits.
           </li>
           <li>
-            The enemy strikes back on its own timer — watch the <strong>attack countdown</strong> and
-            keep typing through the pain. Your challenge is never taken away.
+            <strong>97%+ accuracy lands CRITICAL hits</strong> for 1.5× damage.
           </li>
           <li>
-            Reduce the enemy to <strong>0 HP</strong> before it reduces you. Mistakes reset your
-            combo, so accuracy is power.
+            Then the enemy answers with a quick strike of its own. Reduce it to{' '}
+            <strong>0 HP</strong> before it reduces you.
           </li>
           <li>
             <span className="kbd">ESC</span> pauses the fight. Copy/paste is disabled in the arena.

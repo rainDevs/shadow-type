@@ -1,35 +1,36 @@
-// Difficulty configuration (PLAN.md sections 13, 40).
-// Times are in milliseconds.
+// Difficulty configuration: timed turns (Monkeytype-style).
+// Each player turn lasts turnSeconds; the CPU answers with a quick strike.
+
 export const DIFFICULTIES = {
   easy: {
     id: 'easy',
     label: 'EASY',
-    description: 'Short words. Slower enemy attacks. Recommended for beginners.',
-    cpuAttackMin: 8000,
-    cpuAttackMax: 12000,
-    cpuDamageMin: 4,
-    cpuDamageMax: 7,
-    challengeType: 'word',
+    description: '15-second turns with short words. A forgiving enemy.',
+    turnSeconds: 15,
+    cpuTelegraphMs: 2500,
+    cpuDamageMin: 6,
+    cpuDamageMax: 10,
+    wordPool: 'easy',
   },
   normal: {
     id: 'normal',
     label: 'NORMAL',
-    description: 'Short sentences. A balanced fight for trained typists.',
-    cpuAttackMin: 5000,
-    cpuAttackMax: 9000,
-    cpuDamageMin: 6,
-    cpuDamageMax: 10,
-    challengeType: 'sentence',
+    description: '30-second turns with medium words. A balanced fight.',
+    turnSeconds: 30,
+    cpuTelegraphMs: 2500,
+    cpuDamageMin: 10,
+    cpuDamageMax: 16,
+    wordPool: 'normal',
   },
   hard: {
     id: 'hard',
     label: 'HARD',
-    description: 'Long sentences with punctuation. Relentless enemy.',
-    cpuAttackMin: 3000,
-    cpuAttackMax: 7000,
-    cpuDamageMin: 8,
-    cpuDamageMax: 14,
-    challengeType: 'hard_sentence',
+    description: '60-second turns with long, tricky words. Relentless enemy.',
+    turnSeconds: 60,
+    cpuTelegraphMs: 2000,
+    cpuDamageMin: 14,
+    cpuDamageMax: 22,
+    wordPool: 'hard',
   },
 };
 

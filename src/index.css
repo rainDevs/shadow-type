@@ -547,17 +547,50 @@ html[data-reduced-motion='true'] *::after {
   font-family: var(--mono);
 }
 
-.hud-countdown {
+.turn-banner {
   margin-top: 6px;
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 700;
   letter-spacing: 0.2em;
-  color: var(--gold);
 }
 
-.hud-countdown.imminent {
+.turn-banner.player-turn {
+  color: var(--cyan);
+  text-shadow: 0 0 12px rgba(34, 211, 238, 0.5);
+}
+
+.turn-banner.cpu-turn {
   color: var(--red);
-  animation: lowhp-pulse 0.4s ease-in-out infinite;
+  text-shadow: 0 0 12px rgba(255, 82, 82, 0.5);
+  animation: lowhp-pulse 0.5s ease-in-out infinite;
+}
+
+.turn-track {
+  margin-top: 6px;
+  height: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.turn-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0ea5b7, var(--cyan));
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.6);
+  transition: width 0.1s linear;
+}
+
+.turn-fill.enemy {
+  background: linear-gradient(90deg, #ff8a5c, var(--red));
+  box-shadow: 0 0 10px rgba(255, 82, 82, 0.6);
+}
+
+.words-tally {
+  color: var(--cyan);
+  font-family: var(--mono);
+  letter-spacing: 0.1em;
 }
 
 .arena-wrap {
