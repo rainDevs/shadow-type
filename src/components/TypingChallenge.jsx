@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-export function TypingChallenge({ challenge, typed, disabled, onType, wordsDone }) {
+export function TypingChallenge({ challenge, typed, disabled, onType, wordsDone, enemyTurn }) {
   const inputRef = useRef(null);
   const scrollRef = useRef(null);
   const caretRef = useRef(null);
@@ -37,7 +37,7 @@ export function TypingChallenge({ challenge, typed, disabled, onType, wordsDone 
         Type the text <span className="words-tally" aria-live="polite">{wordsDone} words</span>
       </p>
       <div
-        className={`passage-box ${showReminder ? 'blurred' : ''}`}
+        className={`passage-box ${showReminder || enemyTurn ? 'blurred' : ''}`}
         onClick={focusInput}
         role="presentation"
       >
@@ -65,6 +65,11 @@ export function TypingChallenge({ challenge, typed, disabled, onType, wordsDone 
           <button type="button" className="focus-reminder" onClick={focusInput}>
             Click here to focus
           </button>
+        )}
+        {enemyTurn && !showReminder && (
+          <div className="focus-reminder" aria-live="polite">
+            Enemy turn — stand by
+          </div>
         )}
       </div>
       <input

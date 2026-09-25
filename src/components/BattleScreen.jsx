@@ -101,6 +101,7 @@ export function BattleScreen({ difficulty, settings, onExit }) {
             disabled={status !== 'playing' || game.turn !== 'player'}
             onType={game.typeText}
             wordsDone={game.wordsDone}
+            enemyTurn={game.turn !== 'player'}
           />
         </>
       )}
