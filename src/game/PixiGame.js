@@ -16,8 +16,8 @@ export const ARENA_WIDTH = 1280;
 export const ARENA_HEIGHT = 720;
 // Grass line of the forest backdrop (layers bottom-aligned; measured).
 const GROUND_Y = 633;
-const PLAYER_HOME = { x: 390, y: GROUND_Y };
-const CPU_HOME = { x: 890, y: GROUND_Y };
+const PLAYER_HOME = { x: 300, y: GROUND_Y };
+const CPU_HOME = { x: 980, y: GROUND_Y };
 
 const CYAN = 0x22d3ee;
 const RED = 0xff5252;
