@@ -1,6 +1,8 @@
 // Battle HUD: health bars, live stats, turn indicator + window timer.
 // Pure React — Pixi owns only the arena canvas below it.
 
+import { useEffect, useState } from 'react';
+
 function HealthBar({ side, hp, maxHp }) {
   const pct = Math.max(0, Math.min(100, (hp / Math.max(1, maxHp)) * 100));
   const low = pct <= 25;
@@ -15,10 +17,7 @@ function HealthBar({ side, hp, maxHp }) {
   );
 }
 
-export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, turn, timeLeft, turnSeconds, wordsDone }) {
-  const isPlayer = turn === 'player';
-  const total = isPlayer ? turnSeconds : Math.max(timeLeft, 0.001);
-  const frac = isPlayer ? Math.max(0, Math.min(1, timeLeft / turnSeconds)) : Math.max(0, Math.min(1, timeLeft / total));
+export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, wordsDone }) {
   return (
     <div className="battle-hud">
       <HealthBar side="player" hp={playerHp} maxHp={maxHp} />
@@ -37,14 +36,28 @@ export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, turn, 
             SCORE <strong>{score.toLocaleString()}</strong>
           </span>
         </div>
-        <div className={`turn-banner ${isPlayer ? 'player-turn' : 'cpu-turn'}`} aria-live="polite">
-          {isPlayer ? `YOUR TURN — ${Math.ceil(timeLeft)}s` : `ENEMY TURN — ${timeLeft.toFixed(1)}s`}
-        </div>
-        <div className="turn-track" aria-hidden="true">
-          <div className={`turn-fill ${isPlayer ? '' : 'enemy'}`} style={{ width: `${frac * 100}%` }} />
-        </div>
       </div>
       <HealthBar side="cpu" hp={cpuHp} maxHp={maxHp} />
+    </div>
+  );
+}
+
+// Turn countdown, rendered directly above the typing card.
+export function TurnTimer({ turn, timeLeft, turnSeconds }) {
+  const isPlayer = turn === 'player';
+  const [total, setTotal] = useState(turnSeconds);
+  useEffect(() => {
+    setTotal(Math.max(timeLeft, 0.001));
+  }, [turn]); // eslint-disable-line react-hooks/exhaustive-deps
+  const frac = Math.max(0, Math.min(1, timeLeft / Math.max(total, 0.001)));
+  return (
+    <div className="turn-timer">
+      <div className={`turn-banner ${isPlayer ? 'player-turn' : 'cpu-turn'}`} aria-live="polite">
+        {isPlayer ? `YOUR TURN — ${Math.ceil(timeLeft)}s` : `ENEMY TURN — ${timeLeft.toFixed(1)}s`}
+      </div>
+      <div className="turn-track" aria-hidden="true">
+        <div className={`turn-fill ${isPlayer ? '' : 'enemy'}`} style={{ width: `${frac * 100}%` }} />
+      </div>
     </div>
   );
 }

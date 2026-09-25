@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { PixiGame } from '../game/PixiGame.js';
 import { useTypingGame } from '../hooks/useTypingGame.js';
-import { BattleHUD } from './BattleHUD.jsx';
+import { BattleHUD, TurnTimer } from './BattleHUD.jsx';
 import { TypingChallenge } from './TypingChallenge.jsx';
 import { PauseMenu } from './PauseMenu.jsx';
 import { VictoryScreen } from './VictoryScreen.jsx';
@@ -74,9 +74,6 @@ export function BattleScreen({ difficulty, settings, onExit }) {
         wpm={game.wpm}
         accuracy={game.accuracy}
         score={game.score}
-        turn={game.turn}
-        timeLeft={game.timeLeft}
-        turnSeconds={game.turnSeconds}
         wordsDone={game.wordsDone}
       />
       <div className="arena-wrap">
@@ -94,13 +91,16 @@ export function BattleScreen({ difficulty, settings, onExit }) {
         )}
       </div>
       {!over && (
-        <TypingChallenge
-          challenge={game.challenge}
-          typed={game.typed}
-          disabled={status !== 'playing' || game.turn !== 'player'}
-          onType={game.typeText}
-          wordsDone={game.wordsDone}
-        />
+        <>
+          <TurnTimer turn={game.turn} timeLeft={game.timeLeft} turnSeconds={game.turnSeconds} />
+          <TypingChallenge
+            challenge={game.challenge}
+            typed={game.typed}
+            disabled={status !== 'playing' || game.turn !== 'player'}
+            onType={game.typeText}
+            wordsDone={game.wordsDone}
+          />
+        </>
       )}
       {over && results &&
         (results.won ? (
