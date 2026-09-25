@@ -9,18 +9,18 @@ export const EMBER_VENTS = [300, 640, 980];
 export const EMBER_COLOR = 0xb8e62e; // firefly green
 
 const LAYERS = [
-  'Layer_0000_9.png',
-  'Layer_0001_8.png',
-  'Layer_0002_7.png',
-  'Layer_0003_6.png',
-  'Layer_0004_Lights.png',
-  'Layer_0005_5.png',
-  'Layer_0006_4.png',
-  'Layer_0007_Lights.png',
-  'Layer_0008_3.png',
-  'Layer_0009_2.png',
-  'Layer_0010_1.png',
   'Layer_0011_0.png',
+  'Layer_0010_1.png',
+  'Layer_0009_2.png',
+  'Layer_0008_3.png',
+  'Layer_0007_Lights.png',
+  'Layer_0006_4.png',
+  'Layer_0005_5.png',
+  'Layer_0004_Lights.png',
+  'Layer_0003_6.png',
+  'Layer_0002_7.png',
+  'Layer_0001_8.png',
+  'Layer_0000_9.png',
 ];
 
 export async function buildBackground(width, height, groundY) {
