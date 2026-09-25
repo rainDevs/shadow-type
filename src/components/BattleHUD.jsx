@@ -5,7 +5,7 @@ function HealthBar({ side, hp, maxHp }) {
   const pct = Math.max(0, Math.min(100, (hp / Math.max(1, maxHp)) * 100));
   const low = pct <= 25;
   const name = side === 'player' ? 'PLAYER' : 'COMPUTER';
-  const glyph = side === 'player' ? '影' : '鬼';
+  const glyph = side === 'player' ? 'P' : 'C';
   return (
     <div className={`hud-fighter ${side}`}>
       <div className="hud-id">
