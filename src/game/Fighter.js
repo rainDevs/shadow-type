@@ -1,17 +1,66 @@
-// Samurai shadow fighters built from PixiJS primitives.
-// No external assets; only buildBody() needs to change for sprite sheets.
+// Ink-silhouette fighters (Shadow Fight style): solid black dynamic poses
+// with a neon blade edge. No external assets; poses are joint data so new
+// stances only need new coordinates.
 
 import { Container, Graphics } from 'pixi.js';
 
-const BODY = 0x0a0a13;
-const BODY_EDGE = 0x2a2a44;
-const GOLD = 0xd9b36c;
+const INK = 0x060609;
+
+// Player: lunging punch stance. CPU: low guard with raised blade.
+// Joints are [x, y] in body space, feet near y=+58, facing right
+// (CPU is mirrored via scale.x).
+const POSES = {
+  player: {
+    hips: [0, 0],
+    chest: [9, -54],
+    neck: [11, -64],
+    head: [13, -77],
+    headR: 11,
+    knot: [4, -89],
+    rearHip: [-5, 0],
+    rearKnee: [-26, 28],
+    rearFoot: [-40, 58],
+    frontHip: [5, 0],
+    frontKnee: [28, 30],
+    frontFoot: [44, 58],
+    shoulder: [9, -48],
+    rearElbow: [-13, -30],
+    rearHand: [-5, -46],
+    frontElbow: [31, -54],
+    frontHand: [54, -47],
+    bladeFrom: [54, -47],
+    bladeTo: [100, -72],
+    tails: true,
+  },
+  cpu: {
+    hips: [-2, 6],
+    chest: [0, -44],
+    neck: [1, -54],
+    head: [3, -66],
+    headR: 11,
+    knot: [-6, -78],
+    rearHip: [-6, 6],
+    rearKnee: [-28, 34],
+    rearFoot: [-38, 58],
+    frontHip: [2, 6],
+    frontKnee: [24, 38],
+    frontFoot: [30, 58],
+    shoulder: [0, -38],
+    rearElbow: [-18, -22],
+    rearHand: [-8, -38],
+    frontElbow: [16, -52],
+    frontHand: [12, -70],
+    bladeFrom: [12, -70],
+    bladeTo: [40, -108],
+    tails: true,
+  },
+};
 
 export class Fighter {
   constructor({ side, accent }) {
     this.side = side; // 'player' | 'cpu'
     this.accent = accent;
-    this.dir = side === 'player' ? 1 : -1; // facing direction
+    this.dir = side === 'player' ? 1 : -1;
     this.root = new Container();
     this.idlePhase = Math.random() * Math.PI * 2;
     this.baseY = 0;
@@ -20,139 +69,105 @@ export class Fighter {
     this.buildBody();
   }
 
+  limb(g, x1, y1, x2, y2, w) {
+    g.moveTo(x1, y1);
+    g.lineTo(x2, y2);
+    g.stroke({ color: INK, width: w, cap: 'round' });
+    // Fatten joints so limbs read as one silhouette.
+    g.circle(x1, y1, w * 0.42);
+    g.fill({ color: INK });
+  }
+
   buildBody() {
     const A = this.accent;
-
-    // Ground aura.
-    this.aura = new Graphics();
-    this.aura.ellipse(0, 64, 46, 12);
-    this.aura.fill({ color: A, alpha: 0.28 });
-    this.root.addChild(this.aura);
-
+    const P = POSES[this.side];
     const g = new Graphics();
 
-    // --- Hakama (skirt trousers) ---
-    g.moveTo(-27, 62);
-    g.lineTo(27, 62);
-    g.lineTo(16, 2);
-    g.lineTo(-16, 2);
-    g.closePath();
-    g.fill({ color: BODY });
-    g.stroke({ color: BODY_EDGE, width: 2 });
-    // Pleats.
-    for (const px of [-9, 0, 9]) {
-      g.moveTo(px, 58);
-      g.lineTo(px * 0.7, 6);
-      g.stroke({ color: A, width: 1.2, alpha: 0.4 });
+    // Ground shadow with a faint faction glow.
+    this.aura = new Graphics();
+    this.aura.ellipse(0, 62, 48, 10);
+    this.aura.fill({ color: 0x000000, alpha: 0.45 });
+    this.auraGlow = new Graphics();
+    this.auraGlow.ellipse(0, 62, 56, 13);
+    this.auraGlow.fill({ color: this.accent, alpha: 0.22 });
+    this.root.addChild(this.auraGlow);
+    this.root.addChild(this.aura);
+
+    // Legs (thighs thicker than shins).
+    this.limb(g, P.rearHip[0], P.rearHip[1], P.rearKnee[0], P.rearKnee[1], 17);
+    this.limb(g, P.rearKnee[0], P.rearKnee[1], P.rearFoot[0], P.rearFoot[1], 12);
+    this.limb(g, P.frontHip[0], P.frontHip[1], P.frontKnee[0], P.frontKnee[1], 17);
+    this.limb(g, P.frontKnee[0], P.frontKnee[1], P.frontFoot[0], P.frontFoot[1], 12);
+    // Feet (straw sandals hint).
+    g.moveTo(P.rearFoot[0] - 8, P.rearFoot[1]);
+    g.lineTo(P.rearFoot[0] + 8, P.rearFoot[1]);
+    g.stroke({ color: INK, width: 6, cap: 'round' });
+    g.moveTo(P.frontFoot[0] - 8, P.frontFoot[1]);
+    g.lineTo(P.frontFoot[0] + 8, P.frontFoot[1]);
+    g.stroke({ color: INK, width: 6, cap: 'round' });
+
+    // Torso: hips to chest, broad shoulders.
+    this.limb(g, P.hips[0], P.hips[1], P.chest[0], P.chest[1], 26);
+    this.limb(g, P.chest[0] - 12, P.chest[1] + 4, P.chest[0] + 12, P.chest[1] + 4, 14);
+    // Belt (obi) knot.
+    g.circle(P.hips[0] - 2, P.hips[1] - 2, 5);
+    g.fill({ color: INK });
+
+    // Arms.
+    this.limb(g, P.shoulder[0], P.shoulder[1], P.rearElbow[0], P.rearElbow[1], 12);
+    this.limb(g, P.rearElbow[0], P.rearElbow[1], P.rearHand[0], P.rearHand[1], 9);
+    this.limb(g, P.shoulder[0], P.shoulder[1], P.frontElbow[0], P.frontElbow[1], 12);
+    this.limb(g, P.frontElbow[0], P.frontElbow[1], P.frontHand[0], P.frontHand[1], 9);
+    // Fists.
+    g.circle(P.rearHand[0], P.rearHand[1], 6);
+    g.fill({ color: INK });
+    g.circle(P.frontHand[0], P.frontHand[1], 6);
+    g.fill({ color: INK });
+
+    // Katana: black blade with a neon edge.
+    g.moveTo(P.bladeFrom[0], P.bladeFrom[1]);
+    g.lineTo(P.bladeTo[0], P.bladeTo[1]);
+    g.stroke({ color: INK, width: 7, cap: 'round' });
+    g.moveTo(P.bladeFrom[0], P.bladeFrom[1]);
+    g.lineTo(P.bladeTo[0], P.bladeTo[1]);
+    g.stroke({ color: A, width: 2, alpha: 0.85, cap: 'round' });
+    // Tsuba guard.
+    g.circle(P.bladeFrom[0], P.bladeFrom[1], 5);
+    g.fill({ color: INK });
+
+    // Neck + head + topknot.
+    this.limb(g, P.neck[0], P.neck[1] + 6, P.neck[0], P.neck[1] - 2, 10);
+    g.circle(P.head[0], P.head[1], P.headR);
+    g.fill({ color: INK });
+    g.circle(P.knot[0], P.knot[1], 4.5);
+    g.fill({ color: INK });
+
+    // Hachimaki headband + flowing tails.
+    g.moveTo(P.head[0] - P.headR, P.head[1] - 3);
+    g.lineTo(P.head[0] + P.headR, P.head[1] - 3);
+    g.stroke({ color: INK, width: 4 });
+    if (P.tails) {
+      const bx = P.head[0] - P.headR - 2;
+      const by = P.head[1] - 3;
+      g.moveTo(bx, by);
+      g.lineTo(bx - 22, by + 6);
+      g.lineTo(bx - 4, by + 10);
+      g.closePath();
+      g.fill({ color: INK });
+      g.moveTo(bx, by + 2);
+      g.lineTo(bx - 16, by + 16);
+      g.lineTo(bx - 2, by + 16);
+      g.closePath();
+      g.fill({ color: INK });
     }
 
-    // --- Do (cuirass) with lacing ---
-    g.roundRect(-21, -38, 42, 42, 6);
-    g.fill({ color: BODY });
-    g.stroke({ color: BODY_EDGE, width: 2 });
-    for (let i = 0; i < 4; i++) {
-      const ly = -30 + i * 9;
-      g.moveTo(-19, ly);
-      g.lineTo(19, ly);
-      g.stroke({ color: A, width: 1.4, alpha: 0.4 });
-    }
-    // Chest mon (clan crest).
-    g.circle(0, -17, 6);
-    g.stroke({ color: GOLD, width: 2, alpha: 0.9 });
-
-    // --- Sode (shoulder guards) ---
-    g.moveTo(-19, -36);
-    g.lineTo(-45, -28);
-    g.lineTo(-41, -6);
-    g.lineTo(-17, -10);
-    g.closePath();
-    g.fill({ color: BODY });
-    g.stroke({ color: BODY_EDGE, width: 2 });
-    g.moveTo(19, -36);
-    g.lineTo(38, -30);
-    g.lineTo(35, -12);
-    g.lineTo(17, -12);
-    g.closePath();
-    g.fill({ color: BODY });
-    g.stroke({ color: BODY_EDGE, width: 2 });
-
-    // --- Sashimono (back banner) ---
-    g.moveTo(-13, -30);
-    g.lineTo(-13, -96);
-    g.stroke({ color: 0x1a1a2a, width: 3 });
-    g.rect(-37, -96, 26, 32);
-    g.fill({ color: A, alpha: 0.22 });
-    g.stroke({ color: A, width: 1.5, alpha: 0.7 });
-    g.circle(-24, -80, 6);
-    g.stroke({ color: A, width: 2, alpha: 0.9 });
-
-    // --- Arms ---
-    g.moveTo(-10, -28);
-    g.lineTo(-36, -12);
-    g.stroke({ color: BODY_EDGE, width: 9, cap: 'round' });
-
-    // --- Katana: handle, tsuba guard, glowing blade ---
-    g.moveTo(12, -30);
-    g.lineTo(40, -48);
-    g.stroke({ color: 0x14141f, width: 7, cap: 'round' });
-    g.circle(40, -48, 7);
-    g.fill({ color: 0x14141f });
-    g.stroke({ color: GOLD, width: 2, alpha: 0.9 });
-    // Blade glow (layered strokes).
-    g.moveTo(44, -51);
-    g.lineTo(98, -90);
-    g.stroke({ color: A, width: 10, alpha: 0.22, cap: 'round' });
-    g.moveTo(44, -51);
-    g.lineTo(98, -90);
-    g.stroke({ color: A, width: 4, alpha: 0.9, cap: 'round' });
-
-    // --- Menpo (mask) + head ---
-    g.circle(0, -52, 13);
-    g.fill({ color: BODY });
-    g.stroke({ color: BODY_EDGE, width: 2 });
-    // Mask grill lines.
-    g.moveTo(-8, -48);
-    g.lineTo(8, -48);
-    g.stroke({ color: BODY_EDGE, width: 1.5 });
-    g.moveTo(-8, -44);
-    g.lineTo(8, -44);
-    g.stroke({ color: BODY_EDGE, width: 1.5 });
-
-    // --- Kabuto (helmet bowl + crest + horns) ---
-    g.circle(0, -60, 14);
-    g.fill({ color: BODY });
-    g.stroke({ color: GOLD, width: 2, alpha: 0.8 });
-    // Maedate (forehead crest).
-    g.circle(0, -66, 3.5);
-    g.fill({ color: GOLD });
-    // Kuwagata horns.
-    g.moveTo(-8, -70);
-    g.quadraticCurveTo(-22, -84, -30, -98);
-    g.stroke({ color: GOLD, width: 3, cap: 'round' });
-    g.moveTo(8, -70);
-    g.quadraticCurveTo(22, -84, 30, -98);
-    g.stroke({ color: GOLD, width: 3, cap: 'round' });
-    // Shikoro (neck guard plates).
-    for (let i = 0; i < 3; i++) {
-      g.moveTo(-12 + i * 2, -48 + i * 4);
-      g.lineTo(12 - i * 2, -48 + i * 4);
-      g.stroke({ color: BODY_EDGE, width: 2.5 });
-    }
+    // Neon rim light along the back silhouette.
+    g.moveTo(P.head[0] - P.headR + 1, P.head[1] - 6);
+    g.quadraticCurveTo(P.chest[0] - 15, P.chest[1] + 10, P.hips[0] - 12, P.hips[1] + 6);
+    g.stroke({ color: A, width: 2, alpha: 0.55 });
 
     this.body = g;
     this.root.addChild(g);
-
-    // Glowing eyes through the mask.
-    this.eyes = new Graphics();
-    this.eyes.circle(-5.5, -54, 2.8);
-    this.eyes.circle(5.5, -54, 2.8);
-    this.eyes.fill({ color: A, alpha: 1 });
-    this.root.addChild(this.eyes);
-    this.eyeGlow = new Graphics();
-    this.eyeGlow.circle(-5.5, -54, 5.5);
-    this.eyeGlow.circle(5.5, -54, 5.5);
-    this.eyeGlow.fill({ color: A, alpha: 0.3 });
-    this.root.addChild(this.eyeGlow);
 
     // White hit-flash overlay (hidden until hit).
     this.flash = new Graphics();
@@ -169,15 +184,13 @@ export class Fighter {
     this.root.position.set(x, y);
   }
 
-  // Subtle breathing / hover (called every frame).
+  // Idle: hover breath + slight rock (called every frame).
   update(time, paused) {
     if (paused || this.defeated) return;
     const t = time * 0.002 + this.idlePhase;
-    this.root.y = this.baseY + Math.sin(t) * 6;
-    this.body.rotation = Math.sin(t * 0.8) * 0.02;
-    const pulse = 0.22 + Math.abs(Math.sin(t * 1.4)) * 0.14;
-    this.aura.alpha = pulse + this.auraPulse;
-    this.eyeGlow.alpha = 0.25 + Math.abs(Math.sin(t * 2.2)) * 0.2;
+    this.root.y = this.baseY + Math.sin(t) * 5;
+    this.body.rotation = Math.sin(t * 0.8) * 0.018;
+    this.auraGlow.alpha = 0.16 + Math.abs(Math.sin(t * 1.4)) * 0.12 + this.auraPulse;
   }
 
   showFlash(strength = 0.85) {
@@ -190,14 +203,14 @@ export class Fighter {
 
   playDefeat() {
     this.defeated = true;
-    this.root.rotation = 0.45 * this.dir;
-    this.root.alpha = 0.45;
-    this.root.y = this.baseY + 26;
+    this.root.rotation = 0.5 * this.dir;
+    this.root.alpha = 0.4;
+    this.root.y = this.baseY + 30;
   }
 
   playVictoryPose() {
-    this.root.y = this.baseY - 34;
-    this.auraPulse = 0.35;
+    this.root.y = this.baseY - 30;
+    this.auraPulse = 0.2;
   }
 
   reset() {

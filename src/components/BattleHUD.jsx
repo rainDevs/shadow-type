@@ -4,13 +4,20 @@
 function HealthBar({ side, hp, maxHp }) {
   const pct = Math.max(0, Math.min(100, (hp / Math.max(1, maxHp)) * 100));
   const low = pct <= 25;
+  const name = side === 'player' ? 'KAGE' : 'ONI';
+  const glyph = side === 'player' ? '影' : '鬼';
   return (
     <div className={`hud-fighter ${side}`}>
-      <div className="hud-name">{side === 'player' ? 'PLAYER' : 'CPU'}</div>
-      <div className={`health-track ${low ? 'low' : ''}`} role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin="0" aria-valuemax="100" aria-label={`${side} health`}>
-        <div className="health-fill" style={{ width: `${pct}%` }} />
+      <div className="hud-id">
+        <span className="hud-portrait" aria-hidden="true">{glyph}</span>
+        <div className="hud-namehp">
+          <div className="hud-name">{name}</div>
+          <div className={`health-track ${low ? 'low' : ''}`} role="progressbar" aria-valuenow={Math.round(hp)} aria-valuemin="0" aria-valuemax={maxHp} aria-label={`${name} health`}>
+            <div className="health-fill" style={{ width: `${pct}%` }} />
+          </div>
+          <div className="health-pct">{Math.round(hp)}/{maxHp}</div>
+        </div>
       </div>
-      <div className="health-pct">{Math.round(hp)}/{maxHp}</div>
     </div>
   );
 }
