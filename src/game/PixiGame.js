@@ -152,7 +152,8 @@ export class PixiGame {
     const duration = this.reducedMotion ? 60 : 200;
     return this.tween(duration, (k) => {
       g.alpha = 1 - k;
-      g.scale.setScalar(1 + k * (big ? 0.5 : 0.3));
+      const s = 1 + k * (big ? 0.5 : 0.3);
+      g.scale.set(s, s);
       if (k >= 1) {
         this.fxLayer.removeChild(g);
         g.destroy();
