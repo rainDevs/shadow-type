@@ -1,8 +1,8 @@
 // Battle HUD: health bars, live stats, turn indicator + window timer.
 // Pure React — Pixi owns only the arena canvas below it.
 
-function HealthBar({ side, hp }) {
-  const pct = Math.max(0, Math.min(100, hp));
+function HealthBar({ side, hp, maxHp }) {
+  const pct = Math.max(0, Math.min(100, (hp / Math.max(1, maxHp)) * 100));
   const low = pct <= 25;
   return (
     <div className={`hud-fighter ${side}`}>
@@ -10,18 +10,18 @@ function HealthBar({ side, hp }) {
       <div className={`health-track ${low ? 'low' : ''}`} role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin="0" aria-valuemax="100" aria-label={`${side} health`}>
         <div className="health-fill" style={{ width: `${pct}%` }} />
       </div>
-      <div className="health-pct">{Math.round(pct)}%</div>
+      <div className="health-pct">{Math.round(hp)}/{maxHp}</div>
     </div>
   );
 }
 
-export function BattleHUD({ playerHp, cpuHp, wpm, accuracy, score, turn, timeLeft, turnSeconds, wordsDone }) {
+export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, turn, timeLeft, turnSeconds, wordsDone }) {
   const isPlayer = turn === 'player';
   const total = isPlayer ? turnSeconds : Math.max(timeLeft, 0.001);
   const frac = isPlayer ? Math.max(0, Math.min(1, timeLeft / turnSeconds)) : Math.max(0, Math.min(1, timeLeft / total));
   return (
     <div className="battle-hud">
-      <HealthBar side="player" hp={playerHp} />
+      <HealthBar side="player" hp={playerHp} maxHp={maxHp} />
       <div className="hud-center">
         <div className="hud-stats">
           <span>
@@ -44,7 +44,7 @@ export function BattleHUD({ playerHp, cpuHp, wpm, accuracy, score, turn, timeLef
           <div className={`turn-fill ${isPlayer ? '' : 'enemy'}`} style={{ width: `${frac * 100}%` }} />
         </div>
       </div>
-      <HealthBar side="cpu" hp={cpuHp} />
+      <HealthBar side="cpu" hp={cpuHp} maxHp={maxHp} />
     </div>
   );
 }

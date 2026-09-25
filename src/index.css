@@ -654,6 +654,86 @@ html[data-reduced-motion='true'] *::after {
   overflow-wrap: break-word;
 }
 
+/* Monkeytype-style flowing passage. */
+.passage-box {
+  position: relative;
+  margin: 6px 0 4px;
+  cursor: text;
+}
+
+.passage-scroll {
+  max-height: calc(1.7em * 3 + 12px);
+  overflow-y: hidden;
+  padding: 6px 4px;
+}
+
+.passage-text {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: clamp(19px, 3vw, 26px);
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  white-space: pre-wrap;
+  text-align: left;
+  user-select: none;
+}
+
+.passage-box.blurred .passage-text {
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.ch-caret {
+  position: relative;
+}
+
+.ch-caret::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 2px;
+  bottom: 2px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--gold);
+  animation: caret-blink 1s steps(2) infinite;
+}
+
+.ch-end {
+  display: inline-block;
+  width: 0;
+}
+
+.ch-wrong.ch-space {
+  background: rgba(255, 82, 82, 0.3);
+  border-radius: 3px;
+}
+
+.typing-input-hidden {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+
+.focus-reminder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  font: inherit;
+  font-size: 15px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text);
+  text-shadow: 0 2px 8px #000;
+  cursor: pointer;
+}
+
 .ch-remaining {
   color: rgba(233, 233, 242, 0.38);
 }
@@ -719,11 +799,6 @@ html[data-reduced-motion='true'] *::after {
   pointer-events: none;
   white-space: nowrap;
   animation: feedback-rise 1.8s ease-out forwards;
-}
-
-.combat-feedback.crit {
-  color: var(--gold);
-  text-shadow: 0 0 20px rgba(255, 209, 102, 0.9), 0 2px 0 #000;
 }
 
 .combat-feedback.miss,

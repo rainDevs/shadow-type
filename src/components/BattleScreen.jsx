@@ -70,6 +70,7 @@ export function BattleScreen({ difficulty, settings, onExit }) {
       <BattleHUD
         playerHp={game.playerHp}
         cpuHp={game.cpuHp}
+        maxHp={game.maxHp}
         wpm={game.wpm}
         accuracy={game.accuracy}
         score={game.score}

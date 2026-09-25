@@ -40,8 +40,8 @@ export function GameOverScreen({ results, onSubmitScore, onRematch, onMenu }) {
             <dd>{results.totalDamage}</dd>
           </div>
           <div>
-            <dt>Critical hits</dt>
-            <dd>{results.crits}</dd>
+            <dt>Words typed</dt>
+            <dd>{results.words}</dd>
           </div>
         </dl>
         {results.qualifies && rank == null && (

@@ -1,14 +1,13 @@
 // Score calculation for timed turns.
-// Words pay per character as they land; the window bonus rewards
-// accuracy, throughput and damage when the turn ends.
+// Correct characters pay 10 points each as words complete; the window bonus
+// rewards accuracy, throughput and damage when the turn ends.
 
-export function calculateWordScore(chars) {
-  return chars * 10;
+export function calculateCharScore(correctChars) {
+  return correctChars * 10;
 }
 
-export function calculateWindowBonus({ accuracy, words, damage, critical }) {
+export function calculateWindowBonus({ accuracy, words, damage }) {
   const accuracyBonus = Math.round((accuracy / 100) * words * 10);
   const damageScore = damage * 10;
-  const criticalBonus = critical ? 150 : 0;
-  return accuracyBonus + damageScore + criticalBonus;
+  return accuracyBonus + damageScore;
 }

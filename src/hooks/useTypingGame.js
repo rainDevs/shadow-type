@@ -1,31 +1,60 @@
-// Central timed-turn combat state machine.
-// Player turn: type endless words for turnSeconds; damage comes from window
-// WPM + accuracy. Then a quick CPU strike. React owns ALL game logic;
-// PixiGame only plays animations on command.
+// Central timed-turn combat state machine (Monkeytype-style).
+// Player turn: type a continuous flowing passage for turnSeconds; damage
+// comes from window adjusted-WPM. Then a quick CPU strike. React owns ALL
+// game logic; PixiGame only plays animations on command.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DIFFICULTIES } from '../data/difficulty.js';
 import { TIMED_WORDS } from '../data/timedWords.js';
 import { calculateWPM, calculateAccuracy } from '../utils/typingMetrics.js';
 import { calculateWindowDamage } from '../utils/damageCalculator.js';
-import { calculateWordScore, calculateWindowBonus } from '../utils/scoreCalculator.js';
+import { calculateCharScore, calculateWindowBonus } from '../utils/scoreCalculator.js';
 import { pickChallenge, randomInt } from '../utils/random.js';
 import { qualifiesForHighScores, addHighScore } from '../utils/storage.js';
 import { audio } from '../utils/audioManager.js';
 
 let feedbackId = 0;
 
+const PASSAGE_WORDS = 100; // generated per turn; extended as needed
+const EXTEND_THRESHOLD = 30; // chars from the end that trigger extension
+const EXTEND_WORDS = 30;
+
+function buildPassage(pool, count, previous) {
+  const words = [];
+  let prev = previous ?? '';
+  for (let i = 0; i < count; i++) {
+    const w = pickChallenge(pool, prev);
+    words.push(w);
+    prev = w;
+  }
+  return words.join(' ');
+}
+
+// Word boundaries [{start, end}] over a passage (end excludes trailing space).
+function wordBounds(passage) {
+  const bounds = [];
+  let start = 0;
+  for (let i = 0; i <= passage.length; i++) {
+    if (i === passage.length || passage[i] === ' ') {
+      if (i > start) bounds.push({ start, end: i });
+      start = i + 1;
+    }
+  }
+  return bounds;
+}
+
 export function useTypingGame({ difficultyId, pixiRef }) {
   const config = DIFFICULTIES[difficultyId] ?? DIFFICULTIES.normal;
   const pool = TIMED_WORDS[config.wordPool];
   const turnMs = config.turnSeconds * 1000;
+  const maxHp = config.maxHp;
 
   const [status, setStatus] = useState('playing'); // playing | paused | won | lost
   const [turn, setTurn] = useState('player'); // player | cpu
-  const [playerHp, setPlayerHp] = useState(100);
-  const [cpuHp, setCpuHp] = useState(100);
+  const [playerHp, setPlayerHp] = useState(maxHp);
+  const [cpuHp, setCpuHp] = useState(maxHp);
   const [score, setScore] = useState(0);
-  const [word, setWord] = useState(() => pickChallenge(pool, ''));
+  const [passage, setPassage] = useState(() => buildPassage(pool, PASSAGE_WORDS));
   const [typed, setTyped] = useState('');
   const [timeLeft, setTimeLeft] = useState(config.turnSeconds);
   const [wordsDone, setWordsDone] = useState(0);
@@ -36,24 +65,23 @@ export function useTypingGame({ difficultyId, pixiRef }) {
 
   const statusRef = useRef('playing');
   const turnRef = useRef('player');
-  const playerHpRef = useRef(100);
-  const cpuHpRef = useRef(100);
+  const playerHpRef = useRef(maxHp);
+  const cpuHpRef = useRef(maxHp);
   const scoreRef = useRef(0);
-  const wordRef = useRef('');
-  const typedRef = useRef('');
+  const passageRef = useRef('');
+  const boundsRef = useRef([]);
+  const bankedRef = useRef(0); // words banked for score so far
   const busyRef = useRef(false);
   const turnEndsAtRef = useRef(0);
   const pauseStartRef = useRef(0);
   const remainingRef = useRef(0);
-  // Window accumulators (final-text per word).
-  const windowWordsRef = useRef(0);
-  const windowCorrectRef = useRef(0);
-  const windowTotalRef = useRef(0);
+  // Per-position correctness for the current window (true/false/null).
+  const recordRef = useRef([]);
   // Match totals (keystroke accuracy).
   const keysCorrectRef = useRef(0);
   const keysTotalRef = useRef(0);
   const totalDamageRef = useRef(0);
-  const critsRef = useRef(0);
+  const matchWordsRef = useRef(0);
   const turnsRef = useRef(0);
   const wpmSumRef = useRef(0);
   const windowTimerRef = useRef(null);
@@ -61,7 +89,6 @@ export function useTypingGame({ difficultyId, pixiRef }) {
   const feedbackTimerRef = useRef(null);
   const aliveRef = useRef(true);
   const matchGenRef = useRef(0);
-  // Indirection for the turn cycle (avoids declaration-order cycles).
   const endWindowRef = useRef(null);
   const startCpuTurnRef = useRef(null);
   const startPlayerTurnRef = useRef(null);
@@ -86,12 +113,26 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     }, 1800);
   }, []);
 
+  // Window totals derived from the position record.
+  const windowTotals = useCallback(() => {
+    let correct = 0;
+    let total = 0;
+    for (const r of recordRef.current) {
+      if (r != null) {
+        total += 1;
+        if (r) correct += 1;
+      }
+    }
+    return { correct, total };
+  }, []);
+
   const refreshLive = useCallback(() => {
     const elapsedMs = Math.max(1, turnMs - Math.max(0, turnEndsAtRef.current - Date.now()));
-    const acc = calculateAccuracy(keysCorrectRef.current, keysTotalRef.current);
-    setLiveWpm(calculateWPM(windowTotalRef.current, elapsedMs, acc));
-    setLiveAcc(acc);
-  }, [turnMs]);
+    const { correct, total } = windowTotals();
+    const acc = total > 0 ? (correct / total) * 100 : 100;
+    setLiveWpm(calculateWPM(total, elapsedMs, acc));
+    setLiveAcc(calculateAccuracy(keysCorrectRef.current, keysTotalRef.current));
+  }, [turnMs, windowTotals]);
 
   // --- match end (declared before the turn actions that call it) -------------------
   const endMatch = useCallback(
@@ -116,8 +157,8 @@ export function useTypingGame({ difficultyId, pixiRef }) {
         avgWpm,
         accuracy,
         totalDamage: totalDamageRef.current,
-        crits: critsRef.current,
         turns: turnsRef.current,
+        words: matchWordsRef.current,
         difficulty: difficultyId,
         qualifies: qualifiesForHighScores(finalScore),
       });
@@ -131,14 +172,13 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     if (!aliveRef.current || statusRef.current !== 'playing') return;
     setTurnBoth('player');
     busyRef.current = false;
-    windowWordsRef.current = 0;
-    windowCorrectRef.current = 0;
-    windowTotalRef.current = 0;
     turnsRef.current += 1;
-    const first = pickChallenge(pool, wordRef.current);
-    wordRef.current = first;
-    typedRef.current = '';
-    setWord(first);
+    const text = buildPassage(pool, PASSAGE_WORDS);
+    passageRef.current = text;
+    boundsRef.current = wordBounds(text);
+    bankedRef.current = 0;
+    recordRef.current = [];
+    setPassage(text);
     setTyped('');
     setWordsDone(0);
     setLiveWpm(0);
@@ -153,39 +193,23 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     }, 100);
   }, [config, pool, setTurnBoth, turnMs]);
 
-  // --- window end: bank partial word, strike ---------------------------------------------------
+  // --- window end: strike from window stats ----------------------------------------------------
   const endWindow = useCallback(() => {
     if (windowTimerRef.current) clearInterval(windowTimerRef.current);
     if (busyRef.current || statusRef.current !== 'playing') return;
     busyRef.current = true;
-    // Bank the in-progress word by its typed portion.
-    const w = wordRef.current;
-    const t = typedRef.current;
-    if (t.length > 0) {
-      let correct = 0;
-      for (let i = 0; i < t.length; i++) {
-        if (t[i] === w[i]) correct += 1;
-      }
-      windowCorrectRef.current += correct;
-      windowTotalRef.current += t.length;
-    }
-    const total = windowTotalRef.current;
-    const acc = total > 0 ? (windowCorrectRef.current / total) * 100 : 0;
-    const wpm = calculateWPM(total, turnMs, acc);
-    const words = windowWordsRef.current;
+    const { correct, total } = windowTotals();
+    const wpm = calculateWPM(total, turnMs, total > 0 ? (correct / total) * 100 : 0);
+    const acc = total > 0 ? (correct / total) * 100 : 0;
+    const words = bankedRef.current;
     wpmSumRef.current += wpm;
 
-    const { damage, critical } = calculateWindowDamage({ wpm, accuracy: acc, turnSeconds: config.turnSeconds });
-    const bonus = calculateWindowBonus({ accuracy: acc, words, damage, critical });
+    const { damage } = calculateWindowDamage({ wpm, accuracy: acc, turnSeconds: config.turnSeconds });
+    const bonus = calculateWindowBonus({ accuracy: acc, words, damage });
     scoreRef.current += bonus;
     setScore(scoreRef.current);
-    if (critical) critsRef.current += 1;
 
-    showFeedback(
-      critical ? 'crit' : 'attack',
-      critical ? `CRITICAL! -${damage}` : `+${bonus}  -${damage} DMG`,
-      damage,
-    );
+    showFeedback('attack', `+${bonus}  -${damage} DMG`, damage);
     audio.playAttack();
     const myGen = matchGenRef.current;
     setTimeout(() => {
@@ -195,7 +219,7 @@ export function useTypingGame({ difficultyId, pixiRef }) {
       totalDamageRef.current += dealt;
       setCpuHp(cpuHpRef.current);
     }, 200);
-    const strike = pixiRef.current?.playerAttack({ damage, critical }) ?? Promise.resolve();
+    const strike = pixiRef.current?.playerAttack({ damage }) ?? Promise.resolve();
     strike
       .catch(() => {
         /* arena unavailable — logic continues */
@@ -205,15 +229,14 @@ export function useTypingGame({ difficultyId, pixiRef }) {
           busyRef.current = false;
           return;
         }
-        if (critical) audio.playCritical();
-        else audio.playHit();
+        audio.playHit();
         if (cpuHpRef.current <= 0 && statusRef.current === 'playing') {
           endMatch(true);
           return;
         }
         startCpuTurnRef.current?.();
       });
-  }, [config, endMatch, pixiRef, showFeedback, turnMs]);
+  }, [config, endMatch, pixiRef, showFeedback, turnMs, windowTotals]);
 
   // --- CPU turn: short telegraph, then strike --------------------------------------------------
   const fireCpuStrike = useCallback(
@@ -269,48 +292,82 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     startPlayerTurnRef.current = startPlayerTurn;
   });
 
-  // --- typing input -------------------------------------------------------------------------------
+  // --- typing input: continuous caret through the passage -----------------------------------------
   const typeText = useCallback(
     (value) => {
       if (statusRef.current !== 'playing' || turnRef.current !== 'player' || busyRef.current) return;
-      const target = wordRef.current;
-      const next = value.slice(0, target.length);
-      const prevLen = typed.length;
-      if (next.length > prevLen) {
-        for (let i = prevLen; i < next.length; i++) {
+      const target = passageRef.current;
+      const old = typed;
+      let next = value;
+      if (next.length > old.length) {
+        // Added characters: record each at the caret, advance on every key.
+        let pos = old.length;
+        let applied = old;
+        for (let i = old.length; i < next.length && pos < target.length; i++) {
+          const ch = next[i];
           keysTotalRef.current += 1;
-          if (next[i] === target[i]) {
+          const ok = ch === target[pos];
+          recordRef.current[pos] = ok;
+          if (ok) {
             keysCorrectRef.current += 1;
             audio.playKey();
           } else {
             audio.playError();
             showFeedback('miss', 'MISS', 0);
           }
+          applied += ch;
+          pos += 1;
+        }
+        next = applied;
+        // Extend the passage before the fast typist runs out of road.
+        if (target.length - pos < EXTEND_THRESHOLD) {
+          let prev = target.split(' ').pop() ?? '';
+          const extra = [];
+          for (let i = 0; i < EXTEND_WORDS; i++) {
+            const w = pickChallenge(pool, prev);
+            extra.push(w);
+            prev = w;
+          }
+          const grown = `${target} ${extra.join(' ')}`;
+          passageRef.current = grown;
+          boundsRef.current = wordBounds(grown);
+          setPassage(grown);
+        }
+      } else if (next.length < old.length) {
+        // Backspaces: pull the caret back, clearing records.
+        recordRef.current.length = next.length;
+      } else {
+        // Same length (e.g. IME replace): re-verify the whole line.
+        const rec = recordRef.current;
+        for (let i = 0; i < next.length && i < target.length; i++) {
+          rec[i] = next[i] === target[i];
         }
       }
-      typedRef.current = next;
       setTyped(next);
-      refreshLive();
-      if (next.length === target.length) {
-        // Word complete: bank final-text accuracy, pay per-character score.
+      // Bank every word the caret has passed (pays 10 per correct char).
+      const pos = next.length;
+      const bounds = boundsRef.current;
+      let banked = bankedRef.current;
+      let gained = 0;
+      while (banked < bounds.length && pos > bounds[banked].end) {
+        const { start, end } = bounds[banked];
         let correct = 0;
-        for (let i = 0; i < target.length; i++) {
-          if (next[i] === target[i]) correct += 1;
+        for (let i = start; i < end; i++) {
+          if (recordRef.current[i]) correct += 1;
         }
-        windowCorrectRef.current += correct;
-        windowTotalRef.current += target.length;
-        windowWordsRef.current += 1;
-        const gained = calculateWordScore(target.length);
+        gained += calculateCharScore(correct);
+        banked += 1;
+        matchWordsRef.current += 1;
+      }
+      if (gained > 0) {
         scoreRef.current += gained;
         setScore(scoreRef.current);
-        setWordsDone(windowWordsRef.current);
-        const following = pickChallenge(pool, target);
-        wordRef.current = following;
-        typedRef.current = '';
-        setWord(following);
-        setTyped('');
-        refreshLive();
       }
+      if (banked !== bankedRef.current) {
+        bankedRef.current = banked;
+        setWordsDone(banked);
+      }
+      refreshLive();
     },
     [pool, refreshLive, showFeedback, typed],
   );
@@ -361,19 +418,18 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     matchGenRef.current += 1; // abort any in-flight strike/damage work
     if (windowTimerRef.current) clearInterval(windowTimerRef.current);
     if (cpuTimeoutRef.current) clearTimeout(cpuTimeoutRef.current);
-    playerHpRef.current = 100;
-    cpuHpRef.current = 100;
+    playerHpRef.current = maxHp;
+    cpuHpRef.current = maxHp;
     scoreRef.current = 0;
     keysCorrectRef.current = 0;
     keysTotalRef.current = 0;
     totalDamageRef.current = 0;
-    critsRef.current = 0;
+    matchWordsRef.current = 0;
     turnsRef.current = 0;
     wpmSumRef.current = 0;
     busyRef.current = false;
-    typedRef.current = '';
-    setPlayerHp(100);
-    setCpuHp(100);
+    setPlayerHp(maxHp);
+    setCpuHp(maxHp);
     setScore(0);
     setTyped('');
     setResults(null);
@@ -385,7 +441,7 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     setStatusBoth('playing');
     audio.startMusic();
     startPlayerTurn();
-  }, [pixiRef, setStatusBoth, startPlayerTurn]);
+  }, [maxHp, pixiRef, setStatusBoth, startPlayerTurn]);
 
   const submitScore = useCallback(
     (name) => {
@@ -423,8 +479,9 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     turn,
     playerHp,
     cpuHp,
+    maxHp,
     score,
-    challenge: word,
+    challenge: passage,
     typed,
     timeLeft,
     turnSeconds: config.turnSeconds,

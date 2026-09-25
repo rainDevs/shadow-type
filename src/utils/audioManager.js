@@ -124,12 +124,6 @@ class AudioManager {
     this.blip({ freq: 150, freqEnd: 60, type: 'square', duration: 0.2, volume: 0.35 });
   }
 
-  playCritical() {
-    this.noise({ duration: 0.35, volume: 0.6, filterFreq: 2500, type: 'highpass' });
-    this.blip({ freq: 400, freqEnd: 1400, type: 'sawtooth', duration: 0.3, volume: 0.35 });
-    this.blip({ freq: 1400, freqEnd: 2000, type: 'sine', duration: 0.25, volume: 0.3, delay: 0.08 });
-  }
-
   playVictory() {
     [523, 659, 784, 1047].forEach((freq, i) =>
       this.blip({ freq, type: 'triangle', duration: 0.35, volume: 0.35, delay: i * 0.14 }),

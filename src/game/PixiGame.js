@@ -1,6 +1,6 @@
 // PixiGame: owns the entire PixiJS rendering lifecycle (PLAN.md section 26).
 // React mounts it into a div and talks to it only through this API:
-//   playerAttack({ damage, critical }) -> Promise (resolves when done)
+//   playerAttack({ damage }) -> Promise (resolves when done)
 //   cpuAttack({ damage })              -> Promise
 //   victory() / defeat() / reset()
 //   setPaused(bool)
@@ -198,7 +198,7 @@ export class PixiGame {
   }
 
   // --- combat sequences --------------------------------------------------------
-  async playerAttack({ damage, critical = false }) {
+  async playerAttack({ damage }) {
     if (!this.app || this.destroyed || this.busy) return;
     this.busy = true;
     try {
@@ -211,18 +211,18 @@ export class PixiGame {
       // Slash + impact on CPU.
       const cx = this.cpu.root.x;
       const cy = this.cpu.root.y - 40;
-      this.slash(cx - 30, cy, CYAN, critical);
-      this.impact(cx, cy, CYAN, critical);
-      this.cpu.showFlash(critical ? 1 : 0.85);
-      this.damageText(cx, cy - 90, critical ? `CRIT -${damage}` : `-${damage}`, critical ? 0xffd166 : 0xffffff, critical);
+      this.slash(cx - 30, cy, CYAN, false);
+      this.impact(cx, cy, CYAN, false);
+      this.cpu.showFlash(0.85);
+      this.damageText(cx, cy - 90, `-${damage}`, 0xffffff, false);
       const knock = this.tween(140 * step, (k) => {
-        this.cpu.root.x = cx + k * (critical ? 46 : 26);
+        this.cpu.root.x = cx + k * 26;
       });
-      const shakeP = this.shake(critical ? 14 : 8);
+      const shakeP = this.shake(8);
       await Promise.all([knock, shakeP]);
       // Recover.
       await this.tween(170 * step, (k) => {
-        this.cpu.root.x = cx + (critical ? 46 : 26) * (1 - k);
+        this.cpu.root.x = cx + 26 * (1 - k);
         this.player.root.x = fromX + 130 * (1 - k);
       });
       this.cpu.root.x = CPU_HOME.x;

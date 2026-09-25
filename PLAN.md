@@ -305,53 +305,44 @@ seconds. During a player turn, an endless stream of words appears — finishing
 one word instantly serves the next. When time expires, the fighter strikes and
 damage is computed from the turn's WPM and accuracy.
 
-Display a random word from the difficulty pool.
+Display a continuous flowing passage of words from the difficulty pool
+(Monkeytype-style). The passage extends itself so the player never runs out
+of text mid-turn.
 
-Examples:
+Examples (pool words):
 
 ```text
 shadow
 warrior
-darkness
+thunder
 precision
-focus
-The shadows never sleep
-Strike before you are struck
-Speed creates power
+midnight
 ```
-
-Eventually support multiple difficulty levels.
 
 ## Difficulty
 
 ### Easy
 
-Short words.
+Short words, 15-second turns.
 
 ```text
-shadow
-fight
-type
-strike
-power
+ash fog hit run dark fight
 ```
 
 ### Normal
 
-Short sentences.
+Medium words, 30-second turns.
 
 ```text
-The shadow moves quickly
-Precision creates power
-Strike before the enemy attacks
+shadow warrior thunder silence
 ```
 
 ### Hard
 
-Longer sentences and punctuation.
+Long, tricky words, 60-second turns.
 
 ```text
-The strongest warrior is the one who never loses focus.
+darkness precision lightning battlefield
 ```
 
 ---
@@ -360,39 +351,36 @@ The strongest warrior is the one who never loses focus.
 
 The typing input should feel responsive and game-like.
 
-Display the challenge text.
-
-Example:
-
-```text
-The shadows never sleep
-```
+Display a continuous flowing passage. A block caret marks the current
+position; typing advances it on every key (correct or not), Backspace pulls
+it back.
 
 As the user types:
 
 - Correct characters become highlighted.
 - Incorrect characters are visibly marked.
-- Current character is clearly indicated.
-- The word completes when its full length is typed, mistakes included.
+- The caret shows the current position.
+- Remaining text is muted.
+- Completed words bank score (10 per correct character).
 
 Recommended behavior:
 
 ```text
 Correct → character turns cyan/green
 Incorrect → character turns red
-Current → highlighted
+Current → block caret
 Remaining → muted
 ```
 
-When the complete word is typed (full length entered, correct or not):
+When the turn timer expires:
 
 ```text
 ATTACK!
 ```
 
-The player's fighter immediately attacks. Mistakes never block the strike —
-they lower accuracy and therefore damage. Backspacing to fix errors costs time
-(lower WPM) but restores accuracy.
+The player's fighter strikes with damage from the turn's adjusted WPM.
+Mistakes never block typing — they lower accuracy and therefore damage.
+Backspacing to fix errors costs time (lower WPM) but restores accuracy.
 
 ---
 
@@ -430,32 +418,16 @@ Speed alone does not dominate accuracy.
 
 # 11. Damage System
 
-Typing performance over the turn window determines damage.
-
-Do NOT make damage purely random.
-
-Create a deterministic formula.
-
-Example:
+Damage scales 1–15 from the turn's accuracy-adjusted WPM:
 
 ```text
 damage =
-WPM
-× (accuracy / 100)
-× (turnSeconds / 60)
-× 2
+round(adjusted WPM × (turnSeconds / 60))
 ```
 
-Clamp damage to reasonable values.
-
-Example:
-
-```text
-minimum damage: 5
-maximum damage: 40
-```
-
-Critical hits (97%+ accuracy) multiply damage by 1.5 before clamping.
+clamped to minimum 1, maximum 15. In other words, every 5 accurate
+characters of throughput deals about 1 damage. There are no critical hits
+and no randomness — only typing skill.
 
 A player typing:
 
@@ -476,34 +448,14 @@ Display the calculated damage after each successful attack.
 Example:
 
 ```text
-CRITICAL HIT!
--18 DAMAGE
++274  -11 DMG
 ```
 
 ---
 
-# 12. Critical Hits
+# 12. (Removed — no critical hits)
 
-Add a critical hit system.
-
-Critical hit is deterministic: a turn window with 97%+ accuracy (and at
-least one typed character) is critical.
-
-Critical hit:
-
-```text
-damage × 1.5
-```
-
-applied before clamping.
-
-Display:
-
-```text
-CRITICAL!
-```
-
-with a strong visual effect.
+Damage comes only from adjusted WPM. There is no crit system.
 
 ---
 
@@ -686,16 +638,14 @@ Create a score system based on:
 - Accuracy
 - Words completed
 - Damage
-- Critical hits
 
 Example:
 
 ```text
 Score =
-wordScore (per completed word)
+charScore (10 per correct character)
 + windowAccuracyBonus
 + damageScore
-+ criticalBonus
 ```
 
 Display live score during battle.
@@ -804,7 +754,6 @@ Support:
 - Typing sounds
 - Attack sounds
 - Hit sounds
-- Critical hit sound
 - Victory sound
 - Defeat sound
 - UI click sound
@@ -1106,16 +1055,6 @@ Implement lightweight PixiJS effects:
 - Knockback
 - Screen shake
 - Impact particles
-
-### Critical Hit
-
-- Larger particle explosion
-- Stronger screen shake
-- Large:
-
-```text
-CRITICAL!
-```
 
 ### Low Health
 
@@ -1428,14 +1367,6 @@ Example:
 +12 DAMAGE
 ```
 
-For critical:
-
-```text
-CRITICAL HIT!
-
-+18 DAMAGE
-```
-
 For errors:
 
 ```text
@@ -1456,7 +1387,6 @@ Average WPM (per turn)
 Average Accuracy
 Turns Played
 Total Damage
-Critical Hits
 Words Completed
 ```
 
@@ -1632,7 +1562,6 @@ The implementation is complete only when:
 - CPU attacks automatically.
 - Player takes damage.
 - Health bars animate.
-- Critical hits work.
 - Victory state works.
 - Defeat state works.
 - Score is calculated.
