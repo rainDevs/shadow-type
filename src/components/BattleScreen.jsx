@@ -92,7 +92,7 @@ export function BattleScreen({ difficulty, settings, onExit }) {
       </div>
       {!over && (
         <>
-          <TurnTimer turn={game.turn} timeLeft={game.timeLeft} turnSeconds={game.turnSeconds} />
+          <TurnTimer turn={game.turn} timeLeft={game.timeLeft} turnTotal={game.turnTotal} />
           <TypingChallenge
             challenge={game.challenge}
             typed={game.typed}

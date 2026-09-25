@@ -485,6 +485,7 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     typed,
     timeLeft,
     turnSeconds: config.turnSeconds,
+    turnTotal: turn === 'player' ? config.turnSeconds : config.cpuTelegraphMs / 1000,
     wordsDone,
     feedback,
     results,
