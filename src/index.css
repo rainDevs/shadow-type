@@ -437,10 +437,12 @@ html[data-reduced-motion='true'] *::after {
 /* --- Battle screen (PLAN.md section 5) --- */
 
 .battle-root {
-  flex: 1;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 100svh;
+  min-height: 0;
   background:
     radial-gradient(1200px 500px at 50% -10%, rgba(76, 29, 149, 0.3), transparent 60%),
     var(--bg-0);
@@ -450,10 +452,11 @@ html[data-reduced-motion='true'] *::after {
   display: flex;
   align-items: flex-start;
   gap: 16px;
-  padding: 14px 20px 10px;
+  padding: 10px 20px 6px;
   max-width: 1280px;
   width: 100%;
   margin: 0 auto;
+  flex-shrink: 0;
 }
 
 .hud-fighter {
@@ -602,8 +605,17 @@ html[data-reduced-motion='true'] *::after {
 
 .arena-wrap {
   position: relative;
-  width: min(1280px, 100%);
+  /* Fill horizontally, but shrink to fit the viewport height so the whole
+     battle stays in one view (HUD + arena + typing, no page scroll). */
+  width: min(1280px, 100%, max(320px, calc((100vh - 400px) * 16 / 9)));
   margin: 0 auto;
+  flex-shrink: 0;
+}
+
+@supports (height: 100dvh) {
+  .arena-wrap {
+    width: min(1280px, 100%, max(320px, calc((100dvh - 400px) * 16 / 9)));
+  }
 }
 
 .arena-mount {
@@ -630,12 +642,13 @@ html[data-reduced-motion='true'] *::after {
 
 .typing-panel {
   width: min(860px, 94vw);
-  margin: 8px auto 24px;
-  padding: 18px 22px;
+  margin: 6px auto 10px;
+  padding: 12px 22px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 12px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .typing-label {
@@ -951,5 +964,19 @@ html[data-reduced-motion='true'] *::after {
   .hud-center {
     order: 3;
     flex-basis: 100%;
+  }
+}
+
+/* Short viewports (e.g. landscape phones): allow scrolling rather than
+   clipping controls, and let the arena use full width. */
+@media (max-height: 640px) {
+  .battle-root {
+    height: auto;
+    min-height: 100svh;
+    overflow: visible;
+  }
+
+  .arena-wrap {
+    width: min(1280px, 100%);
   }
 }
