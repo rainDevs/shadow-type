@@ -5,7 +5,7 @@
 import { AnimatedSprite, Assets, Container, Graphics, Rectangle, Texture } from 'pixi.js';
 
 const FRAME = 128;
-const SPRITE_SCALE = 4.5;
+const SPRITE_SCALE = 5;
 // Measured union of non-transparent pixels across all sheets: every clip
 // shares the same feet baseline, so one tight box fits all with no pop.
 const CROP = { x: 42, y: 29, w: 68, h: 50 };
@@ -149,7 +149,7 @@ export class Fighter {
 
   // Mid-torso impact point in world space.
   hitPoint() {
-    return { x: this.root.x, y: this.root.y - 125 };
+    return { x: this.root.x, y: this.root.y - 140 };
   }
 
   setBasePosition(x, y) {
