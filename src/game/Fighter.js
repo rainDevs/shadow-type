@@ -152,10 +152,11 @@ export class Fighter {
     this.root.position.set(x, y);
   }
 
-  // Idle: hover breath (called every frame; dt in seconds).
-  update(time, paused, dt = 0) {
+  // Idle: hover breath (called every frame; ticker advances sprites).
+  // Pause freezes everything; defeat freezes motion but lets the fall clip play.
+  update(time, paused, ticker) {
+    if (!paused && ticker && this.current) this.current.update(ticker);
     if (paused || this.defeated) return;
-    if (this.current) this.current.update(dt * 60);
     const t = time * 0.002 + this.idlePhase;
     this.root.y = this.baseY + Math.sin(t) * 4;
     this.auraGlow.alpha = 0.16 + Math.abs(Math.sin(t * 1.4)) * 0.12 + this.auraPulse;

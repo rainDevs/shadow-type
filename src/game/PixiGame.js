@@ -97,8 +97,8 @@ export class PixiGame {
       }
     }
 
-    this.player.update(this.elapsed, this.paused, dt);
-    this.cpu.update(this.elapsed, this.paused, dt);
+    this.player.update(this.elapsed, this.paused, ticker);
+    this.cpu.update(this.elapsed, this.paused, ticker);
     this.player.fadeFlash(dt * 4);
     this.cpu.fadeFlash(dt * 4);
 
