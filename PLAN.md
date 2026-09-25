@@ -418,16 +418,16 @@ Speed alone does not dominate accuracy.
 
 # 11. Damage System
 
-Damage scales 1–15 from the turn's accuracy-adjusted WPM:
+Damage scales 1–20 from the turn's accuracy-adjusted WPM (a rate, so window
+length grants no free damage):
 
 ```text
 damage =
-round(adjusted WPM × (turnSeconds / 60))
+round(adjusted WPM / 4)
 ```
 
-clamped to minimum 1, maximum 15. In other words, every 5 accurate
-characters of throughput deals about 1 damage. There are no critical hits
-and no randomness — only typing skill.
+clamped to minimum 1, maximum 20. There are no critical hits and no
+randomness — only typing skill. Every WPM point counts on every mode.
 
 A player typing:
 

@@ -204,7 +204,7 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     const words = bankedRef.current;
     wpmSumRef.current += wpm;
 
-    const { damage } = calculateWindowDamage({ wpm, accuracy: acc, turnSeconds: config.turnSeconds });
+    const { damage } = calculateWindowDamage({ wpm });
     const bonus = calculateWindowBonus({ accuracy: acc, words, damage });
     scoreRef.current += bonus;
     setScore(scoreRef.current);
@@ -236,7 +236,7 @@ export function useTypingGame({ difficultyId, pixiRef }) {
         }
         startCpuTurnRef.current?.();
       });
-  }, [config, endMatch, pixiRef, showFeedback, turnMs, windowTotals]);
+  }, [endMatch, pixiRef, showFeedback, turnMs, windowTotals]);
 
   // --- CPU turn: short telegraph, then strike --------------------------------------------------
   const fireCpuStrike = useCallback(
