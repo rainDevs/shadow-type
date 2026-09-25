@@ -14,8 +14,8 @@ import { buildBackground, EMBER_VENTS, EMBER_COLOR } from './Background.js';
 
 export const ARENA_WIDTH = 1280;
 export const ARENA_HEIGHT = 720;
-// Grass line of the forest backdrop (layers bottom-aligned).
-const GROUND_Y = 590;
+// Grass line of the forest backdrop (layers bottom-aligned; measured).
+const GROUND_Y = 633;
 const PLAYER_HOME = { x: 390, y: GROUND_Y };
 const CPU_HOME = { x: 890, y: GROUND_Y };
 

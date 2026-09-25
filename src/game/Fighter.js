@@ -19,8 +19,8 @@ const SHEETS = {
   jump: { file: 'male_hero-jump.png', frames: 6, fps: 12, loop: false },
 };
 
-// Player full color; CPU darkened steel so the mirror match reads.
-const FACTION_TINT = { player: 0xffffff, cpu: 0x8f96ac };
+// Near-identical twins; factions read via aura, portraits and names.
+const FACTION_TINT = { player: 0xffffff, cpu: 0xe8ecf2 };
 
 let sheetCache = null;
 
