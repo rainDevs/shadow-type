@@ -452,11 +452,20 @@ html[data-reduced-motion='true'] *::after {
   display: flex;
   align-items: flex-start;
   gap: 16px;
-  padding: 10px 20px 6px;
-  max-width: 1280px;
   width: 100%;
-  margin: 0 auto;
   flex-shrink: 0;
+}
+
+/* HUD floats over the top of the arena. */
+.hud-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  padding: 10px 18px 22px;
+  background: linear-gradient(rgba(3, 3, 8, 0.72), transparent);
+  pointer-events: none;
 }
 
 .hud-fighter {
@@ -607,14 +616,14 @@ html[data-reduced-motion='true'] *::after {
   position: relative;
   /* Two-row layout: arena fills the width, shrinks only enough to leave
      room for the HUD + timer + typing rows. No page scroll. */
-  width: min(1280px, 100%, max(320px, calc((100vh - 350px) * 16 / 9)));
+  width: min(1280px, 100%, max(320px, calc((100vh - 280px) * 16 / 9)));
   margin: 0 auto;
   flex-shrink: 0;
 }
 
 @supports (height: 100dvh) {
   .arena-wrap {
-    width: min(1280px, 100%, max(320px, calc((100dvh - 350px) * 16 / 9)));
+    width: min(1280px, 100%, max(320px, calc((100dvh - 280px) * 16 / 9)));
   }
 }
 

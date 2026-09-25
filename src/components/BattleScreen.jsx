@@ -67,17 +67,19 @@ export function BattleScreen({ difficulty, settings, onExit }) {
 
   return (
     <div className="battle-root">
-      <BattleHUD
-        playerHp={game.playerHp}
-        cpuHp={game.cpuHp}
-        maxHp={game.maxHp}
-        wpm={game.wpm}
-        accuracy={game.accuracy}
-        score={game.score}
-        wordsDone={game.wordsDone}
-      />
       <div className="arena-wrap">
         <div ref={containerRef} className="arena-mount" aria-label="Combat arena" />
+        <div className="hud-overlay">
+          <BattleHUD
+            playerHp={game.playerHp}
+            cpuHp={game.cpuHp}
+            maxHp={game.maxHp}
+            wpm={game.wpm}
+            accuracy={game.accuracy}
+            score={game.score}
+            wordsDone={game.wordsDone}
+          />
+        </div>
         {rendererFailed && (
           <div className="arena-fallback" role="alert">
             <p>Could not start the arena renderer.</p>
