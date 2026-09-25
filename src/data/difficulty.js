@@ -1,6 +1,6 @@
 // Difficulty configuration: timed turns (Monkeytype-style).
 // Each player turn lasts turnSeconds; the CPU answers with a quick strike.
-// Fighters use per-difficulty HP so longer windows don't mean longer fights.
+// Both fighters start at 100 HP on every difficulty.
 
 export const DIFFICULTIES = {
   easy: {
@@ -8,7 +8,7 @@ export const DIFFICULTIES = {
     label: 'EASY',
     description: '15-second turns with short words. A forgiving enemy.',
     turnSeconds: 15,
-    maxHp: 60,
+    maxHp: 100,
     cpuTelegraphMs: 2500,
     cpuDamageMin: 6,
     cpuDamageMax: 10,
@@ -19,7 +19,7 @@ export const DIFFICULTIES = {
     label: 'NORMAL',
     description: '30-second turns with medium words. A balanced fight.',
     turnSeconds: 30,
-    maxHp: 80,
+    maxHp: 100,
     cpuTelegraphMs: 2500,
     cpuDamageMin: 8,
     cpuDamageMax: 12,
@@ -32,8 +32,8 @@ export const DIFFICULTIES = {
     turnSeconds: 60,
     maxHp: 100,
     cpuTelegraphMs: 2000,
-    cpuDamageMin: 10,
-    cpuDamageMax: 16,
+    cpuDamageMin: 8,
+    cpuDamageMax: 14,
     wordPool: 'hard',
   },
 };
