@@ -9,8 +9,9 @@ export function HowToPlay({ onBack }) {
         <p className="lede">Type fast. Strike hard. Survive.</p>
         <ul className="howto-list">
           <li>
-            Fights run in <strong>timed turns</strong> — 15s on Easy, 30s on Normal, 60s on Hard.
-            A flowing river of words appears; type straight through it like Monkeytype.
+            Fights run in <strong>timed turns</strong> — pick 15, 30, or 60
+            seconds per turn. A flowing river of words appears; type straight
+            through it like Monkeytype.
             The text extends on its own, so never stop.
           </li>
           <li>

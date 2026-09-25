@@ -5,7 +5,7 @@
 export const DIFFICULTIES = {
   easy: {
     id: 'easy',
-    label: 'EASY',
+    label: '15 SECS',
     description: '15-second turns with short words. A forgiving enemy.',
     turnSeconds: 15,
     maxHp: 100,
@@ -16,7 +16,7 @@ export const DIFFICULTIES = {
   },
   normal: {
     id: 'normal',
-    label: 'NORMAL',
+    label: '30 SECS',
     description: '30-second turns with medium words. A balanced fight.',
     turnSeconds: 30,
     maxHp: 100,
@@ -27,7 +27,7 @@ export const DIFFICULTIES = {
   },
   hard: {
     id: 'hard',
-    label: 'HARD',
+    label: '60 SECS',
     description: '60-second turns with long, tricky words. Relentless enemy.',
     turnSeconds: 60,
     maxHp: 100,

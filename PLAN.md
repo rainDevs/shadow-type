@@ -693,11 +693,11 @@ Allow the player to enter a name after completing a high score.
 Before starting a fight:
 
 ```text
-SELECT DIFFICULTY
+SELECT TIME LIMIT
 
-[ EASY ]
-[ NORMAL ]
-[ HARD ]
+[ 15 SECS ]
+[ 30 SECS ]
+[ 60 SECS ]
 ```
 
 Show a short description.
