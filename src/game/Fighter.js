@@ -88,13 +88,15 @@ export class Fighter {
 
   buildBody() {
     // Ground shadow + faction glow, sized to the sprite footprint.
-    // Ground shadow + faction glow: hard pixel blocks flush with the feet.
+    // Ground shadow: defined circle centered under the feet.
     this.aura = new Graphics();
-    this.aura.rect(-80, 0, 160, 12);
+    this.aura.ellipse(0, 8, 70, 18);
     this.aura.fill({ color: 0x000000, alpha: 0.5 });
+    this.aura.ellipse(0, 8, 70, 18);
+    this.aura.stroke({ color: this.accent, width: 2, alpha: 0.5 });
     this.auraGlow = new Graphics();
-    this.auraGlow.rect(-95, 0, 190, 12);
-    this.auraGlow.fill({ color: this.accent, alpha: 0.2 });
+    this.auraGlow.ellipse(0, 8, 86, 23);
+    this.auraGlow.fill({ color: this.accent, alpha: 0.16 });
     this.root.addChild(this.auraGlow);
     this.root.addChild(this.aura);
 
