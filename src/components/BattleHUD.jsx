@@ -15,10 +15,7 @@ function HealthBar({ side, hp, maxHp }) {
   );
 }
 
-export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, turn, timeLeft, turnSeconds, wordsDone }) {
-  const isPlayer = turn === 'player';
-  const total = isPlayer ? turnSeconds : Math.max(timeLeft, 0.001);
-  const frac = isPlayer ? Math.max(0, Math.min(1, timeLeft / turnSeconds)) : Math.max(0, Math.min(1, timeLeft / total));
+export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, wordsDone }) {
   return (
     <div className="battle-hud">
       <HealthBar side="player" hp={playerHp} maxHp={maxHp} />
@@ -37,14 +34,24 @@ export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, turn, 
             SCORE <strong>{score.toLocaleString()}</strong>
           </span>
         </div>
-        <div className={`turn-banner ${isPlayer ? 'player-turn' : 'cpu-turn'}`} aria-live="polite">
-          {isPlayer ? `YOUR TURN — ${Math.ceil(timeLeft)}s` : `ENEMY TURN — ${timeLeft.toFixed(1)}s`}
-        </div>
-        <div className="turn-track" aria-hidden="true">
-          <div className={`turn-fill ${isPlayer ? '' : 'enemy'}`} style={{ width: `${frac * 100}%` }} />
-        </div>
       </div>
       <HealthBar side="cpu" hp={cpuHp} maxHp={maxHp} />
+    </div>
+  );
+}
+
+// Turn countdown, rendered directly above the typing card.
+export function TurnTimer({ turn, timeLeft, turnTotal }) {
+  const isPlayer = turn === 'player';
+  const frac = Math.max(0, Math.min(1, timeLeft / Math.max(turnTotal, 0.001)));
+  return (
+    <div className="turn-timer">
+      <div className={`turn-banner ${isPlayer ? 'player-turn' : 'cpu-turn'}`} aria-live="polite">
+        {isPlayer ? `YOUR TURN — ${Math.ceil(timeLeft)}s` : `ENEMY TURN — ${timeLeft.toFixed(1)}s`}
+      </div>
+      <div className="turn-track" aria-hidden="true">
+        <div className={`turn-fill ${isPlayer ? '' : 'enemy'}`} style={{ width: `${frac * 100}%` }} />
+      </div>
     </div>
   );
 }
