@@ -48,7 +48,6 @@ export function useTypingGame({ difficultyId, pixiRef }) {
   const attackingRef = useRef(false);
   const matchStartRef = useRef(0);
   const challengeStartRef = useRef(0);
-  const challengeErrorsRef = useRef(0);
   const pausedAccumRef = useRef(0); // total ms spent paused
   const pauseStartRef = useRef(0);
   const totalCorrectRef = useRef(0);
@@ -175,15 +174,20 @@ export function useTypingGame({ difficultyId, pixiRef }) {
   });
 
   // --- player attack ----------------------------------------------------------------
-  const completeChallenge = useCallback(async () => {
+  const completeChallenge = useCallback(async (finalTyped) => {
     if (attackingRef.current || statusRef.current !== 'playing') return;
     attackingRef.current = true;
     const text = challengeRef.current;
     const challengeMs = Date.now() - challengeStartRef.current - pausedAccumRef.current;
     const wpm = calculateWPM(text.length, challengeMs);
-    const errors = challengeErrorsRef.current;
-    // Accuracy for this strike: correct chars of this challenge vs its length.
-    const strikeAcc = text.length === 0 ? 100 : ((text.length - Math.min(errors, text.length)) / text.length) * 100;
+    // Strike accuracy judges the final text: correcting mistakes (Backspace)
+    // costs time (lower WPM) but restores accuracy. Sloppy keys still reset
+    // combo and drag down match accuracy at the moment they are pressed.
+    let correctChars = 0;
+    for (let i = 0; i < text.length; i++) {
+      if (finalTyped[i] === text[i]) correctChars += 1;
+    }
+    const strikeAcc = text.length === 0 ? 100 : (correctChars / text.length) * 100;
     const comboNow = comboRef.current + 1;
     comboRef.current = comboNow;
     maxComboRef.current = Math.max(maxComboRef.current, comboNow);
@@ -233,7 +237,6 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     // Next challenge.
     const next = pickChallenge(pool, text);
     challengeRef.current = next;
-    challengeErrorsRef.current = 0;
     challengeStartRef.current = Date.now();
     setChallenge(next);
     setTyped('');
@@ -256,7 +259,6 @@ export function useTypingGame({ difficultyId, pixiRef }) {
             totalCorrectRef.current += 1;
             audio.playKey();
           } else {
-            challengeErrorsRef.current += 1;
             comboRef.current = 0;
             setCombo(0);
             audio.playError();
@@ -266,7 +268,9 @@ export function useTypingGame({ difficultyId, pixiRef }) {
       }
       setTyped(next);
       refreshLive();
-      if (next === target) completeChallenge();
+      // Attack as soon as the full length is typed — mistakes don't block
+      // the strike, they reduce its accuracy (and reset combo above).
+      if (next.length === target.length) completeChallenge(next);
     },
     [completeChallenge, refreshLive, showFeedback, typed],
   );
@@ -312,7 +316,6 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     critsRef.current = 0;
     doneRef.current = 0;
     wpmSumRef.current = 0;
-    challengeErrorsRef.current = 0;
     pausedAccumRef.current = 0;
     attackingRef.current = false;
     matchStartRef.current = Date.now();

@@ -9,8 +9,9 @@ export function HowToPlay({ onBack }) {
         <p className="lede">Type fast. Strike hard. Survive.</p>
         <ul className="howto-list">
           <li>
-            A typing challenge appears. <strong>Type it exactly</strong> — correct characters glow
-            cyan, mistakes burn red.
+            A typing challenge appears. <strong>Type it out</strong> — correct characters glow
+            cyan, mistakes burn red. <strong>Mistakes never block your attack</strong>, but each
+            one lowers accuracy, resets your combo, and weakens the strike.
           </li>
           <li>
             Finish a challenge to unleash an attack. <strong>Faster, more accurate typing with a
