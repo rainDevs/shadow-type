@@ -87,12 +87,12 @@ export class Fighter {
   }
 
   buildBody() {
-    // Ground shadow + faction glow (feet at local y=0).
+    // Ground shadow + faction glow, sized to the sprite footprint.
     this.aura = new Graphics();
-    this.aura.ellipse(0, 4, 52, 10);
+    this.aura.ellipse(0, 6, 95, 13);
     this.aura.fill({ color: 0x000000, alpha: 0.45 });
     this.auraGlow = new Graphics();
-    this.auraGlow.ellipse(0, 4, 62, 13);
+    this.auraGlow.ellipse(0, 6, 110, 16);
     this.auraGlow.fill({ color: this.accent, alpha: 0.22 });
     this.root.addChild(this.auraGlow);
     this.root.addChild(this.aura);
