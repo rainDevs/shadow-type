@@ -41,7 +41,7 @@ export function addHighScore(entry) {
     score: Number(entry.score) || 0,
     wpm: Math.round(Number(entry.wpm) || 0),
     accuracy: Number(entry.accuracy) || 0,
-    difficulty: entry.difficulty ?? 'normal',
+    difficulty: entry.difficulty ?? 'medium',
     date: Date.now(),
   };
   scores.push(record);
@@ -62,7 +62,9 @@ export const DEFAULT_SETTINGS = {
   sfxVolume: 0.7,
   muted: false,
   reducedMotion: false,
-  difficulty: 'normal',
+  hero: 'hero-1',
+  mode: 'medium',
+  difficulty: 'medium',
 };
 
 export function loadSettings() {

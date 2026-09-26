@@ -1,31 +1,38 @@
-// Sprite fighters (Ozzbit male hero, see male_hero_free/LICENSE.txt).
-// AnimatedSprite clips per state; factions differ by tint + aura.
-// Same class API as before, so combat code is untouched.
+// Hero-sprite fighters: tiny pixel heroes (CraftPix) as Pixi AnimatedSprites.
+// Strips are horizontal 42x42 cells. RunAttack1 = heavy (>=10 dmg),
+// RunAttack2 = light (<10 dmg).
 
 import { AnimatedSprite, Assets, Container, Graphics, Rectangle, Texture } from 'pixi.js';
+import { FRAME_H, FRAME_W, HERO_SCALE, HERO_SHEETS, HEROES } from '../data/heroes.js';
 
-const FRAME = 128;
-const SPRITE_SCALE = 5;
-// Measured union of non-transparent pixels across all sheets: every clip
-// shares the same feet baseline, so one tight box fits all with no pop.
-const CROP = { x: 42, y: 29, w: 68, h: 50 };
-// Idle stance center within the crop: anchor bodies here so the shadow
-// (drawn at local x=0) sits centered under the fighter in every clip.
-const BODY_ANCHOR_X = (63 - CROP.x) / CROP.w;
+// Ground-anchored impact height in world px (fighter is 42*4.5 = 189px tall).
+const HIT_OFFSET = 116;
 
-const SHEETS = {
-  idle: { file: 'male_hero-idle.png', frames: 10, fps: 10, loop: true },
-  atk1: { file: 'male_hero-combo_1.png', frames: 3, fps: 16, loop: false },
-  atk2: { file: 'male_hero-combo_1_end.png', frames: 4, fps: 16, loop: false },
-  fall: { file: 'male_hero-fall.png', frames: 4, fps: 10, loop: false },
-  fallLoop: { file: 'male_hero-fall_loop.png', frames: 3, fps: 8, loop: true },
-  jump: { file: 'male_hero-jump.png', frames: 6, fps: 12, loop: false },
-};
+const FACTION_TINT = { player: 0xffffff, cpu: 0xffffff };
 
-// Near-identical twins; factions read via aura, portraits and names.
-const FACTION_TINT = { player: 0xffffff, cpu: 0xe8ecf2 };
+// heroId -> { stateKey: Texture[] }
+const textureCache = {};
 
-let sheetCache = null;
+function heroKey(heroId) {
+  return HEROES[heroId] ? heroId : 'hero-1';
+}
+
+function heroFolder(heroId) {
+  return HEROES[heroKey(heroId)].folder;
+}
+
+function sliceStrip(base, frames) {
+  const out = [];
+  for (let i = 0; i < frames; i++) {
+    out.push(
+      new Texture({
+        source: base.source,
+        frame: new Rectangle(i * FRAME_W, 0, FRAME_W, FRAME_H),
+      }),
+    );
+  }
+  return out;
+}
 
 function hexToRgb(hex) {
   return [(hex >> 16) & 255, (hex >> 8) & 255, hex & 255];
@@ -39,33 +46,42 @@ function mixHex(a, b, t) {
 }
 
 export class Fighter {
-  // Load + slice every sheet once (Pixi caches the base textures).
-  static async loadSheets() {
-    if (sheetCache) return sheetCache;
-    const base = import.meta.env.BASE_URL || '/';
-    sheetCache = {};
-    for (const [key, sheet] of Object.entries(SHEETS)) {
-      const texture = await Assets.load(`${base}sprites/${sheet.file}`);
-      texture.source.scaleMode = 'nearest';
-      const frames = [];
-      for (let i = 0; i < sheet.frames; i++) {
-        frames.push(
-          new Texture({
-            source: texture.source,
-            frame: new Rectangle(CROP.x + i * FRAME, CROP.y, CROP.w, CROP.h),
-          }),
-        );
+  // Load one hero's strips. Keep old no-arg shape working (defaults hero-1).
+  static async loadHero(heroId = 'hero-1') {
+    const key = heroKey(heroId);
+    if (textureCache[key]) return textureCache[key];
+    const folder = heroFolder(key);
+    const states = {};
+    for (const [stateKey, meta] of Object.entries(HERO_SHEETS)) {
+      const url = `/sprites/hero-${folder}-${meta.file}.png`;
+      const base = await Assets.load(url);
+      if (base?.source) {
+        try {
+          base.source.scaleMode = 'nearest';
+        } catch {
+          /* crisp pixels are best-effort */
+        }
       }
-      sheetCache[key] = frames;
+      states[stateKey] = sliceStrip(base, meta.frames);
     }
-    return sheetCache;
+    textureCache[key] = states;
+    return states;
   }
 
-  constructor({ side, accent }) {
-    if (!sheetCache) throw new Error('Fighter.loadSheets() must run first');
+  static async loadSheets(heroId) {
+    // Called as loadSheets() historically; now accepts the player hero.
+    // PixiGame loads both fighters explicitly, so this stays a thin alias.
+    return Fighter.loadHero(heroId ?? 'hero-1');
+  }
+
+  constructor({ side, accent, heroId }) {
+    const key = heroKey(heroId);
+    if (!textureCache[key]) throw new Error(`Fighter.loadHero(${key}) must run first`);
     this.side = side;
     this.dir = side === 'player' ? 1 : -1;
     this.accent = accent;
+    this.heroId = key;
+    this.textures = textureCache[key];
     this.factionTint = FACTION_TINT[side];
     this.root = new Container();
     this.idlePhase = Math.random() * Math.PI * 2;
@@ -77,28 +93,26 @@ export class Fighter {
   }
 
   makeClip(key) {
-    const sheet = SHEETS[key];
-    const sprite = new AnimatedSprite(sheetCache[key]);
-    sprite.anchor.set(BODY_ANCHOR_X, 1);
-    sprite.scale.set(this.dir * SPRITE_SCALE, SPRITE_SCALE);
-    sprite.animationSpeed = sheet.fps / 60;
-    sprite.loop = sheet.loop;
-    sprite.tint = this.factionTint;
+    const meta = HERO_SHEETS[key];
+    // Manual tick (autoUpdate=false) so pause + defeat freeze correctly.
+    const sprite = new AnimatedSprite(this.textures[key], false);
+    sprite.animationSpeed = meta.fps / 60;
+    sprite.loop = meta.loop;
+    sprite.anchor.set(0.5, 1);
+    sprite.scale.set(HERO_SCALE * this.dir, HERO_SCALE);
+    sprite.position.set(0, 0);
     sprite.visible = false;
-    sprite.autoUpdate = false; // advanced manually so pause freezes fighters
     return sprite;
   }
 
   buildBody() {
-    // Ground shadow + faction glow, sized to the sprite footprint.
-    // Ground shadow: defined circle centered under the feet.
     this.aura = new Graphics();
-    this.aura.ellipse(0, 8, 70, 18);
+    this.aura.ellipse(0, 8, 90, 23);
     this.aura.fill({ color: 0x000000, alpha: 0.5 });
-    this.aura.ellipse(0, 8, 70, 18);
+    this.aura.ellipse(0, 8, 90, 23);
     this.aura.stroke({ color: this.accent, width: 2, alpha: 0.5 });
     this.auraGlow = new Graphics();
-    this.auraGlow.ellipse(0, 8, 86, 23);
+    this.auraGlow.ellipse(0, 8, 110, 30);
     this.auraGlow.fill({ color: this.accent, alpha: 0.16 });
     this.root.addChild(this.auraGlow);
     this.root.addChild(this.aura);
@@ -108,11 +122,12 @@ export class Fighter {
 
     this.clips = {
       idle: this.makeClip('idle'),
-      atk1: this.makeClip('atk1'),
-      atk2: this.makeClip('atk2'),
-      fall: this.makeClip('fall'),
-      fallLoop: this.makeClip('fallLoop'),
-      jump: this.makeClip('jump'),
+      dash: this.makeClip('dash'),
+      attackHigh: this.makeClip('attackHigh'),
+      attackLow: this.makeClip('attackLow'),
+      hit: this.makeClip('hit'),
+      dead: this.makeClip('dead'),
+      victory: this.makeClip('victory'),
     };
     for (const clip of Object.values(this.clips)) this.body.addChild(clip);
     this.current = null;
@@ -137,15 +152,25 @@ export class Fighter {
     for (const clip of Object.values(this.clips)) clip.tint = tint;
   }
 
-  playAttack() {
+  playDash() {
     if (this.defeated) return;
-    this.showClip('atk1');
+    this.showClip('dash');
+  }
+
+  playAttack(damage) {
+    if (this.defeated) return;
+    const key = (damage ?? 10) >= 10 ? 'attackHigh' : 'attackLow';
+    this.showClip(key);
     this.current.onComplete = () => {
-      if (this.defeated) return;
-      this.showClip('atk2');
-      this.current.onComplete = () => {
-        if (!this.defeated && this.currentKey() !== 'idle') this.showClip('idle');
-      };
+      if (!this.defeated && this.currentKey() !== 'idle') this.showClip('idle');
+    };
+  }
+
+  playHit() {
+    if (this.defeated) return;
+    this.showClip('hit');
+    this.current.onComplete = () => {
+      if (!this.defeated && this.currentKey() !== 'idle') this.showClip('idle');
     };
   }
 
@@ -155,7 +180,7 @@ export class Fighter {
 
   // Mid-torso impact point in world space.
   hitPoint() {
-    return { x: this.root.x, y: this.root.y - 140 };
+    return { x: this.root.x, y: this.root.y - HIT_OFFSET };
   }
 
   setBasePosition(x, y) {
@@ -165,9 +190,11 @@ export class Fighter {
   }
 
   // Idle: hover breath (called every frame; ticker advances sprites).
-  // Pause freezes everything; defeat freezes motion but lets the fall clip play.
+  // Pause freezes everything; defeat freezes motion but lets the dead clip play.
   update(time, paused, ticker) {
-    if (!paused && ticker && this.current) this.current.update(ticker);
+    if (!paused && ticker && this.current) {
+      this.current.update(ticker);
+    }
     if (paused || this.defeated) return;
     const t = time * 0.002 + this.idlePhase;
     this.root.y = this.baseY + Math.sin(t) * 4;
@@ -187,19 +214,12 @@ export class Fighter {
 
   playDefeat() {
     this.defeated = true;
-    this.showClip('fall');
-    this.current.onComplete = () => {
-      if (this.defeated) this.showClip('fallLoop');
-    };
-    this.root.rotation = 0.12 * this.dir;
+    this.showClip('dead'); // loop:false holds the fallen frame
+    this.root.rotation = 0;
   }
 
   playVictoryPose() {
-    this.showClip('jump');
-    this.current.onComplete = () => {
-      if (!this.defeated) this.showClip('idle');
-    };
-    this.root.y = this.baseY - 26;
+    this.showClip('victory'); // JumpAttack, looped
     this.auraPulse = 0.2;
   }
 

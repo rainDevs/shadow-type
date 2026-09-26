@@ -4,23 +4,55 @@
 import { useEffect, useRef, useState } from 'react';
 import { PixiGame } from '../game/PixiGame.js';
 import { useTypingGame } from '../hooks/useTypingGame.js';
+import { HEROES } from '../data/heroes.js';
 import { BattleHUD, TurnTimer } from './BattleHUD.jsx';
 import { TypingChallenge } from './TypingChallenge.jsx';
 import { PauseMenu } from './PauseMenu.jsx';
 import { VictoryScreen } from './VictoryScreen.jsx';
 import { DefeatScreen } from './DefeatScreen.jsx';
 
-export function BattleScreen({ difficulty, settings, onExit }) {
+export function BattleScreen({
+  heroId,
+  cpuHeroId,
+  modeId,
+  mode,
+  difficulty,
+  difficultyId,
+  settings,
+  onExit,
+}) {
   const containerRef = useRef(null);
   const gameRef = useRef(null);
   const [rendererFailed, setRendererFailed] = useState(false);
 
-  const game = useTypingGame({ difficultyId: difficulty, pixiRef: gameRef });
+  const playerHero = HEROES[heroId] ? heroId : 'hero-1';
+  const enemyHero = HEROES[cpuHeroId] ? cpuHeroId : 'hero-2';
+  const resolvedMode = modeId ?? mode ?? 'medium';
+  const resolvedDifficulty = difficultyId ?? difficulty ?? 'medium';
+
+  const game = useTypingGame({
+    modeId: resolvedMode,
+    difficultyId: resolvedDifficulty,
+    pixiRef: gameRef,
+  });
   const { status, results } = game;
+
+  // End-of-fight banner: Victory!/Defeat! over the death animation, with
+  // "click anywhere to continue" appearing after a beat (CSS-delayed).
+  // Clicks/keys only continue once the beat has passed (ref timestamp).
+  const announceAtRef = useRef(0);
+  useEffect(() => {
+    if (status === 'announce') announceAtRef.current = Date.now();
+  }, [status]);
+  const canContinue = () => Date.now() - announceAtRef.current >= 1400;
 
   useEffect(() => {
     let cancelled = false;
-    const pixi = new PixiGame({ reducedMotion: settings.reducedMotion });
+    const pixi = new PixiGame({
+      reducedMotion: settings.reducedMotion,
+      playerHero,
+      cpuHero: enemyHero,
+    });
     gameRef.current = pixi;
     pixi
       .init(containerRef.current)
@@ -35,9 +67,10 @@ export function BattleScreen({ difficulty, settings, onExit }) {
       pixi.destroy();
       gameRef.current = null;
     };
-  }, [settings.reducedMotion]);
+  }, [enemyHero, playerHero, settings.reducedMotion]);
 
-  // Keyboard: ESC pauses/resumes, ENTER rematches on game-over screens.
+  // Keyboard: ESC pauses/resumes, ENTER continues past the end banner,
+  // ENTER rematches on game-over screens.
   // Hidden tab auto-pauses so timers don't run while the player is away.
   useEffect(() => {
     const onKey = (e) => {
@@ -46,8 +79,14 @@ export function BattleScreen({ difficulty, settings, onExit }) {
           e.preventDefault();
           game.togglePause();
         }
-      } else if (e.key === 'Enter') {
-        if ((status === 'won' || status === 'lost') && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'BUTTON') {
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        if (status === 'announce') {
+          if (canContinue() && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'BUTTON') {
+            e.preventDefault();
+            game.acknowledgeEnd();
+          }
+        } else if ((status === 'won' || status === 'lost') && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'BUTTON') {
+          e.preventDefault();
           game.restart();
         }
       }
@@ -64,6 +103,7 @@ export function BattleScreen({ difficulty, settings, onExit }) {
   });
 
   const over = status === 'won' || status === 'lost';
+  const typingHidden = over || status === 'announce';
 
   return (
     <div className="battle-root">
@@ -78,6 +118,10 @@ export function BattleScreen({ difficulty, settings, onExit }) {
             accuracy={game.accuracy}
             score={game.score}
             wordsDone={game.wordsDone}
+            playerName={HEROES[playerHero]?.name ?? 'PLAYER'}
+            cpuName={HEROES[enemyHero]?.name ?? 'CPU'}
+            playerHeroId={playerHero}
+            cpuHeroId={enemyHero}
           />
         </div>
         {rendererFailed && (
@@ -91,8 +135,32 @@ export function BattleScreen({ difficulty, settings, onExit }) {
             {game.feedback.text}
           </div>
         )}
+        {status === 'countdown' && (
+          <div className="countdown-overlay" aria-live="polite" aria-label={game.countdown}>
+            <span
+              key={game.countdown}
+              className={`countdown-num ${game.countdown === 'Type!' ? 'go' : ''}`}
+            >
+              {game.countdown}
+            </span>
+          </div>
+        )}
+        {status === 'announce' && results && (
+          <div
+            className="announce-overlay"
+            onClick={() => {
+              if (canContinue()) game.acknowledgeEnd();
+            }}
+            aria-live="polite"
+          >
+            <span className={`announce-title ${results.won ? 'won' : 'lost'}`}>
+              {results.won ? 'Victory!' : 'Defeat!'}
+            </span>
+            <span className="announce-hint">click anywhere to continue</span>
+          </div>
+        )}
       </div>
-      {!over && (
+      {!typingHidden && (
         <>
           <TurnTimer turn={game.turn} timeLeft={game.timeLeft} turnTotal={game.turnTotal} />
           <TypingChallenge

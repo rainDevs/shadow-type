@@ -3,8 +3,9 @@
 // comes from window adjusted-WPM. Then a quick CPU strike. React owns ALL
 // game logic; PixiGame only plays animations on command.
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DIFFICULTIES } from '../data/difficulty.js';
+import { MODES } from '../data/modes.js';
 import { TIMED_WORDS } from '../data/timedWords.js';
 import { calculateWPM, calculateAccuracy } from '../utils/typingMetrics.js';
 import { calculateWindowDamage } from '../utils/damageCalculator.js';
@@ -14,6 +15,15 @@ import { qualifiesForHighScores, addHighScore } from '../utils/storage.js';
 import { audio } from '../utils/audioManager.js';
 
 let feedbackId = 0;
+
+// Pre-fight countdown: lets the player prepare before the first turn.
+// The passage is already visible (sharp, input disabled) so they can read it.
+const COUNTDOWN_STEPS = [
+  { value: '3', ms: 750, freq: 440 },
+  { value: '2', ms: 750, freq: 440 },
+  { value: '1', ms: 750, freq: 440 },
+  { value: 'Type!', ms: 600, freq: 880 },
+];
 
 // Beat between time-up and the strike (lets the player see TIME!).
 const STRIKE_DELAY_MS = 650;
@@ -46,13 +56,32 @@ function wordBounds(passage) {
   return bounds;
 }
 
-export function useTypingGame({ difficultyId, pixiRef }) {
-  const config = DIFFICULTIES[difficultyId] ?? DIFFICULTIES.normal;
+export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef }) {
+  // Mode sets turn length + word pool; difficulty sets CPU damage.
+  // Accept both new (modeId/difficultyId) and legacy (difficulty as id) props.
+  const modeKey = modeId ?? mode ?? 'medium';
+  const diffKeyRaw = difficultyId ?? difficulty ?? 'medium';
+  const diffKey = diffKeyRaw === 'normal' ? 'medium' : diffKeyRaw;
+  const modeCfg = MODES[modeKey] ?? MODES.medium;
+  const diffCfg = DIFFICULTIES[diffKey] ?? DIFFICULTIES.medium;
+  const config = useMemo(
+    () => ({
+      ...modeCfg,
+      ...diffCfg,
+      turnSeconds: modeCfg.turnSeconds,
+      wordPool: modeCfg.wordPool,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [modeKey, diffKey],
+  );
+  const difficultyLabel = diffCfg.id;
+  const modeLabel = modeCfg.id;
   const pool = TIMED_WORDS[config.wordPool];
   const turnMs = config.turnSeconds * 1000;
   const maxHp = config.maxHp;
 
-  const [status, setStatus] = useState('playing'); // playing | paused | won | lost
+  const [status, setStatus] = useState('countdown'); // countdown | playing | paused | won | lost
+  const [countdown, setCountdown] = useState('3');
   const [turn, setTurn] = useState('player'); // player | cpu
   const [playerHp, setPlayerHp] = useState(maxHp);
   const [cpuHp, setCpuHp] = useState(maxHp);
@@ -67,7 +96,7 @@ export function useTypingGame({ difficultyId, pixiRef }) {
   const [liveWpm, setLiveWpm] = useState(0);
   const [liveAcc, setLiveAcc] = useState(100);
 
-  const statusRef = useRef('playing');
+  const statusRef = useRef('countdown');
   const turnRef = useRef('player');
   const playerHpRef = useRef(maxHp);
   const cpuHpRef = useRef(maxHp);
@@ -89,6 +118,7 @@ export function useTypingGame({ difficultyId, pixiRef }) {
   const turnsRef = useRef(0);
   const wpmSumRef = useRef(0);
   const windowTimerRef = useRef(null);
+  const countdownTimerRef = useRef(null);
   const cpuTimeoutRef = useRef(null);
   const strikeTimeoutRef = useRef(null);
   const strikeDueAtRef = useRef(0);
@@ -169,23 +199,66 @@ export function useTypingGame({ difficultyId, pixiRef }) {
         totalDamage: totalDamageRef.current,
         turns: turnsRef.current,
         words: matchWordsRef.current,
-        difficulty: difficultyId,
+        difficulty: difficultyLabel,
+        mode: modeLabel,
         qualifies: qualifiesForHighScores(finalScore),
       });
-      setStatusBoth(won ? 'won' : 'lost');
+      // Announce first (fighters play defeat/victory in full view), then the
+      // player clicks anywhere to reveal the results screen.
+      setStatusBoth('announce');
     },
-    [difficultyId, pixiRef, setStatusBoth],
+    [difficultyLabel, modeLabel, pixiRef, setStatusBoth],
   );
 
+  // Player clicked through the end-of-fight banner → show results.
+  const acknowledgeEnd = useCallback(() => {
+    if (statusRef.current !== 'announce') return;
+    setStatusBoth(results?.won ? 'won' : 'lost');
+  }, [results, setStatusBoth]);
+
+  // --- countdown: 3-2-1-Type! before the first turn of a match -------------------
+  // Builds the opening passage up front so the player can read it while the
+  // countdown runs (input stays disabled until status flips to playing).
+  const runCountdown = useCallback(() => {
+    const myGen = matchGenRef.current;
+    if (countdownTimerRef.current) clearTimeout(countdownTimerRef.current);
+    setStatusBoth('countdown');
+    const text = buildPassage(pool, PASSAGE_WORDS);
+    passageRef.current = text;
+    boundsRef.current = wordBounds(text);
+    bankedRef.current = 0;
+    recordRef.current = [];
+    setPassage(text);
+    setTyped('');
+    setWordsDone(0);
+    setLiveWpm(0);
+    setTimeLeft(config.turnSeconds);
+    let i = 0;
+    const step = () => {
+      if (!aliveRef.current || myGen !== matchGenRef.current) return;
+      if (i >= COUNTDOWN_STEPS.length) {
+        setStatusBoth('playing');
+        startPlayerTurnRef.current?.(true); // reuse the previewed text
+        return;
+      }
+      const s = COUNTDOWN_STEPS[i];
+      setCountdown(s.value);
+      audio.blip({ freq: s.freq, type: 'square', duration: 0.12, volume: 0.3 });
+      i += 1;
+      countdownTimerRef.current = setTimeout(step, s.ms);
+    };
+    step();
+  }, [config, pool, setStatusBoth]);
+
   // --- player turn ---------------------------------------------------------------------------
-  const startPlayerTurn = useCallback(() => {
+  const startPlayerTurn = useCallback((keepText = false) => {
     if (!aliveRef.current || statusRef.current !== 'playing') return;
     setTurnBoth('player');
     busyRef.current = false;
     struckRef.current = false;
     setLocked(false);
     turnsRef.current += 1;
-    const text = buildPassage(pool, PASSAGE_WORDS);
+    const text = keepText && passageRef.current ? passageRef.current : buildPassage(pool, PASSAGE_WORDS);
     passageRef.current = text;
     boundsRef.current = wordBounds(text);
     bankedRef.current = 0;
@@ -452,10 +525,11 @@ export function useTypingGame({ difficultyId, pixiRef }) {
 
   // --- restart ------------------------------------------------------------------------------------------
   const restart = useCallback(() => {
-    matchGenRef.current += 1; // abort any in-flight strike/damage work
+    matchGenRef.current += 1; // abort any in-flight strike/damage/countdown work
     if (windowTimerRef.current) clearInterval(windowTimerRef.current);
     if (cpuTimeoutRef.current) clearTimeout(cpuTimeoutRef.current);
     if (strikeTimeoutRef.current) clearTimeout(strikeTimeoutRef.current);
+    if (countdownTimerRef.current) clearTimeout(countdownTimerRef.current);
     struckRef.current = false;
     setLocked(false);
     playerHpRef.current = maxHp;
@@ -478,10 +552,9 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     setLiveAcc(100);
     pixiRef.current?.setPaused(false);
     pixiRef.current?.reset();
-    setStatusBoth('playing');
     audio.startMusic();
-    startPlayerTurn();
-  }, [maxHp, pixiRef, setStatusBoth, startPlayerTurn]);
+    runCountdown();
+  }, [maxHp, pixiRef, runCountdown]);
 
   const submitScore = useCallback(
     (name) => {
@@ -503,12 +576,15 @@ export function useTypingGame({ difficultyId, pixiRef }) {
   useEffect(() => {
     aliveRef.current = true;
     audio.startMusic();
-    startPlayerTurn();
+    // Countdown drives its own timers; initial state already matches step 1.
+    const t = setTimeout(() => runCountdown(), 0);
     return () => {
+      clearTimeout(t);
       aliveRef.current = false;
       if (windowTimerRef.current) clearInterval(windowTimerRef.current);
       if (cpuTimeoutRef.current) clearTimeout(cpuTimeoutRef.current);
       if (strikeTimeoutRef.current) clearTimeout(strikeTimeoutRef.current);
+      if (countdownTimerRef.current) clearTimeout(countdownTimerRef.current);
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
       audio.stopMusic();
     };
@@ -517,6 +593,7 @@ export function useTypingGame({ difficultyId, pixiRef }) {
 
   return {
     status,
+    countdown,
     turn,
     playerHp,
     cpuHp,
@@ -538,6 +615,7 @@ export function useTypingGame({ difficultyId, pixiRef }) {
     pause,
     resume,
     restart,
+    acknowledgeEnd,
     submitScore,
   };
 }

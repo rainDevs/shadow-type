@@ -13,21 +13,29 @@ npm install
 npm run dev
 ```
 
-Pick a time mode (**15 SECS / 30 SECS / 60 SECS**), type the flowing word river
-Monkeytype-style, and empty the enemy's 100 HP before it empties yours.
+Pick your hero, pick a time mode (**15 SECS / 30 SECS / 60 SECS**), pick a
+difficulty (**EASY / MEDIUM / HARD**), then type the flowing word river
+Monkeytype-style and empty the enemy's 100 HP before it empties yours.
 `ESC` pauses.
+
+Your CPU opponent is a random hero from the two you didn't pick.
 
 ## How a fight works
 
-1. **Your turn** — a continuous passage streams for the whole window
+1. **Countdown** — `3 · 2 · 1 · Type!` over the arena. The opening passage is
+   already visible so you can get ready; input unlocks on `Type!`.
+2. **Your turn** — a continuous passage streams for the whole window
    (15 / 30 / 60 seconds depending on mode). Finish a word and the next
    words keep flowing; the text extends itself.
-2. **Time expires** — the panel blurs, a short beat plays, then your fighter
-   strikes with damage from that turn's stats.
-3. **Enemy turn** — after a short telegraph the CPU strikes back for
-   difficulty-scaled damage.
-4. Repeat until someone hits **0 HP**, then results, high-score entry,
-   rematch or menu.
+3. **Time expires** — the panel locks, a short beat plays, then your fighter
+   closes in, touches the enemy, and strikes with damage from that turn's
+   stats. Heavy hits (10+) use the big slash, light hits the quick slash.
+4. **Enemy turn** — after a short telegraph the CPU dashes in and strikes
+   back for difficulty-scaled damage.
+5. Repeat until someone hits **0 HP**: the loser plays its death animation
+   under a **Victory! / Defeat!** banner while the winner loops its triumph
+   animation with sparkles — **click anywhere to continue** to results,
+   high-score entry, rematch or menu.
 
 Mistakes never block you: wrong keys burn red, cost accuracy, and reset
 nothing but your momentum — Backspace fixes cost time (lower WPM) but restore
@@ -35,7 +43,7 @@ accuracy.
 
 ## Damage logic
 
-Damage is deterministic: same typing, same damage. No randomness, no crits.
+Damage is deterministic: same typing, same damage. No crits.
 
 **Step 1 — measure the turn** (`src/hooks/useTypingGame.js`)
 
@@ -73,8 +81,8 @@ there is no second multiplier that would square the penalty. Examples:
 Rate-based (not window-length-based), so longer modes grant no free damage:
 every WPM point counts on every mode.
 
-**CPU damage** is a fixed range per mode (Easy 6–10, 30 SECS 8–12,
-60 SECS 8–14), rolled per strike — the only randomness in combat.
+**CPU damage** is a fixed range per difficulty (Easy 5–10, Medium 10–15,
+Hard 15–20), rolled per strike — the only randomness in combat.
 
 **Score** — 10 points per correct character as words complete, plus a window
 bonus from accuracy, words finished and damage dealt
@@ -82,30 +90,35 @@ bonus from accuracy, words finished and damage dealt
 
 ## Tech
 
-- **PixiJS** owns the arena: sprite fighters (idle / attack / hurt-flash /
-  fall / victory clips), pixel forest parallax, particles, slashes, screen
-  shake, damage numbers, floating leaves and fireflies.
-- **React** owns everything else: menus, HUD, typing engine, game state,
-  pause, results, settings, high scores.
+- **PixiJS** owns the arena: CraftPix hero sprite fighters (idle, run,
+  two run-attacks gated on damage ≥ 10, hurt, death, looped victory),
+  procedural pixel backdrop, sword-slash arcs, particles, screen shake,
+  damage numbers, celebration sparkles.
+- **React** owns everything else: hero/mode/difficulty select, countdown and
+  end banners, HUD, typing engine, game state, pause, results, settings,
+  high scores.
 - The bridge is one small API (`src/game/PixiGame.js`): `playerAttack()`,
   `cpuAttack()`, `victory()`, `defeat()`, `reset()`, `setPaused()`,
   `destroy()`. Game logic never lives in Pixi code.
-- Sound is 100% synthesized Web Audio — keystrokes, attacks, hits, jingles
-  and generative battle music, zero audio files (`src/utils/audioManager.js`).
+- Sound is 100% synthesized Web Audio — countdown ticks, keystrokes,
+  attacks, hits, jingles and generative battle music, zero audio files
+  (`src/utils/audioManager.js`).
 
 ## Project layout
 
 ```text
 src/
-  components/   menus, HUD, typing panel, pause, results
+  components/   menus, selectors, HUD, typing panel, pause, results
   game/         PixiGame, Fighter (sprites), Background, particles
-  data/         word pools + difficulty/mode config
+  data/         heroes, modes, difficulty, word pools
   hooks/        useTypingGame (combat state machine), useLocalStorage
   utils/        damage/score/WPM math, audio, storage, random
+public/
+  sprites/      hero sprite strips served to the arena + menus
 ```
 
 ## Credits
 
-- Character sprites: Ozzbit Games (non-commercial, see `male_hero_free/`)
-- Forest background: Eder Muniz (see `Free Pixel Art Forest/`)
-- Pixel font: Press Start 2P (OFL)
+- Hero sprites: tiny pixel heroes (CraftPix free pack, see
+  `tiny-pixel-hero-sprites-with-melee-attacks/license.txt`)
+- Arena backdrop: procedural pixel art (no third-party assets)

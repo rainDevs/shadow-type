@@ -9,7 +9,7 @@ export function MainMenu({ onNavigate }) {
       </h1>
       <p className="st-subtitle">Type. Strike. Survive.</p>
       <nav className="st-menu" aria-label="Main menu">
-        <button type="button" className="menu-btn primary" onClick={() => onNavigate('difficulty')} autoFocus>
+        <button type="button" className="menu-btn primary" onClick={() => onNavigate('hero')} autoFocus>
           Start Fight
         </button>
         <button type="button" className="menu-btn" onClick={() => onNavigate('howto')}>
@@ -23,7 +23,6 @@ export function MainMenu({ onNavigate }) {
         </button>
       </nav>
       <p className="st-footer">Every keystroke is an attack</p>
-      <p className="st-credit">Character sprites: Ozzbit Games · Background: Eder Muniz</p>
     </div>
   );
 }

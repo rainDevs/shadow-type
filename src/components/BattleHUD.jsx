@@ -1,18 +1,30 @@
 // Battle HUD: health bars, live stats, turn indicator + window timer.
 // Pure React — Pixi owns only the arena canvas below it.
 
-function HealthBar({ side, hp, maxHp }) {
+import { heroSpriteUrl, heroTheme } from '../data/heroes.js';
+
+function HealthBar({ side, hp, maxHp, name, heroId }) {
   const pct = Math.max(0, Math.min(100, (hp / Math.max(1, maxHp)) * 100));
   const low = pct <= 25;
-  const name = side === 'player' ? 'PLAYER' : 'COMPUTER';
-  const glyph = side === 'player' ? 'P' : 'C';
+  const display = name ?? (side === 'player' ? 'PLAYER' : 'COMPUTER');
+  const theme = heroTheme(heroId);
   return (
     <div className={`hud-fighter ${side}`}>
       <div className="hud-id">
-        <span className="hud-portrait" aria-hidden="true">{glyph}</span>
+        <span
+          className="hud-portrait"
+          aria-hidden="true"
+          style={{ borderColor: theme.light, ['--hero']: theme.light }}
+        >
+          {heroId ? (
+            <img src={heroSpriteUrl(heroId, 'idle')} alt="" draggable={false} />
+          ) : (
+            display.slice(0, 1)
+          )}
+        </span>
         <div className="hud-namehp">
-          <div className="hud-name">{name}</div>
-          <div className={`health-track ${low ? 'low' : ''}`} role="progressbar" aria-valuenow={Math.round(hp)} aria-valuemin="0" aria-valuemax={maxHp} aria-label={`${name} health`}>
+          <div className="hud-name">{display}</div>
+          <div className={`health-track ${low ? 'low' : ''}`} role="progressbar" aria-valuenow={Math.round(hp)} aria-valuemin="0" aria-valuemax={maxHp} aria-label={`${display} health`}>
             <div className="health-fill" style={{ width: `${pct}%` }} />
           </div>
           <div className="health-pct">{Math.round(hp)}/{maxHp}</div>
@@ -22,10 +34,10 @@ function HealthBar({ side, hp, maxHp }) {
   );
 }
 
-export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, wordsDone }) {
+export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, wordsDone, playerName, cpuName, playerHeroId, cpuHeroId }) {
   return (
     <div className="battle-hud">
-      <HealthBar side="player" hp={playerHp} maxHp={maxHp} />
+      <HealthBar side="player" hp={playerHp} maxHp={maxHp} name={playerName} heroId={playerHeroId} />
       <div className="hud-center">
         <div className="hud-stats">
           <span>
@@ -42,7 +54,7 @@ export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, wordsD
           </span>
         </div>
       </div>
-      <HealthBar side="cpu" hp={cpuHp} maxHp={maxHp} />
+      <HealthBar side="cpu" hp={cpuHp} maxHp={maxHp} name={cpuName} heroId={cpuHeroId} />
     </div>
   );
 }

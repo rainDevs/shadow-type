@@ -3,14 +3,15 @@ import { DIFFICULTIES, DIFFICULTY_IDS } from '../data/difficulty.js';
 import { Embers } from './Embers.jsx';
 
 export function DifficultySelector({ initial, onStart, onBack }) {
-  const [selected, setSelected] = useState(initial ?? 'normal');
+  const fallback = DIFFICULTIES[initial] ? initial : 'medium';
+  const [selected, setSelected] = useState(fallback);
 
   return (
     <div className="st-root">
       <Embers count={14} />
       <div className="panel">
         <h2>Select Difficulty</h2>
-        <p className="lede">Your typing skill becomes combat power.</p>
+        <p className="lede">Enemy strike power. Your typing is your defense.</p>
         <div className="diff-list" role="radiogroup" aria-label="Difficulty">
           {DIFFICULTY_IDS.map((id) => {
             const d = DIFFICULTIES[id];
