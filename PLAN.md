@@ -298,9 +298,10 @@ seconds. During a player turn, an endless stream of words appears — finishing
 one word instantly serves the next. When time expires, the fighter strikes and
 damage is computed from the turn's WPM and accuracy.
 
-Display a continuous flowing passage of words from the difficulty pool
-(Monkeytype-style). The passage extends itself so the player never runs out
-of text mid-turn.
+Display a continuous flowing passage of words from the central 1000-word
+bank (Monkeytype-style). The passage extends itself so the player never runs
+out of text mid-turn. Every turn draws fresh words; difficulty only affects
+CPU damage, never word selection.
 
 Examples (pool words):
 
@@ -314,9 +315,12 @@ midnight
 
 ## Difficulty
 
+Difficulty only affects enemy damage. Turn length comes from the mode
+(15 / 30 / 60 seconds); words always come from the shared bank.
+
 ### Easy
 
-Short words, 15-second turns.
+15-second turns.
 
 ```text
 ash fog hit run dark fight
@@ -324,7 +328,7 @@ ash fog hit run dark fight
 
 ### Normal
 
-Medium words, 30-second turns.
+30-second turns.
 
 ```text
 shadow warrior thunder silence
@@ -332,7 +336,7 @@ shadow warrior thunder silence
 
 ### Hard
 
-Long, tricky words, 60-second turns.
+60-second turns.
 
 ```text
 darkness precision lightning battlefield
@@ -411,16 +415,20 @@ Speed alone does not dominate accuracy.
 
 # 11. Damage System
 
-Damage scales 1–20 from the turn's accuracy-adjusted WPM (a rate, so window
+Damage scales 2–24 from the turn's accuracy-adjusted WPM (a rate, so window
 length grants no free damage):
 
 ```text
 damage =
-round(adjusted WPM / 4)
+round(adjusted WPM / 3.5)
 ```
 
-clamped to minimum 1, maximum 20. There are no critical hits and no
+clamped to minimum 2, maximum 24. There are no critical hits and no
 randomness — only typing skill. Every WPM point counts on every mode.
+
+Bands follow the standard adjusted-WPM skill benchmarks: Learning (<20),
+Beginner (20–35), Average (35–50), Productive (50–70), High Speed (70–90),
+Competitive (90+). The strike feedback names the tier.
 
 A player typing:
 
@@ -441,7 +449,7 @@ Display the calculated damage after each successful attack.
 Example:
 
 ```text
-+274  -11 DMG
+HIGH SPEED +274  -19 DMG
 ```
 
 ---
@@ -465,21 +473,21 @@ telegraph (no full mirrored window — no dead air).
 
 ```text
 telegraph: ~2.5 seconds
-damage: 6–10
+damage: 6–12
 ```
 
 ## Normal
 
 ```text
 telegraph: ~2.5 seconds
-damage: 10–16
+damage: 13–18
 ```
 
 ## Hard
 
 ```text
 telegraph: ~2 seconds
-damage: 14–22
+damage: 19–24
 ```
 
 The AI should create pressure without making the game impossible.
@@ -1209,18 +1217,13 @@ Enemy HP
 
 ---
 
-# 39. Timed Word Datasets
+# 39. Word Bank
 
-Create endless word pools, one per difficulty:
-
-### Easy Words (short, 60)
-
-### Normal Words (medium, 60+)
-
-### Hard Words (long/tricky, 55+)
-
-Words stream one at a time during a turn window; finishing a word instantly
-serves the next.
+One central repository of 1000 words (`src/data/words.js`), mixing arena
+flavor with general English. Each match shuffles a deck and every turn draws
+fresh words with no repeats; when the bank cycles, recently used words are
+withheld so consecutive turns stay different. Difficulty never affects word
+selection — only CPU damage.
 
 ---
 
@@ -1233,30 +1236,27 @@ Example:
 ```javascript
 const difficulties = {
   easy: {
-    turnSeconds: 15,
     cpuTelegraphMs: 2500,
     cpuDamageMin: 6,
-    cpuDamageMax: 10,
-    wordPool: "easy"
+    cpuDamageMax: 12,
   },
 
   normal: {
-    turnSeconds: 30,
-    cpuTelegraphMs: 2500,
-    cpuDamageMin: 10,
-    cpuDamageMax: 16,
-    wordPool: "normal"
+    cpuTelegraphMs: 2300,
+    cpuDamageMin: 13,
+    cpuDamageMax: 18,
   },
 
   hard: {
-    turnSeconds: 60,
     cpuTelegraphMs: 2000,
-    cpuDamageMin: 14,
-    cpuDamageMax: 22,
-    wordPool: "hard"
+    cpuDamageMin: 19,
+    cpuDamageMax: 24,
   }
 };
 ```
+
+Modes set only the turn length (15 / 30 / 60 seconds); words always come
+from the shared 1000-word bank.
 
 ---
 

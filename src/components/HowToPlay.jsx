@@ -19,8 +19,9 @@ export function HowToPlay({ onBack }) {
             you</strong> — just keep flowing. Backspace fixes errors but costs time.
           </li>
           <li>
-            When time expires, your fighter strikes. <strong>Damage (1–15) scales with your
-            turn's adjusted WPM</strong> — more accurate throughput, bigger hits.
+            When time expires, your fighter strikes. <strong>Damage (2–24) scales with your
+            turn's adjusted WPM</strong> — climb the tiers from LEARNING to COMPETITIVE
+            for bigger hits.
           </li>
           <li>
             Then the enemy answers with a quick strike of its own. Empty its health bar

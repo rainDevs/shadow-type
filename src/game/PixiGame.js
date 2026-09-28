@@ -40,6 +40,7 @@ export class PixiGame {
     this.sparkleTimer = 200;
     this.sparkleColor = 0;
     this.emberTimer = 0;
+    this.shootTimer = 2500;
     this.winFx = null;
     this.playerAccent = heroAccent(playerHero);
     this.cpuAccent = heroAccent(cpuHero);
@@ -74,6 +75,7 @@ export class PixiGame {
     const bg = await buildBackground(ARENA_WIDTH, ARENA_HEIGHT, GROUND_Y);
     this.world.addChild(bg.root);
     this.fog = bg.fog;
+    this.clouds = bg.clouds ?? [];
 
     this.player = new Fighter({ side: 'player', accent: this.playerGlow, heroId: this.playerHero });
     this.player.setBasePosition(PLAYER_HOME.x, PLAYER_HOME.y);
@@ -119,6 +121,19 @@ export class PixiGame {
     for (const f of this.fog) {
       f.x += f.userData.speed * dt;
       if (f.x - 220 > ARENA_WIDTH) f.x = -220;
+    }
+
+    // Pixel clouds drifting across the moonlit sky.
+    for (const c of this.clouds) {
+      c.x += c.userData.speed * dt;
+      if (c.x - c.userData.w > ARENA_WIDTH) c.x = -c.userData.w;
+    }
+
+    // Shooting star every few seconds (skipped in reduced motion).
+    this.shootTimer -= ticker.deltaMS;
+    if (this.shootTimer <= 0) {
+      this.shootTimer = 4000 + Math.random() * 5000;
+      if (!this.reducedMotion) this.shootStar();
     }
 
     // Ambient motes in each hero's glow color.
@@ -183,6 +198,36 @@ export class PixiGame {
   }
 
   // --- effects ---------------------------------------------------------------
+  // Shooting star: bright head with a cyan trail, streaking down-left.
+  shootStar() {
+    const g = new Graphics();
+    const sx = 250 + Math.random() * 850;
+    const sy = 40 + Math.random() * 160;
+    const len = 240;
+    const dx = -0.92;
+    const dy = 0.39;
+    const trail = 90;
+    this.fxLayer.addChild(g);
+    return this.tween(550, (k) => {
+      const hx = sx + dx * len * k;
+      const hy = sy + dy * len * k;
+      g.clear();
+      g.alpha = Math.max(0, 1 - k * k);
+      g.moveTo(hx, hy);
+      g.lineTo(hx - dx * trail, hy - dy * trail);
+      g.stroke({ color: 0x0feffb, width: 5, alpha: 0.35, cap: 'round' });
+      g.moveTo(hx, hy);
+      g.lineTo(hx - dx * trail * 0.7, hy - dy * trail * 0.7);
+      g.stroke({ color: 0xffffff, width: 2.5, alpha: 0.9, cap: 'round' });
+      g.circle(hx, hy, 3);
+      g.fill({ color: 0xffffff, alpha: 0.95 });
+      if (k >= 1) {
+        this.fxLayer.removeChild(g);
+        g.destroy();
+      }
+    });
+  }
+
   shake(strength = 10) {
     if (this.reducedMotion || strength <= 0) return Promise.resolve();
     const duration = 220;

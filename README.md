@@ -64,25 +64,27 @@ exact hit rate. A 60 gross WPM at 80% accuracy counts as 48.
 **Step 3 — damage** (`src/utils/damageCalculator.js`)
 
 ```text
-damage = round(Adjusted WPM / 4), clamped to 1–20
+damage = round(Adjusted WPM / 3.5), clamped to 2–24
 ```
 
 Because the WPM is already accuracy-adjusted, accuracy counts exactly once —
-there is no second multiplier that would square the penalty. Examples:
+there is no second multiplier that would square the penalty. Bands follow the
+standard skill benchmarks:
 
-| Turn | Adjusted WPM | Damage |
+| Tier | Adjusted WPM | Damage |
 | ---- | ------------ | ------ |
-| Idle | 0            | 1      |
-| Novice (~20) | 20  | 5      |
-| Decent (~43) | 43  | 11     |
-| Strong (~55) | 55  | 14     |
-| Elite (80+)  | 80+ | 20 (cap) |
+| Learning | < 20      | 2–5    |
+| Beginner | 20–35     | 6–10   |
+| Average | 35–50      | 10–14  |
+| Productive | 50–70   | 14–20  |
+| High Speed | 70–90   | 20–24  |
+| Competitive | 90+     | 24 (cap) |
 
 Rate-based (not window-length-based), so longer modes grant no free damage:
 every WPM point counts on every mode.
 
-**CPU damage** is a fixed range per difficulty (Easy 5–10, Medium 10–15,
-Hard 15–20), rolled per strike — the only randomness in combat.
+**CPU damage** is a fixed range per difficulty (Easy 6–12, Medium 13–18,
+Hard 19–24), rolled per strike — the only randomness in combat.
 
 **Score** — 10 points per correct character as words complete, plus a window
 bonus from accuracy, words finished and damage dealt
@@ -110,7 +112,7 @@ bonus from accuracy, words finished and damage dealt
 src/
   components/   menus, selectors, HUD, typing panel, pause, results
   game/         PixiGame, Fighter (sprites), Background, particles
-  data/         heroes, modes, difficulty, word pools
+  data/         heroes, modes, difficulty, word bank
   hooks/        useTypingGame (combat state machine), useLocalStorage
   utils/        damage/score/WPM math, audio, storage, random
 public/

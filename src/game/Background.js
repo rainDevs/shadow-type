@@ -1,19 +1,22 @@
-// Tiny-hero arena backdrop: deep-ink sky with steel star pixels and a
-// pixel ground slab the 42px fighters stand on. All squares — no soft
-// gradients — so the canvas matches the sprite art style.
+// Tiny-hero arena backdrop: deep-ink sky with steel star pixels, a cratered
+// moon, drifting blocky clouds, and a pixel ground slab the 42px fighters
+// stand on. All squares and flat fills — no soft gradients — so the canvas
+// matches the sprite art style.
 
 import { Container, Graphics } from 'pixi.js';
 
 // Sprite palette.
 const INK = 0x04193f;
 const INK_LIGHT = 0x0a2050;
+const RIDGE = 0x071233;
 const STEEL = 0x94a0ba;
 const SKIN = 0xe59b6a;
 const PAPER = 0xfcfefe;
-const PINK = 0xf489f6;
 
 export const EMBER_VENTS = [300, 640, 980];
 export const EMBER_COLOR = 0xe59b6a; // shared skin tone rising from the ground
+
+export const MOON = { x: 1050, y: 150, r: 55 };
 
 function hashRand(seed) {
   let s = seed >>> 0;
@@ -21,6 +24,27 @@ function hashRand(seed) {
     s = (s * 1664525 + 1013904223) >>> 0;
     return s / 0xffffffff;
   };
+}
+
+// One blocky cloud: clustered rects, dark body with a moonlit top edge.
+function makeCloud(rand, w) {
+  const g = new Graphics();
+  const h = 22 + Math.floor(rand() * 3) * 8;
+  // Body slabs.
+  g.rect(0, 10, w, h);
+  g.fill({ color: INK_LIGHT, alpha: 0.92 });
+  g.rect(10, 0, w - 26, 14);
+  g.fill({ color: INK_LIGHT, alpha: 0.92 });
+  g.rect(24, -8, Math.floor(w * 0.4), 12);
+  g.fill({ color: INK_LIGHT, alpha: 0.92 });
+  // Moonlit top edges.
+  g.rect(0, 10, w, 3);
+  g.fill({ color: STEEL, alpha: 0.5 });
+  g.rect(10, 0, w - 26, 3);
+  g.fill({ color: STEEL, alpha: 0.45 });
+  g.rect(24, -8, Math.floor(w * 0.4), 3);
+  g.fill({ color: PAPER, alpha: 0.35 });
+  return { g, w: w + 8, h: h + 18 };
 }
 
 export async function buildBackground(width, height, groundY) {
@@ -41,20 +65,51 @@ export async function buildBackground(width, height, groundY) {
     const x = Math.floor(rand() * (width / 4)) * 4;
     const y = Math.floor(rand() * ((groundY - 140) / 4)) * 4;
     const s = rand() < 0.85 ? 2 : 3;
-    const c = rand() < 0.6 ? STEEL : rand() < 0.5 ? PAPER : PINK;
+    const c = rand() < 0.6 ? STEEL : rand() < 0.5 ? PAPER : 0xf489f6;
     stars.rect(x, y, s, s);
     stars.fill({ color: c, alpha: 0.18 + rand() * 0.3 });
   }
   root.addChild(stars);
 
+  // Moon: soft glow, pale body, steel craters.
+  const moon = new Graphics();
+  moon.circle(MOON.x, MOON.y, MOON.r + 26);
+  moon.fill({ color: PAPER, alpha: 0.1 });
+  moon.circle(MOON.x, MOON.y, MOON.r + 10);
+  moon.fill({ color: PAPER, alpha: 0.1 });
+  moon.circle(MOON.x, MOON.y, MOON.r);
+  moon.fill({ color: PAPER });
+  moon.circle(MOON.x - 18, MOON.y - 12, 12);
+  moon.fill({ color: STEEL, alpha: 0.55 });
+  moon.circle(MOON.x + 14, MOON.y + 8, 9);
+  moon.fill({ color: STEEL, alpha: 0.5 });
+  moon.circle(MOON.x + 2, MOON.y - 24, 6);
+  moon.fill({ color: STEEL, alpha: 0.45 });
+  moon.circle(MOON.x - 4, MOON.y + 22, 7);
+  moon.fill({ color: SKIN, alpha: 0.3 });
+  root.addChild(moon);
+
+  // Drifting clouds (animated by PixiGame).
+  const clouds = [];
+  const lanes = [90, 150, 220, 300, 180];
+  for (let i = 0; i < lanes.length; i++) {
+    const w = 110 + Math.floor(rand() * 5) * 22;
+    const { g, w: full } = makeCloud(rand, w);
+    g.position.set(rand() * width, lanes[i] + (rand() - 0.5) * 30);
+    root.addChild(g);
+    clouds.push(Object.assign(g, {
+      userData: { speed: 6 + rand() * 12, w: full },
+    }));
+  }
+
   // Distant blocky ridge (dark silhouette two tones).
   const ridge = new Graphics();
   ridge.rect(0, groundY - 64, width, 64);
-  ridge.fill({ color: 0x071233, alpha: 0.9 });
+  ridge.fill({ color: RIDGE, alpha: 0.9 });
   for (let x = 0; x < width; x += 32) {
     const h = 8 + Math.floor(rand() * 5) * 8;
     ridge.rect(x, groundY - 64 - h, 32, h);
-    ridge.fill({ color: 0x071233, alpha: 0.9 });
+    ridge.fill({ color: RIDGE, alpha: 0.9 });
   }
   root.addChild(ridge);
 
@@ -80,5 +135,5 @@ export async function buildBackground(width, height, groundY) {
   }
   root.addChild(grit);
 
-  return { root, fog: [] };
+  return { root, fog: [], clouds };
 }

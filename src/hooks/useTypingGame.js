@@ -6,11 +6,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DIFFICULTIES } from '../data/difficulty.js';
 import { MODES } from '../data/modes.js';
-import { TIMED_WORDS } from '../data/timedWords.js';
+import { createWordDeck } from '../data/words.js';
 import { calculateWPM, calculateAccuracy } from '../utils/typingMetrics.js';
-import { calculateWindowDamage } from '../utils/damageCalculator.js';
+import { calculateWindowDamage, tierForWpm } from '../utils/damageCalculator.js';
 import { calculateCharScore, calculateWindowBonus } from '../utils/scoreCalculator.js';
-import { pickChallenge, randomInt } from '../utils/random.js';
+import { randomInt } from '../utils/random.js';
 import { qualifiesForHighScores, addHighScore } from '../utils/storage.js';
 import { audio } from '../utils/audioManager.js';
 
@@ -32,15 +32,8 @@ const PASSAGE_WORDS = 100; // generated per turn; extended as needed
 const EXTEND_THRESHOLD = 30; // chars from the end that trigger extension
 const EXTEND_WORDS = 30;
 
-function buildPassage(pool, count, previous) {
-  const words = [];
-  let prev = previous ?? '';
-  for (let i = 0; i < count; i++) {
-    const w = pickChallenge(pool, prev);
-    words.push(w);
-    prev = w;
-  }
-  return words.join(' ');
+function buildPassage(deck, count) {
+  return deck.draw(count).join(' ');
 }
 
 // Word boundaries [{start, end}] over a passage (end excludes trailing space).
@@ -69,16 +62,18 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
       ...modeCfg,
       ...diffCfg,
       turnSeconds: modeCfg.turnSeconds,
-      wordPool: modeCfg.wordPool,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [modeKey, diffKey],
   );
   const difficultyLabel = diffCfg.id;
   const modeLabel = modeCfg.id;
-  const pool = TIMED_WORDS[config.wordPool];
   const turnMs = config.turnSeconds * 1000;
   const maxHp = config.maxHp;
+
+  // Match-level word deck: every turn draws fresh words from the 1000-word
+  // bank, reshuffling (minus recent words) when it cycles.
+  const deckRef = useRef(null);
 
   const [status, setStatus] = useState('countdown'); // countdown | playing | paused | won | lost
   const [countdown, setCountdown] = useState('3');
@@ -86,7 +81,7 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
   const [playerHp, setPlayerHp] = useState(maxHp);
   const [cpuHp, setCpuHp] = useState(maxHp);
   const [score, setScore] = useState(0);
-  const [passage, setPassage] = useState(() => buildPassage(pool, PASSAGE_WORDS));
+  const [passage, setPassage] = useState(() => createWordDeck().draw(PASSAGE_WORDS).join(' '));
   const [typed, setTyped] = useState('');
   const [timeLeft, setTimeLeft] = useState(config.turnSeconds);
   const [wordsDone, setWordsDone] = useState(0);
@@ -223,7 +218,8 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
     const myGen = matchGenRef.current;
     if (countdownTimerRef.current) clearTimeout(countdownTimerRef.current);
     setStatusBoth('countdown');
-    const text = buildPassage(pool, PASSAGE_WORDS);
+    deckRef.current = createWordDeck();
+    const text = buildPassage(deckRef.current, PASSAGE_WORDS);
     passageRef.current = text;
     boundsRef.current = wordBounds(text);
     bankedRef.current = 0;
@@ -248,7 +244,7 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
       countdownTimerRef.current = setTimeout(step, s.ms);
     };
     step();
-  }, [config, pool, setStatusBoth]);
+  }, [config, setStatusBoth]);
 
   // --- player turn ---------------------------------------------------------------------------
   const startPlayerTurn = useCallback((keepText = false) => {
@@ -258,7 +254,8 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
     struckRef.current = false;
     setLocked(false);
     turnsRef.current += 1;
-    const text = keepText && passageRef.current ? passageRef.current : buildPassage(pool, PASSAGE_WORDS);
+    if (!deckRef.current) deckRef.current = createWordDeck();
+    const text = keepText && passageRef.current ? passageRef.current : buildPassage(deckRef.current, PASSAGE_WORDS);
     passageRef.current = text;
     boundsRef.current = wordBounds(text);
     bankedRef.current = 0;
@@ -276,7 +273,7 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
       setTimeLeft(Math.max(0, remain / 1000));
       if (remain <= 0) endWindowRef.current?.();
     }, 100);
-  }, [config, pool, setTurnBoth, turnMs]);
+  }, [config, setTurnBoth, turnMs]);
 
   // --- window end: lock input, beat, then strike -----------------------------------------------
   const endWindow = useCallback(() => {
@@ -301,11 +298,12 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
     wpmSumRef.current += wpm;
 
     const { damage } = calculateWindowDamage({ wpm });
+    const { label: tier } = tierForWpm(wpm);
     const bonus = calculateWindowBonus({ accuracy: acc, words, damage });
     scoreRef.current += bonus;
     setScore(scoreRef.current);
 
-    showFeedback('attack', `+${bonus}  -${damage} DMG`, damage);
+    showFeedback('attack', `${tier} +${bonus}  -${damage} DMG`, damage);
     audio.playAttack();
     const myGen = matchGenRef.current;
     setTimeout(() => {
@@ -418,13 +416,8 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
         next = applied;
         // Extend the passage before the fast typist runs out of road.
         if (target.length - pos < EXTEND_THRESHOLD) {
-          let prev = target.split(' ').pop() ?? '';
-          const extra = [];
-          for (let i = 0; i < EXTEND_WORDS; i++) {
-            const w = pickChallenge(pool, prev);
-            extra.push(w);
-            prev = w;
-          }
+          if (!deckRef.current) deckRef.current = createWordDeck();
+          const extra = deckRef.current.draw(EXTEND_WORDS);
           const grown = `${target} ${extra.join(' ')}`;
           passageRef.current = grown;
           boundsRef.current = wordBounds(grown);
@@ -466,7 +459,7 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
       }
       refreshLive();
     },
-    [pool, refreshLive, showFeedback, typed],
+    [refreshLive, showFeedback, typed],
   );
 
   // --- pause ------------------------------------------------------------------------------------------
