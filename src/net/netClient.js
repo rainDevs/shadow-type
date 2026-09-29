@@ -3,7 +3,7 @@
 
 // Live Render backend — used when VITE_ARENA_URL is unset and the page
 // isn't served from localhost (so Vercel previews play real PVP).
-export const LIVE_ARENA_URL = 'wss://shadow-type-arena.onrender.com';
+export const LIVE_ARENA_URL = 'wss://shadow-type.onrender.com';
 
 export function arenaUrl() {
   const fromEnv = import.meta?.env?.VITE_ARENA_URL;

@@ -3,7 +3,7 @@
 # with Build `npm install`, Start `node server/arena-server.js`.
 services:
   - type: web
-    name: shadow-type-arena
+    name: shadow-type
     runtime: node
     plan: free
     buildCommand: npm install

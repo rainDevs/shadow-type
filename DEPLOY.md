@@ -12,8 +12,8 @@ serverless). Render **can**. Keep them separate.
 
 Live instances:
 
-- Frontend: `https://shadow-type-arena.vercel.app/`
-- Backend: `wss://shadow-type-arena.onrender.com`
+- Frontend: `https://shadow-type.vercel.app/`
+- Backend: `wss://shadow-type.onrender.com`
 
 ## 0. Prerequisites
 
@@ -28,7 +28,7 @@ Live instances:
    Blueprint** — `render.yaml` in the repo pre-fills everything below).
 2. Connect the `rainDevs/shadow-type` repository.
 3. Settings:
-   - **Name:** `shadow-type-arena`
+   - **Name:** `shadow-type`
    - **Runtime:** `Node`
    - **Build Command:** `npm install`
    - **Start Command:** `node server/arena-server.js`
@@ -76,7 +76,7 @@ npm run dev                     # http://localhost:5173
 To point local frontend at the live backend instead:
 
 ```bash
-VITE_ARENA_URL=wss://shadow-type-arena.onrender.com npm run dev
+VITE_ARENA_URL=wss://shadow-type.onrender.com npm run dev
 ```
 
 ## 4. Troubleshooting

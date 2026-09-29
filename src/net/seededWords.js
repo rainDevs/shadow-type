@@ -40,5 +40,5 @@ export function seededPassage(seed, windowId, count = 100) {
 
 export function arenaServerUrl() {
   // Legacy alias — prefer arenaUrl() from netClient.js.
-  return 'wss://shadow-type-arena.onrender.com';
+  return 'wss://shadow-type.onrender.com';
 }

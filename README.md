@@ -23,7 +23,7 @@ Your CPU opponent is a random hero from the two you didn't pick.
 
 ## Arena (PVP)
 
-Live backend: `wss://shadow-type-arena.onrender.com` (free tier — wakes
+Live backend: `wss://shadow-type.onrender.com` (free tier — wakes
 ~30–60s on first use; the arena shows **Waiting for Opponent...** until
 the server answers and pairs you).
 
