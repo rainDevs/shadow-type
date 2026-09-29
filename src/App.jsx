@@ -160,7 +160,7 @@ function App() {
       )}
       {screen === 'arena-lobby' && (
         <ArenaLobby
-          initialMode={arenaCfg?.modeId ?? modeId}
+          initialMode={arenaCfg?.modeId ?? null}
           initialName={arenaCfg?.name ?? ''}
           onStart={startArenaLobby}
           onBack={() => navigate('menu')}

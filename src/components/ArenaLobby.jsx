@@ -8,7 +8,7 @@ import { Embers } from './Embers.jsx';
 
 export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
   const [name, setName] = useState(initialName ?? '');
-  const [modeId, setModeId] = useState(initialMode && MODES[initialMode] ? initialMode : 'medium');
+  const [modeId, setModeId] = useState(initialMode && MODES[initialMode] ? initialMode : null);
   const [code, setCode] = useState('');
 
   const cleanName = name.trim().slice(0, 12) || 'SHADOW';
@@ -19,6 +19,7 @@ export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
       <div className="panel">
         <h2>Arena — PVP</h2>
         <p className="lede">Same passage. Same window. Faster typing wins.</p>
+        <h3 className="lede" style={{ margin: '0 0 12px' }}>1. Select mode</h3>
         <div className="diff-list" role="radiogroup" aria-label="Arena mode">
           {MODE_IDS.map((id) => {
             const m = MODES[id];
@@ -29,7 +30,7 @@ export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
                 role="radio"
                 aria-checked={modeId === id}
                 className={`diff-card ${id} ${modeId === id ? 'selected' : ''}`}
-                onClick={() => setModeId(id)}
+                onClick={() => setModeId(modeId === id ? null : id)}
               >
                 <span className="diff-name">{m.label}</span>
                 <span className="diff-desc">{m.description}</span>
@@ -37,58 +38,66 @@ export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
             );
           })}
         </div>
-        <label className="score-form" htmlFor="arena-name">
-          <span style={{ display: 'block', marginBottom: 8 }}>Fighter name</span>
-          <span className="score-form-row">
-            <input
-              id="arena-name"
-              value={name}
-              onChange={(e) => setName(e.target.value.slice(0, 12))}
-              maxLength={12}
-              autoComplete="off"
-              placeholder="SHADOW"
-            />
-          </span>
-        </label>
-        <div className="btn-row">
-          <button
-            type="button"
-            className="menu-btn primary"
-            onClick={() => onStart({ action: 'queue', modeId, name: cleanName })}
-          >
-            Find Match
-          </button>
-          <button
-            type="button"
-            className="menu-btn"
-            onClick={() => onStart({ action: 'create', modeId, name: cleanName })}
-          >
-            Create Room
-          </button>
-        </div>
-        <form
-          className="score-form"
-          style={{ marginTop: 16 }}
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (code.trim()) onStart({ action: 'join', modeId, name: cleanName, code: code.trim().toUpperCase() });
-          }}
-        >
-          <label htmlFor="arena-code">Join by code</label>
-          <span className="score-form-row">
-            <input
-              id="arena-code"
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4))}
-              maxLength={4}
-              autoComplete="off"
-              placeholder="AB12"
-            />
-            <button type="submit" className="menu-btn" disabled={!code.trim()}>
-              Join
-            </button>
-          </span>
-        </form>
+        {!modeId && (
+          <p className="hint-line" aria-live="polite">Pick a mode above to continue.</p>
+        )}
+        {modeId && (
+          <>
+            <h3 className="lede" style={{ margin: '20px 0 12px' }}>2. Enter the arena</h3>
+            <label className="score-form" htmlFor="arena-name">
+              <span style={{ display: 'block', marginBottom: 8 }}>Fighter name</span>
+              <span className="score-form-row">
+                <input
+                  id="arena-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value.slice(0, 12))}
+                  maxLength={12}
+                  autoComplete="off"
+                  placeholder="SHADOW"
+                />
+              </span>
+            </label>
+            <div className="btn-row">
+              <button
+                type="button"
+                className="menu-btn primary"
+                onClick={() => onStart({ action: 'queue', modeId, name: cleanName })}
+              >
+                Find Match
+              </button>
+              <button
+                type="button"
+                className="menu-btn"
+                onClick={() => onStart({ action: 'create', modeId, name: cleanName })}
+              >
+                Create Room
+              </button>
+            </div>
+            <form
+              className="score-form"
+              style={{ marginTop: 16 }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (code.trim()) onStart({ action: 'join', modeId, name: cleanName, code: code.trim().toUpperCase() });
+              }}
+            >
+              <label htmlFor="arena-code">Join by code</label>
+              <span className="score-form-row">
+                <input
+                  id="arena-code"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4))}
+                  maxLength={4}
+                  autoComplete="off"
+                  placeholder="AB12"
+                />
+                <button type="submit" className="menu-btn" disabled={!code.trim()}>
+                  Join
+                </button>
+              </span>
+            </form>
+          </>
+        )}
         <button type="button" className="back-link" onClick={onBack}>
           ← Back
         </button>
