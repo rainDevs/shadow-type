@@ -60,11 +60,13 @@ export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
               <span className="score-form-row">
                 <input
                   id="arena-name"
+                  className="mixed-case"
                   value={name}
                   onChange={(e) => setName(e.target.value.slice(0, 12))}
                   maxLength={12}
                   autoComplete="off"
-                  placeholder="SHADOW"
+                  autoCapitalize="sentences"
+                  placeholder="Shadow"
                 />
               </span>
             </label>
@@ -105,11 +107,13 @@ export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
               <span className="score-form-row">
                 <input
                   id="arena-name-join"
+                  className="mixed-case"
                   value={name}
                   onChange={(e) => setName(e.target.value.slice(0, 12))}
                   maxLength={12}
                   autoComplete="off"
-                  placeholder="SHADOW"
+                  autoCapitalize="sentences"
+                  placeholder="Shadow"
                 />
               </span>
             </label>

@@ -1316,6 +1316,10 @@ html[data-reduced-motion='true'] .announce-hint {
   border-color: var(--gold);
 }
 
+.score-form-row input.mixed-case {
+  text-transform: none;
+}
+
 .rank-line {
   color: var(--gold);
   font-family: var(--mono);
