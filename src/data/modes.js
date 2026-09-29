@@ -6,19 +6,19 @@ export const MODES = {
   short: {
     id: 'short',
     label: 'BLITZ',
-    description: 'Blitz — 15-second turns. Fast rounds.',
+    description: '15-second turns. Fast rounds.',
     turnSeconds: 15,
   },
   medium: {
     id: 'medium',
     label: 'RAPID',
-    description: 'Rapid — 30-second turns. Balanced fight.',
+    description: '30-second turns. Balanced fight.',
     turnSeconds: 30,
   },
   long: {
     id: 'long',
     label: 'MARATHON',
-    description: 'Marathon — 60-second turns. Endurance.',
+    description: '60-second turns. Endurance.',
     turnSeconds: 60,
   },
 };
