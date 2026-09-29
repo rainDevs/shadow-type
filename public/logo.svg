@@ -1,13 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Shadow Type logo: crossed pixel daggers over S and T keycaps">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Shadow Type logo: S and T pixel keycaps">
   <defs>
-    <linearGradient id="st-blade-cyan" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0feffb"/>
-      <stop offset="1" stop-color="#0696db"/>
-    </linearGradient>
-    <linearGradient id="st-blade-ember" x1="1" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fda216"/>
-      <stop offset="1" stop-color="#fc5003"/>
-    </linearGradient>
     <filter id="st-glow" x="-40%" y="-40%" width="180%" height="180%">
       <feGaussianBlur stdDeviation="2.6" result="b"/>
       <feMerge>
@@ -17,28 +9,15 @@
     </filter>
   </defs>
 
-  <!-- crossed pixel daggers, the dominant element -->
+  <!-- plain pixeled keycaps with cut corners -->
   <g filter="url(#st-glow)">
-    <!-- ember dagger, top-right to bottom-left (behind) -->
-    <polygon points="112,10 47,85 37,75" fill="url(#st-blade-ember)"/>
-    <line x1="102" y1="20" x2="52" y2="70" stroke="#fcfefe" stroke-width="2.5" opacity="0.85"/>
-    <polygon points="47,92 54,85 36,68 30,75" fill="#fda216"/>
-    <polygon points="39,83 44,78 32,90 27,95" fill="#5e2c29"/>
-    <circle cx="28" cy="94" r="5" fill="#f489f6"/>
-    <!-- cyan dagger, top-left to bottom-right (front) -->
-    <polygon points="16,10 91,75 81,85" fill="url(#st-blade-cyan)"/>
-    <line x1="26" y1="20" x2="76" y2="70" stroke="#fcfefe" stroke-width="2.5" opacity="0.85"/>
-    <polygon points="81,92 74,85 92,68 98,75" fill="#0feffb"/>
-    <polygon points="89,83 84,78 96,90 101,95" fill="#03396b"/>
-    <circle cx="100" cy="94" r="5" fill="#f489f6"/>
-  </g>
-
-  <!-- S + T keycaps, center foreground -->
-  <g filter="url(#st-glow)">
-    <rect x="32" y="54" width="33" height="34" rx="6" fill="#000000" opacity="0.55"/>
-    <rect x="71" y="54" width="33" height="34" rx="6" fill="#000000" opacity="0.55"/>
-    <rect x="28" y="50" width="33" height="34" rx="6" fill="#fcfefe" stroke="#94a0ba" stroke-width="3"/>
-    <rect x="67" y="50" width="33" height="34" rx="6" fill="#fcfefe" stroke="#94a0ba" stroke-width="3"/>
+    <polygon points="38,50 59,50 65,56 65,84 59,92 38,92 32,84 32,56" fill="#000000" opacity="0.55"/>
+    <polygon points="77,50 98,50 104,56 104,84 98,92 77,92 71,84 71,56" fill="#000000" opacity="0.55"/>
+    <polygon points="34,46 55,46 61,52 61,82 55,88 34,88 28,82 28,52" fill="#fcfefe" stroke="#94a0ba" stroke-width="3" stroke-linejoin="miter"/>
+    <polygon points="73,46 94,46 100,52 100,82 94,88 73,88 67,82 67,52" fill="#fcfefe" stroke="#94a0ba" stroke-width="3" stroke-linejoin="miter"/>
+    <!-- keycap top highlight -->
+    <polygon points="34,46 55,46 61,52 59,54 53,54 53,50 36,50 36,54 30,54" fill="#ffffff" opacity="0.7"/>
+    <polygon points="73,46 94,46 100,52 98,54 92,54 92,50 75,50 75,54 69,54" fill="#ffffff" opacity="0.7"/>
     <!-- pixel "S" -->
     <g fill="#d840fb">
       <rect x="39" y="60" width="10" height="2"/>
@@ -50,7 +29,7 @@
       <rect x="39" y="72" width="10" height="2"/>
     </g>
     <!-- pixel "T" -->
-    <g fill="#d840fb">
+    <g fill="#0696db">
       <rect x="78" y="60" width="10" height="2"/>
       <rect x="82" y="62" width="2" height="2"/>
       <rect x="82" y="64" width="2" height="2"/>
@@ -62,8 +41,8 @@
   </g>
 
   <!-- spark pixels -->
-  <rect x="8" y="64" width="4" height="4" fill="#0feffb"/>
-  <rect x="116" y="64" width="4" height="4" fill="#fda216"/>
-  <rect x="62" y="108" width="5" height="5" fill="#f489f6"/>
-  <rect x="60" y="4" width="4" height="4" fill="#94a0ba"/>
+  <rect x="14" y="60" width="4" height="4" fill="#0feffb"/>
+  <rect x="110" y="60" width="4" height="4" fill="#fda216"/>
+  <rect x="62" y="104" width="5" height="5" fill="#f489f6"/>
+  <rect x="60" y="20" width="4" height="4" fill="#94a0ba"/>
 </svg>

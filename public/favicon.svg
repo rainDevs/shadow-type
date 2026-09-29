@@ -1,26 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Shadow Type icon">
   <rect x="2" y="2" width="60" height="60" rx="12" fill="#04193f"/>
   <rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="#94a0ba" stroke-width="3" opacity="0.6"/>
-  <!-- crossed dagger blades tucking behind the keys -->
-  <polygon points="56,6 24,40 20,36" fill="#fda216"/>
-  <polygon points="8,6 40,40 44,36" fill="#0feffb"/>
-  <!-- S + T mini keycaps -->
-  <rect x="14" y="26" width="17" height="16" rx="3" fill="#fcfefe" stroke="#94a0ba" stroke-width="2"/>
-  <rect x="33" y="26" width="17" height="16" rx="3" fill="#fcfefe" stroke="#94a0ba" stroke-width="2"/>
+  <!-- plain pixeled mini keycaps -->
+  <polygon points="17,24 28,24 31,27 31,39 28,42 17,42 14,39 14,27" fill="#fcfefe" stroke="#94a0ba" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="36,24 47,24 50,27 50,39 47,42 36,42 33,39 33,27" fill="#fcfefe" stroke="#94a0ba" stroke-width="2" stroke-linejoin="miter"/>
   <g fill="#d840fb">
-    <rect x="20" y="30" width="5" height="1"/>
+    <rect x="20" y="29" width="5" height="1"/>
+    <rect x="20" y="30" width="1" height="1"/>
     <rect x="20" y="31" width="1" height="1"/>
-    <rect x="20" y="32" width="1" height="1"/>
-    <rect x="20" y="33" width="5" height="1"/>
+    <rect x="20" y="32" width="5" height="1"/>
+    <rect x="24" y="33" width="1" height="1"/>
     <rect x="24" y="34" width="1" height="1"/>
-    <rect x="24" y="35" width="1" height="1"/>
-    <rect x="20" y="36" width="5" height="1"/>
-    <rect x="39" y="30" width="5" height="1"/>
+    <rect x="20" y="35" width="5" height="1"/>
+  </g>
+  <g fill="#0696db">
+    <rect x="39" y="29" width="5" height="1"/>
+    <rect x="41" y="30" width="1" height="1"/>
     <rect x="41" y="31" width="1" height="1"/>
     <rect x="41" y="32" width="1" height="1"/>
     <rect x="41" y="33" width="1" height="1"/>
     <rect x="41" y="34" width="1" height="1"/>
     <rect x="41" y="35" width="1" height="1"/>
-    <rect x="41" y="36" width="1" height="1"/>
   </g>
 </svg>
