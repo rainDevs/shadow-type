@@ -24,7 +24,8 @@ Your CPU opponent is a random hero from the two you didn't pick.
 ## Arena (PVP)
 
 Live backend: `wss://shadow-type-arena.onrender.com` (free tier — wakes
-~30–60s on first use; the game plays the spar bot meanwhile).
+~30–60s on first use; the arena shows **Waiting for Opponent...** until
+the server answers and pairs you).
 
 ```bash
 npm run arena-server        # :8787 locally (PORT / ARENA_PORT to override)
@@ -39,8 +40,8 @@ in Vercel and redeploy.
 Main menu → **Arena (PVP)** → name + mode → Find Match / Create / Join
 by 4-letter code → pick fighter → simultaneous typing windows on an
 identical seeded passage. Damage uses the same WPM formula, resolved
-server-side. No server reachable? Tick **offline spar bot** for a local
-demo bout. `ESC` forfeits and leaves.
+server-side. Until a rival joins, the arena shows **Waiting for
+Opponent...** and keeps retrying. `ESC` forfeits and leaves.
 
 ## How a fight works
 

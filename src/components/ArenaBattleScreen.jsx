@@ -1,4 +1,5 @@
-// ArenaBattleScreen: PVP simultaneous windows over WS (or offline spar bot).
+// ArenaBattleScreen: PVP simultaneous windows over WS.
+// Stays on "Waiting for Opponent..." until the server pairs a rival.
 // Pixi inits once the rival is known so both fighters use true heroes.
 
 import { useEffect, useRef, useState } from 'react';
@@ -78,7 +79,6 @@ export function ArenaBattleScreen({
   playerName,
   action,
   code,
-  mock,
   settings,
   onRematch,
   onExit,
@@ -95,7 +95,6 @@ export function ArenaBattleScreen({
     action,
     code,
     pixiRef: gameRef,
-    mock,
   });
   const { status, results } = game;
   const oppHero = game.opponent?.heroId && HEROES[game.opponent.heroId] ? game.opponent.heroId : pickCpuHero(myHero);
@@ -168,7 +167,7 @@ export function ArenaBattleScreen({
             score={game.score}
             wordsDone={game.wordsDone}
             playerName={playerName ?? 'YOU'}
-            cpuName={game.opponent?.name ?? (mock ? 'SPAR BOT' : 'RIVAL')}
+            cpuName={game.opponent?.name ?? 'RIVAL'}
             playerHeroId={myHero}
             cpuHeroId={oppHero}
           />
@@ -188,10 +187,9 @@ export function ArenaBattleScreen({
           <div className="countdown-overlay" aria-live="polite">
             <div style={{ textAlign: 'center' }}>
               <div className="countdown-num" style={{ fontSize: 'clamp(28px,6vw,54px)' }}>
-                {status === 'connecting' ? 'Connecting…' : 'Waiting for rival…'}
+                Waiting for Opponent...
               </div>
               {game.roomCode && <p className="announce-hint" style={{ opacity: 1 }}>Room {game.roomCode} — share the code</p>}
-              {mock && <p className="announce-hint" style={{ opacity: 1 }}>Spar bot will join instantly</p>}
             </div>
           </div>
         )}

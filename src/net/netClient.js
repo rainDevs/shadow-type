@@ -1,5 +1,5 @@
 // Minimal browser WebSocket client for Arena PVP.
-// Resolves to a connected socket or throws; caller handles mock fallback.
+// Resolves to a connected socket or throws; caller retries and waits.
 
 // Live Render backend — used when VITE_ARENA_URL is unset and the page
 // isn't served from localhost (so Vercel previews play real PVP).

@@ -112,7 +112,6 @@ function App() {
       modeId: MODES[cfg.modeId] ? cfg.modeId : 'medium',
       name: String(cfg.name ?? 'SHADOW').slice(0, 12) || 'SHADOW',
       code: cfg.code ? String(cfg.code).toUpperCase().slice(0, 4) : null,
-      mock: Boolean(cfg.mock),
     };
     setArenaCfg(clean);
     setArenaHeroId(null);
@@ -211,7 +210,6 @@ function App() {
             playerName={arenaCfg.name}
             action={arenaCfg.action}
             code={arenaCfg.code}
-            mock={arenaCfg.mock}
             settings={settings}
             onRematch={rematchArena}
             onExit={() => navigate('menu')}

@@ -26,17 +26,7 @@ function wordBounds(passage) {
   return bounds;
 }
 
-function mockBotTurn(turnSeconds) {
-  // Simulated remote for offline demo: 25-75 WPM, 88-99% acc.
-  const wpm = 25 + Math.random() * 50;
-  const acc = 88 + Math.random() * 11;
-  const total = Math.round((wpm / 60) * 5 * (turnSeconds / 60) * 60);
-  const correct = Math.round(total * (acc / 100));
-  const words = Math.max(1, Math.round(total / 5.5));
-  return { wpm, acc, total, correct, words };
-}
-
-export function useNetGame({ modeId, heroId, name, action, code, pixiRef, mock = false }) {
+export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
   const modeKey = MODES[modeId] ? modeId : 'medium';
   const turnSeconds = MODES[modeKey].turnSeconds;
 
@@ -83,7 +73,6 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef, mock =
   const matchWordsRef = useRef(0);
   const aliveRef = useRef(true);
   const sentRef = useRef(0);
-  const mockTimers = useRef([]);
 
   const setStatusBoth = useCallback((s) => {
     statusRef.current = s;
@@ -174,88 +163,19 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef, mock =
   }, [turnSeconds, windowId, windowTotals]);
 
   const endWindowRef = useRef(null);
-  const finishMockRef = useRef(null);
-
-  const finishMock = useCallback(() => {
-    const won = hpOppRef.current <= 0 && hpMeRef.current > 0;
-    const draw = hpOppRef.current <= 0 && hpMeRef.current <= 0;
-    const pixi = pixiRef.current;
-    if (draw) {
-      setStatusBoth('announce');
-    } else if (won) {
-      pixi?.win?.(0) ?? pixi?.victory?.();
-      audio.playVictory();
-      setStatusBoth('announce');
-    } else {
-      pixi?.win?.(1) ?? pixi?.defeat?.();
-      audio.playDefeat();
-      setStatusBoth('announce');
-    }
-    audio.stopMusic();
-    const avgWpm = turnsRef.current > 0 ? wpmSumRef.current / turnsRef.current : 0;
-    setResults({
-      won,
-      draw,
-      score: scoreRef.current,
-      avgWpm,
-      accuracy: calculateAccuracy(keysCorrectRef.current, keysTotalRef.current),
-      totalDamage: totalDamageRef.current,
-      turns: turnsRef.current + 1,
-      words: matchWordsRef.current,
-      mode: modeKey,
-    });
-  }, [modeKey, pixiRef, setStatusBoth]);
 
   const endWindow = useCallback(() => {
     if (statusRef.current !== 'playing' || sentRef.current) return;
     sentRef.current = 1;
     setLocked(true);
     showFeedback('info', 'TIME!');
-    const mine = sendTurn();
-    if (mock) {
-      // offline mock: resolve locally after a beat
-      const bot = mockBotTurn(turnSeconds);
-      const myDmg = mine.total === 0 ? 0 : Math.min(24, Math.max(2, Math.round(mine.wpm / 3.5)));
-      const botDmg = Math.min(24, Math.max(2, Math.round(bot.wpm / 3.5)));
-      setOppWpm(bot.wpm);
-      const t = setTimeout(() => {
-        if (!aliveRef.current) return;
-        hpOppRef.current = Math.max(0, hpOppRef.current - myDmg);
-        hpMeRef.current = Math.max(0, hpMeRef.current - botDmg);
-        totalDamageRef.current += Math.min(myDmg, hpOppRef.current + myDmg);
-        setHpOpp(hpOppRef.current);
-        setHpMe(hpMeRef.current);
-        const { label } = tierForWpm(mine.wpm);
-        showFeedback('attack', `${label} -${myDmg}  FOE -${botDmg}`);
-        audio.playAttack();
-        const pixi = pixiRef.current;
-        const seq = async () => {
-          try {
-            if (myDmg > 0) await pixi?.leftAttack?.({ damage: myDmg });
-            if (hpOppRef.current <= 0 || hpMeRef.current <= 0) return;
-            if (botDmg > 0) await pixi?.rightAttack?.({ damage: botDmg });
-          } catch {
-            /* arena unavailable */
-          }
-          audio.playHit();
-          if (hpOppRef.current <= 0 || hpMeRef.current <= 0) {
-            finishMockRef.current?.();
-            return;
-          }
-          turnsRef.current += 1;
-          openWindow(windowId + 1, Date.now() + turnSeconds * 1000, seedRef.current);
-        };
-        seq();
-      }, 700);
-      mockTimers.current.push(t);
-    }
-  }, [mock, openWindow, pixiRef, sendTurn, showFeedback, turnSeconds, windowId]);
+    sendTurn();
+  }, [sendTurn, showFeedback]);
 
   // Keep timer callbacks on the latest window logic (same pattern as training).
   useEffect(() => {
     // eslint-disable-next-line react-hooks/immutability
     endWindowRef.current = endWindow;
-    finishMockRef.current = finishMock;
   });
 
   const acknowledgeEnd = useCallback(() => {
@@ -331,31 +251,25 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef, mock =
     [refreshLive, showFeedback, typed, windowId],
   );
 
-  // --- connection lifecycle ---
+  // --- connection lifecycle (stays on "Waiting for Opponent..." until live) ---
   useEffect(() => {
     aliveRef.current = true;
     audio.startMusic();
     let ws = null;
     let closed = false;
-    const pendingTimers = mockTimers.current;
+    let retryTimer = null;
 
-    const goMock = (reason) => {
-      // offline demo room: same seeded passage, bot opponent
-      const s = Math.floor(Math.random() * 2 ** 31);
-      seedRef.current = s;
-      setSeed(s);
-      setYou(0);
-      youRef.current = 0;
-      setOpponent({ name: 'SPAR BOT', heroId: 'hero-2' });
-      setRoomCode('MOCK');
-      setStatusBoth('countdown');
-      setTimeout(() => {
-        if (!aliveRef.current || closed) return;
-        setStatusBoth('playing');
-        turnsRef.current += 1;
-        openWindow(1, Date.now() + turnSeconds * 1000, s);
-      }, 1800);
-      if (reason) setError(reason);
+    const handshake = (sock) => {
+      sendJson(sock, { t: 'hello', name, heroId, modeId: modeKey });
+      if (action === 'create') sendJson(sock, { t: 'create', name, heroId, modeId: modeKey });
+      else if (action === 'join') sendJson(sock, { t: 'join', code, name, heroId });
+      else sendJson(sock, { t: 'queue', name, heroId, modeId: modeKey });
+    };
+
+    const scheduleRetry = () => {
+      if (closed || !aliveRef.current) return;
+      if (retryTimer) clearTimeout(retryTimer);
+      retryTimer = setTimeout(() => connect(), 4000);
     };
 
     const onMessage = (ev) => {
@@ -455,14 +369,27 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef, mock =
         audio.stopMusic();
       } else if (msg.t === 'error') {
         setError(msg.message);
+        setStatusBoth('error');
       }
     };
 
-    (async () => {
-      if (mock) {
-        goMock(null);
-        return;
+    const onClose = () => {
+      wsRef.current = null;
+      if (closed || !aliveRef.current) return;
+      // Drop before a match started: keep waiting and retry.
+      // Drop mid-match: surface it; the player can go back and re-queue.
+      if (statusRef.current === 'connecting' || statusRef.current === 'waiting' || statusRef.current === 'countdown') {
+        setStatusBoth('waiting');
+        scheduleRetry();
+      } else if (statusRef.current === 'playing') {
+        setError('connection-lost');
+        setStatusBoth('error');
       }
+    };
+
+    const connect = async () => {
+      if (closed || !aliveRef.current) return;
+      setStatusBoth(statusRef.current === 'playing' ? statusRef.current : 'waiting');
       try {
         ws = await connectArena();
         if (!aliveRef.current || closed) {
@@ -471,21 +398,23 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef, mock =
         }
         wsRef.current = ws;
         ws.addEventListener('message', onMessage);
-        sendJson(ws, { t: 'hello', name, heroId, modeId: modeKey });
-        if (action === 'create') sendJson(ws, { t: 'create', name, heroId, modeId: modeKey });
-        else if (action === 'join') sendJson(ws, { t: 'join', code, name, heroId });
-        else sendJson(ws, { t: 'queue', name, heroId, modeId: modeKey });
+        ws.addEventListener('close', onClose);
+        handshake(ws);
         setStatusBoth('waiting');
       } catch {
-        goMock('arena-offline-mock');
+        // Server asleep/unreachable (Render free tier): stay on the
+        // waiting screen and retry until live.
+        setStatusBoth('waiting');
+        scheduleRetry();
       }
-    })();
+    };
+    connect();
 
     return () => {
       closed = true;
       aliveRef.current = false;
       if (timerRef.current) clearInterval(timerRef.current);
-      for (const t of pendingTimers) clearTimeout(t);
+      if (retryTimer) clearTimeout(retryTimer);
       try {
         ws?.close();
       } catch {

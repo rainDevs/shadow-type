@@ -10,7 +10,6 @@ export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
   const [name, setName] = useState(initialName ?? '');
   const [modeId, setModeId] = useState(initialMode && MODES[initialMode] ? initialMode : 'medium');
   const [code, setCode] = useState('');
-  const [useMock, setUseMock] = useState(false);
 
   const cleanName = name.trim().slice(0, 12) || 'SHADOW';
 
@@ -51,27 +50,18 @@ export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
             );
           })}
         </div>
-        <div className="setting-row" style={{ marginBottom: 16 }}>
-          <label htmlFor="arena-mock">Offline spar bot (no server)</label>
-          <input
-            id="arena-mock"
-            type="checkbox"
-            checked={useMock}
-            onChange={(e) => setUseMock(e.target.checked)}
-          />
-        </div>
         <div className="btn-row">
           <button
             type="button"
             className="menu-btn primary"
-            onClick={() => onStart({ action: 'queue', modeId, name: cleanName, mock: useMock })}
+            onClick={() => onStart({ action: 'queue', modeId, name: cleanName })}
           >
             Find Match
           </button>
           <button
             type="button"
             className="menu-btn"
-            onClick={() => onStart({ action: 'create', modeId, name: cleanName, mock: useMock })}
+            onClick={() => onStart({ action: 'create', modeId, name: cleanName })}
           >
             Create Room
           </button>
@@ -81,7 +71,7 @@ export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
           style={{ marginTop: 16 }}
           onSubmit={(e) => {
             e.preventDefault();
-            if (code.trim()) onStart({ action: 'join', modeId, name: cleanName, code: code.trim().toUpperCase(), mock: useMock });
+            if (code.trim()) onStart({ action: 'join', modeId, name: cleanName, code: code.trim().toUpperCase() });
           }}
         >
           <label htmlFor="arena-code">Join by code</label>
