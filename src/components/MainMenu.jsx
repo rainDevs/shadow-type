@@ -9,8 +9,11 @@ export function MainMenu({ onNavigate }) {
       </h1>
       <p className="st-subtitle">Type. Strike. Survive.</p>
       <nav className="st-menu" aria-label="Main menu">
-        <button type="button" className="menu-btn primary" onClick={() => onNavigate('hero')} autoFocus>
-          Start Fight
+        <button type="button" className="menu-btn primary" onClick={() => onNavigate('arena-lobby')} autoFocus>
+          Arena (PVP)
+        </button>
+        <button type="button" className="menu-btn" onClick={() => onNavigate('mode')}>
+          Training (vs CPU)
         </button>
         <button type="button" className="menu-btn" onClick={() => onNavigate('howto')}>
           How to Play

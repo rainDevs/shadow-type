@@ -1,11 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { HEROES, HERO_IDS, heroSpriteUrl, heroTheme } from '../data/heroes.js';
 import { Embers } from './Embers.jsx';
 
-export function CharacterSelector({ initial, onSelect, onBack }) {
-  const [selected, setSelected] = useState(
-    initial && HEROES[initial] ? initial : HERO_IDS[0],
-  );
+export function CharacterSelector({ onSelect, onBack }) {
+  const [selected, setSelected] = useState(null);
+
+  // Preload JumpAttack strips so selecting a card swaps instantly.
+  useEffect(() => {
+    for (const id of HERO_IDS) {
+      const img = new Image();
+      img.src = heroSpriteUrl(id, 'victory');
+    }
+  }, []);
 
   return (
     <div className="st-root">
@@ -17,19 +23,21 @@ export function CharacterSelector({ initial, onSelect, onBack }) {
           {HERO_IDS.map((id) => {
             const h = HEROES[id];
             const t = heroTheme(id);
+            const isSelected = selected === id;
             return (
               <button
                 key={id}
                 type="button"
                 role="radio"
-                aria-checked={selected === id}
-                className={`hero-card ${selected === id ? 'selected' : ''}`}
+                aria-checked={isSelected}
+                className={`hero-card ${isSelected ? 'selected' : ''}`}
                 style={{ '--hero': t.light, '--hero-deep': t.deep }}
                 onClick={() => setSelected(id)}
               >
                 <img
-                  src={heroSpriteUrl(id, 'idle')}
-                  alt={`${h.name} idle preview`}
+                  key={isSelected ? 'victory' : 'idle'}
+                  src={heroSpriteUrl(id, isSelected ? 'victory' : 'idle')}
+                  alt={isSelected ? `${h.name} jumping attack preview` : `${h.name} idle preview`}
                   className="hero-preview"
                   draggable={false}
                 />
@@ -42,12 +50,17 @@ export function CharacterSelector({ initial, onSelect, onBack }) {
           })}
         </div>
         <div className="btn-row">
-          <button type="button" className="menu-btn primary" onClick={() => onSelect(selected)}>
-            Continue
+          <button
+            type="button"
+            className="menu-btn primary"
+            disabled={!selected}
+            onClick={() => selected && onSelect(selected)}
+          >
+            Enter the Arena
           </button>
         </div>
         <button type="button" className="back-link" onClick={onBack}>
-          ← Back to menu
+          ← Back
         </button>
       </div>
     </div>

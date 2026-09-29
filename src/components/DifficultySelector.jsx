@@ -32,11 +32,11 @@ export function DifficultySelector({ initial, onStart, onBack }) {
         </div>
         <div className="btn-row">
           <button type="button" className="menu-btn primary" onClick={() => onStart(selected)}>
-            Enter the Arena
+            Continue
           </button>
         </div>
         <button type="button" className="back-link" onClick={onBack}>
-          ← Back to menu
+          ← Back
         </button>
       </div>
     </div>

@@ -432,6 +432,20 @@ export class PixiGame {
     this.shake(12);
   }
 
+  // PVP aliases: left side is player 0, right side is player 1.
+  leftAttack(opts) {
+    return this.playerAttack(opts);
+  }
+
+  rightAttack(opts) {
+    return this.cpuAttack(opts);
+  }
+
+  win(side) {
+    if (side === 1) return this.defeat();
+    return this.victory();
+  }
+
   reset() {
     this.tweens.length = 0;
     this.winFx = null;

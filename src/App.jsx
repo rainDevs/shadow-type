@@ -3,6 +3,7 @@ import { MainMenu } from './components/MainMenu.jsx';
 import { CharacterSelector } from './components/CharacterSelector.jsx';
 import { ModeSelector } from './components/ModeSelector.jsx';
 import { DifficultySelector } from './components/DifficultySelector.jsx';
+import { ArenaLobby } from './components/ArenaLobby.jsx';
 import { HowToPlay } from './components/HowToPlay.jsx';
 import { Settings } from './components/Settings.jsx';
 import { HighScores } from './components/HighScores.jsx';
@@ -18,8 +19,11 @@ import { audio } from './utils/audioManager.js';
 const BattleScreen = lazy(() =>
   import('./components/BattleScreen.jsx').then((m) => ({ default: m.BattleScreen })),
 );
+const ArenaBattleScreen = lazy(() =>
+  import('./components/ArenaBattleScreen.jsx').then((m) => ({ default: m.ArenaBattleScreen ?? m.default })),
+);
 
-// Screens: menu | hero | mode | difficulty | howto | settings | scores | battle
+// Screens: menu | mode | difficulty | hero | battle | arena-lobby | arena-hero | arena-battle | howto | settings | scores
 function normalize(id, table, fallback) {
   return table[id] ? id : fallback;
 }
@@ -36,6 +40,9 @@ function App() {
   const [heroId, setHeroId] = useState(() =>
     normalize(settings.hero, HEROES, 'hero-1'),
   );
+  const [arenaHeroId, setArenaHeroId] = useState(null);
+  const [arenaCfg, setArenaCfg] = useState(null);
+  const [arenaKey, setArenaKey] = useState(0);
   const [modeId, setModeId] = useState(() =>
     normalize(settings.mode, MODES, 'medium'),
   );
@@ -62,15 +69,6 @@ function App() {
     setScreen(next);
   }, []);
 
-  const chooseHero = useCallback((id) => {
-    audio.unlock();
-    audio.playClick();
-    const clean = HEROES[id] ? id : 'hero-1';
-    setHeroId(clean);
-    setSettings((prev) => ({ ...prev, hero: clean }));
-    setScreen('mode');
-  }, [setSettings]);
-
   const chooseMode = useCallback((id) => {
     audio.unlock();
     audio.playClick();
@@ -80,39 +78,100 @@ function App() {
     setScreen('difficulty');
   }, [setSettings]);
 
-  const startBattle = useCallback(
+  const chooseDifficulty = useCallback(
     (difficultyId) => {
       audio.unlock();
       audio.playClick();
       const clean = migrateDifficulty(difficultyId);
       setDifficulty(clean);
       setSettings((prev) => ({ ...prev, difficulty: clean }));
+      setScreen('hero');
+    },
+    [setSettings],
+  );
+
+  const startBattle = useCallback(
+    (id) => {
+      audio.unlock();
+      audio.playClick();
+      const clean = HEROES[id] ? id : 'hero-1';
+      setHeroId(clean);
+      setSettings((prev) => ({ ...prev, hero: clean }));
       // CPU is a random hero from the 2 the player did not pick.
-      setCpuHeroId(pickCpuHero(heroId));
+      setCpuHeroId(pickCpuHero(clean));
       setScreen('battle');
     },
-    [heroId, setSettings],
+    [setSettings],
   );
+
+  const startArenaLobby = useCallback((cfg) => {
+    audio.unlock();
+    audio.playClick();
+    const clean = {
+      action: cfg.action === 'create' || cfg.action === 'join' ? cfg.action : 'queue',
+      modeId: MODES[cfg.modeId] ? cfg.modeId : 'medium',
+      name: String(cfg.name ?? 'SHADOW').slice(0, 12) || 'SHADOW',
+      code: cfg.code ? String(cfg.code).toUpperCase().slice(0, 4) : null,
+      mock: Boolean(cfg.mock),
+    };
+    setArenaCfg(clean);
+    setArenaHeroId(null);
+    setScreen('arena-hero');
+  }, []);
+
+  const startArenaBattle = useCallback(
+    (id) => {
+      audio.unlock();
+      audio.playClick();
+      const clean = HEROES[id] ? id : 'hero-1';
+      setArenaHeroId(clean);
+      setArenaKey((k) => k + 1);
+      setScreen('arena-battle');
+    },
+    [],
+  );
+
+  const rematchArena = useCallback(() => {
+    audio.unlock();
+    audio.playClick();
+    // Fresh WS + fresh room: always re-queue to avoid stale codes.
+    setArenaCfg((prev) => (prev ? { ...prev, action: 'queue', code: null } : prev));
+    setArenaKey((k) => k + 1);
+    setScreen('arena-battle');
+  }, []);
 
   return (
     <>
       {screen === 'menu' && <MainMenu onNavigate={navigate} />}
-      {screen === 'hero' && (
-        <CharacterSelector
-          initial={heroId}
-          onSelect={chooseHero}
-          onBack={() => navigate('menu')}
-        />
-      )}
       {screen === 'mode' && (
         <ModeSelector
           initial={modeId}
           onSelect={chooseMode}
-          onBack={() => navigate('hero')}
+          onBack={() => navigate('menu')}
         />
       )}
       {screen === 'difficulty' && (
-        <DifficultySelector initial={difficulty} onStart={startBattle} onBack={() => navigate('mode')} />
+        <DifficultySelector initial={difficulty} onStart={chooseDifficulty} onBack={() => navigate('mode')} />
+      )}
+      {screen === 'hero' && (
+        <CharacterSelector
+          onSelect={startBattle}
+          onBack={() => navigate('difficulty')}
+        />
+      )}
+      {screen === 'arena-lobby' && (
+        <ArenaLobby
+          initialMode={arenaCfg?.modeId ?? modeId}
+          initialName={arenaCfg?.name ?? ''}
+          onStart={startArenaLobby}
+          onBack={() => navigate('menu')}
+        />
+      )}
+      {screen === 'arena-hero' && arenaCfg && (
+        <CharacterSelector
+          onSelect={startArenaBattle}
+          onBack={() => navigate('arena-lobby')}
+        />
       )}
       {screen === 'howto' && <HowToPlay onBack={() => navigate('menu')} />}
       {screen === 'settings' && (
@@ -133,6 +192,28 @@ function App() {
             modeId={modeId}
             difficulty={difficulty}
             settings={settings}
+            onExit={() => navigate('menu')}
+          />
+        </Suspense>
+      )}
+      {screen === 'arena-battle' && arenaCfg && arenaHeroId && (
+        <Suspense
+          fallback={
+            <div className="st-root">
+              <p className="st-subtitle">Entering the PVP arena…</p>
+            </div>
+          }
+        >
+          <ArenaBattleScreen
+            key={arenaKey}
+            heroId={arenaHeroId}
+            modeId={arenaCfg.modeId}
+            playerName={arenaCfg.name}
+            action={arenaCfg.action}
+            code={arenaCfg.code}
+            mock={arenaCfg.mock}
+            settings={settings}
+            onRematch={rematchArena}
             onExit={() => navigate('menu')}
           />
         </Suspense>

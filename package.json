@@ -8,12 +8,14 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "arena-server": "node server/arena-server.js",
     "gen:warrior": "node scripts/generate-warrior.cjs"
   },
   "dependencies": {
     "pixi.js": "^8.21.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "ws": "^8.22.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

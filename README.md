@@ -3,8 +3,9 @@
 A browser-based arcade typing fighting game. You duel a computer-controlled
 fighter by typing: every timed turn, your typing skill becomes combat damage.
 
-Built with React + Vite + PixiJS. No backend — high scores and settings persist
-in LocalStorage.
+Built with React + Vite + PixiJS. Training (vs CPU) is fully client-side —
+high scores and settings persist in LocalStorage. Arena PVP needs the
+bundled WebSocket server (`server/arena-server.js`).
 
 ## Play
 
@@ -13,12 +14,25 @@ npm install
 npm run dev
 ```
 
-Pick your hero, pick a time mode (**15 SECS / 30 SECS / 60 SECS**), pick a
-difficulty (**EASY / MEDIUM / HARD**), then type the flowing word river
-Monkeytype-style and empty the enemy's 100 HP before it empties yours.
-`ESC` pauses.
+Training: pick a time mode (**BLITZ / RAPID / MARATHON**), pick a
+difficulty (**EASY / MEDIUM / HARD**), pick your fighter, then type the
+flowing word river Monkeytype-style and empty the enemy's 100 HP before
+it empties yours. `ESC` pauses.
 
 Your CPU opponent is a random hero from the two you didn't pick.
+
+## Arena (PVP)
+
+```bash
+npm run arena-server        # :8787  (ARENA_PORT to override)
+# optional: VITE_ARENA_URL=ws://host:8787 npm run dev
+```
+
+Main menu → **Arena (PVP)** → name + mode → Find Match / Create / Join
+by 4-letter code → pick fighter → simultaneous typing windows on an
+identical seeded passage. Damage uses the same WPM formula, resolved
+server-side. No server reachable? Tick **offline spar bot** for a local
+demo bout. `ESC` forfeits and leaves.
 
 ## How a fight works
 
@@ -96,12 +110,13 @@ bonus from accuracy, words finished and damage dealt
   two run-attacks gated on damage ≥ 10, hurt, death, looped victory),
   procedural pixel backdrop, sword-slash arcs, particles, screen shake,
   damage numbers, celebration sparkles.
-- **React** owns everything else: hero/mode/difficulty select, countdown and
-  end banners, HUD, typing engine, game state, pause, results, settings,
-  high scores.
+- **React** owns everything else: training hero/mode/difficulty select,
+  arena lobby + PVP battle, countdown and end banners, HUD, typing engine,
+  game state, pause, results, settings, high scores.
 - The bridge is one small API (`src/game/PixiGame.js`): `playerAttack()`,
-  `cpuAttack()`, `victory()`, `defeat()`, `reset()`, `setPaused()`,
-  `destroy()`. Game logic never lives in Pixi code.
+  `cpuAttack()` (+ PVP aliases `leftAttack()`/`rightAttack()`/`win(side)`),
+  `victory()`, `defeat()`, `reset()`, `setPaused()`, `destroy()`.
+  Game logic never lives in Pixi code.
 - Sound is 100% synthesized Web Audio — countdown ticks, keystrokes,
   attacks, hits, jingles and generative battle music, zero audio files
   (`src/utils/audioManager.js`).
@@ -110,11 +125,14 @@ bonus from accuracy, words finished and damage dealt
 
 ```text
 src/
-  components/   menus, selectors, HUD, typing panel, pause, results
+  components/   menus, selectors, arena lobby/PVP battle, HUD, typing panel, pause, results
   game/         PixiGame, Fighter (sprites), Background, particles
   data/         heroes, modes, difficulty, word bank
-  hooks/        useTypingGame (combat state machine), useLocalStorage
+  hooks/        useTypingGame (training state machine), useLocalStorage
+  net/          Arena WS client, simultaneous-window hook, seeded passages
   utils/        damage/score/WPM math, audio, storage, random
+server/
+  arena-server.js   authoritative PVP rooms (queue / create / join)
 public/
   sprites/      hero sprite strips served to the arena + menus
 ```

@@ -90,8 +90,10 @@ export function TypingChallenge({ challenge, typed, disabled, onType, wordsDone,
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         autoComplete="off"
-        autoCapitalize="off"
+        autoCapitalize="none"
         autoCorrect="off"
+        enterKeyHint="go"
+        inputMode="text"
         spellCheck={false}
         aria-label="Typing input"
       />

@@ -22,7 +22,7 @@ export function ModeSelector({ initial, onSelect, onBack }) {
                 type="button"
                 role="radio"
                 aria-checked={selected === id}
-                className={`diff-card ${selected === id ? 'selected' : ''}`}
+                className={`diff-card ${id} ${selected === id ? 'selected' : ''}`}
                 onClick={() => setSelected(id)}
               >
                 <span className="diff-name">{m.label}</span>
