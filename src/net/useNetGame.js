@@ -275,24 +275,28 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
       retryTimer = setTimeout(() => connect(), 4000);
     };
 
-    // "Match Found!" → 3 · 2 · 1 · Type! over ~3.2s, synced to the
-    // server's startsAt so both clients count down together.
-    const runMatchCountdown = (startsAt) => {
+    // Fixed local schedule: "Match Found!" holds a full beat, then
+    // 3 · 2 · 1 · Type!. Deliberately NOT synced to the server clock —
+    // clock skew between client and host was compressing the old
+    // startsAt-based steps so early steps fired in the same millisecond
+    // and never painted. Both clients receive `matched` within ~100ms of
+    // each other, so fixed schedules stay in sync. The `window` message
+    // flips to playing whenever it truly arrives (guarded below).
+    const runMatchCountdown = () => {
       for (const t of countdownTimers.current) clearTimeout(t);
       countdownTimers.current.length = 0;
-      const now = Date.now();
-      const end = Number(startsAt) || now + 3200;
       const steps = [
         { value: 'Match Found!', at: 0, freq: 660 },
-        { value: '3', at: Math.max(0, end - now - 2300), freq: 440 },
-        { value: '2', at: Math.max(0, end - now - 1700), freq: 440 },
-        { value: '1', at: Math.max(0, end - now - 1100), freq: 440 },
-        { value: 'Type!', at: Math.max(0, end - now - 500), freq: 880 },
+        { value: '3', at: 1200, freq: 440 },
+        { value: '2', at: 1800, freq: 440 },
+        { value: '1', at: 2400, freq: 440 },
+        { value: 'Type!', at: 3000, freq: 880 },
       ];
       for (const s of steps) {
         countdownTimers.current.push(
           setTimeout(() => {
             if (!aliveRef.current || closed) return;
+            if (statusRef.current !== 'countdown') return;
             setCountdown(s.value);
             audio.blip({ freq: s.freq, type: 'square', duration: 0.12, volume: 0.3 });
           }, s.at),
@@ -325,9 +329,10 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
         setHpOpp(MAX_HP);
         hpMeRef.current = MAX_HP;
         hpOppRef.current = MAX_HP;
-        runMatchCountdown(msg.startsAt);
+        runMatchCountdown();
         setStatusBoth('countdown');
       } else if (msg.t === 'window') {
+        for (const t of countdownTimers.current) clearTimeout(t);
         if (statusRef.current === 'countdown') setStatusBoth('playing');
         turnsRef.current += 1;
         openWindow(msg.windowId, msg.endsAt, seedRef.current);
