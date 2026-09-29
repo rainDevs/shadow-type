@@ -1,91 +1,127 @@
-# Deploying Shadow Type
+# Deploying Shadow Type (Student Guide)
 
-Two moving parts, two hosts:
+This guide takes the game from your laptop to the real internet. No
+experience needed — just follow the steps in order and check the little
+✅ after each one.
 
-| Part | Host | What it runs |
-| ---- | ---- | ------------ |
-| Game frontend (Vite static) | Vercel | Menus, Training vs CPU, Arena PVP client |
-| Arena WS backend (Node) | Render | `server/arena-server.js` — rooms, matchmaking, HP authority |
+## What are we deploying, and where?
 
-Vercel **cannot** host the backend (no persistent WebSocket servers on
-serverless). Render **can**. Keep them separate.
+The game has **two parts** that live on **two free websites**:
 
-Live instances:
+1. **The game itself** (buttons, fighters, typing) → goes on **Vercel**.
+   Think of Vercel as a shelf that shows your game to the world.
+2. **The Arena server** (the referee that connects two players) →
+   goes on **Render**. The game needs a referee that stays awake and
+   remembers both players, and Vercel can't do that job — Render can.
 
-- Frontend: `https://shadow-type.vercel.app/`
-- Backend: `wss://shadow-type.onrender.com`
+Our live addresses (yours will look the same once you finish):
 
-## 0. Prerequisites
+- Game: `https://shadow-type.vercel.app/`
+- Server: `wss://shadow-type.onrender.com`
 
-- Code on GitHub: `rainDevs/shadow-type`, branch `main`, up to date
-  (`git status` clean, `git log origin/main` matches local).
-- A Vercel account with the GitHub integration installed.
-- A Render account with the GitHub integration installed.
+## Before you start (accounts + code)
 
-## 1. Backend first — Render
+1. Make sure your code is saved and uploaded to GitHub:
+   - Open a terminal in the project folder.
+   - Run `git status` — it should say "nothing to commit, working
+     tree clean". If not, run `git add -A`, then
+     `git commit -m "describe your change"`, then `git push`.
+   - ✅ The GitHub page for `rainDevs/shadow-type`, branch `main`,
+     shows your newest commit.
+2. Create a free account on **vercel.com** and connect your GitHub
+   when it asks (click "Authorize" — this lets Vercel read your code).
+3. Create a free account on **dashboard.render.com** and connect
+   your GitHub the same way.
 
-1. Go to **dashboard.render.com → New + → Web Service** (or **New →
-   Blueprint** — `render.yaml` in the repo pre-fills everything below).
-2. Connect the `rainDevs/shadow-type` repository.
-3. Settings:
+## Part 1 — Put the server (referee) on Render (do this first)
+
+1. Go to **dashboard.render.com** and click **New + → Web Service**.
+   (Shortcut: **New → Blueprint** — the file `render.yaml` in the
+   project fills in the settings below for you.)
+2. Pick the `rainDevs/shadow-type` repository and click Connect.
+3. Fill in the settings exactly like this:
    - **Name:** `shadow-type`
    - **Runtime:** `Node`
    - **Build Command:** `npm install`
    - **Start Command:** `node server/arena-server.js`
    - **Instance Type:** `Free`
    - **Health Check Path:** `/healthz`
-4. Click **Create Web Service** and wait for status **Live**.
-5. Verify: open `https://<your-service>.onrender.com/healthz` in a
-   browser — expect plain text `ok`.
-6. Your WebSocket URL is `wss://<your-service>.onrender.com`
-   (note `wss`, no port).
+4. Click **Create Web Service**. Now wait a few minutes — you will see
+   building messages, then status **Live** in green.
+   - ✅ It says **Live**.
+5. Test it: open `https://shadow-type.onrender.com/healthz` in your
+   browser (use your own service name if different). You should see
+   the plain word `ok`. That's the server saying "I'm awake!".
+   - ✅ You see `ok`.
+6. Write down your server address: `wss://shadow-type.onrender.com`.
+   (It starts with `wss` — the secure version of `ws`, like `https`
+   is to `http`. No port number at the end.)
 
-> Free-tier sleep: Render spins the service down after ~15 min idle.
-> The first Arena tap after sleep takes ~30–60s while it wakes; the
-> game shows **Waiting for Opponent...** and retries automatically.
+> A free Render server falls asleep after ~15 minutes with no players
+> (this saves money). The first person to open the Arena wakes it up,
+> which takes about 30–60 seconds. During that time the game shows
+> **Waiting for Opponent...** and tries again by itself — just wait.
 
-## 2. Frontend — Vercel
+## Part 2 — Put the game on Vercel
 
-1. Go to **vercel.com → Add New → Project → Import**
-   `rainDevs/shadow-type`.
-   - Framework Preset: **Vite** (auto-detected; `vercel.json` pins
-     Build `npm run build`, Output `dist/`).
-   - Root Directory: `./` (repo root).
-2. **Environment Variables** — add before the first deploy if you run
-   your own backend:
-   - `VITE_ARENA_URL` = `wss://<your-service>.onrender.com`
-   - (Skip it and the game defaults to the live backend above;
-     `localhost` dev builds still target `ws://<host>:8787`.)
-3. Click **Deploy**. Vite `VITE_*` vars bake in at **build time**, so
-   any later env change needs **Deployments → Redeploy**.
-4. Verify production: hard-refresh and confirm the menu shows
-   **Arena (PVP)** + **Training (vs CPU)** — the old **Start Fight**
-   button is gone. Play a Training bout, then an Arena bout on two
-   browsers.
+1. Go to **vercel.com** and click **Add New → Project → Import**,
+   then choose `rainDevs/shadow-type`.
+2. Check these three things (Vercel usually guesses right):
+   - **Framework Preset:** Vite
+   - **Root Directory:** `./` (the top of the project)
+   - **Project Name:** `shadow-type` (same as the GitHub repo, so
+     nothing gets confusing later)
+3. Environment variable (tells the game where its server lives):
+   - If your server address is exactly `wss://shadow-type.onrender.com`,
+     **skip this step** — the game already uses it by default.
+   - If your server has a different address, open
+     **Environment Variables** and add `VITE_ARENA_URL` with your
+     `wss://...` address.
+4. Click **Deploy** and wait for the confetti (status **Ready**).
+   - ✅ You get a live link like `https://shadow-type.vercel.app/`.
+5. Open the link and hard-refresh (`Ctrl+Shift+R` on Windows) so your
+   browser doesn't show an old saved copy. The main menu should show
+   **Arena (PVP)** and **Training (vs CPU)**.
+   - ✅ You see both buttons. Play one Training fight against the
+     computer to prove the game works.
 
-## 3. Local development (mirrors production)
+## Part 3 — Play a real online match (the fun test)
+
+1. Wake the server first: open `.../healthz` and make sure you see `ok`.
+2. Open the game link on **two** browsers (or your phone + laptop).
+3. On both, tap **Arena (PVP)** → type a name → pick the same mode →
+   **Find Match** → pick a fighter.
+4. Both screens should start the same fight at the same time.
+   - ✅ Typing on one screen hurts the other fighter. You did it —
+     real internet multiplayer!
+
+## Running it on your own laptop (practice / coding)
+
+You don't need the internet to code. Open **two** terminals:
 
 ```bash
-# terminal 1 — backend
-npm run arena-server            # :8787 (PORT / ARENA_PORT overrides)
-
-# terminal 2 — frontend
-npm run dev                     # http://localhost:5173
+# terminal 1 — the referee (server)
+npm run arena-server
+# terminal 2 — the game (frontend)
+npm run dev
 ```
 
-To point local frontend at the live backend instead:
+Then open `http://localhost:5173` in your browser. To test against
+the live server instead of your own, run:
 
 ```bash
 VITE_ARENA_URL=wss://shadow-type.onrender.com npm run dev
 ```
 
-## 4. Troubleshooting
+## If something goes wrong
 
-| Symptom | Cause → Fix |
-| ------- | ----------- |
-| Vercel site shows old menu / "Initial commit" content | Project is connected to the wrong repo. **Project → Settings → Git → Connected Git Repository** must be `rainDevs/shadow-type`, branch `main`. Reconnect or re-import, then redeploy. Confirm the deployment's commit hash matches `git log origin/main`. |
-| Vercel shows the new menu but Arena never pairs | Backend asleep or `VITE_ARENA_URL` wrong. Check `/healthz` on Render; check the value in **Vercel → Settings → Environment Variables**, then **Redeploy** (env needs a rebuild). |
-| Arena stuck on "Waiting for Opponent..." | Normal while Render wakes (~60s) or when no second player is queuing. Open a second browser to pair. Same-mode queues only pair together. |
-| `room-not-found` / `room-full` | Wrong/expired 4-letter code, or the room already has 2 players. Create a fresh room. |
-| Mixed-content / WS errors in console | Page is `https:` but WS URL is `ws:` — must be `wss:`. |
-| Build fails on Vercel, works locally | Open the deployment's **Build Logs**; usually a missing env var or a Node version difference. Repo builds clean with `npm run lint` + `npm run build`. |
+Read the row that matches what you see:
+
+| What you see | What it means, in plain words → what to do |
+| ------------ | ------------------------------------------ |
+| The site shows an old menu, or a page saying "Initial commit" | Vercel is showing a *different* project. Go to **Project → Settings → Git** and check **Connected Git Repository** is `rainDevs/shadow-type`, branch `main`. If not, reconnect it (or import the repo as a new project) and redeploy. Compare the deployment's commit code with `git log` on your laptop — they must match. |
+| New menu works, but Arena never finds a match | The server is asleep or the game looks in the wrong place. First open `/healthz` — if it loads slowly then says `ok`, just wait a minute and try again. If the address differs, check `VITE_ARENA_URL` in **Vercel → Settings → Environment Variables**, then **Deployments → Redeploy** (changing settings alone does nothing until you redeploy, because the address is baked in during the build). |
+| Stuck on "Waiting for Opponent..." | Either the server is still waking up (~60s), or nobody else is queuing. Open the game in a second browser and queue the **same mode** — modes only pair with themselves. |
+| `room-not-found` or `room-full` | The 4-letter room code is wrong, expired, or already has 2 players. Go back and **Create Room** again for a fresh code. |
+| Errors in the browser console about `ws:` / mixed content | The page is secure (`https:`) so the server address must be secure too (`wss:`). Change `ws://` to `wss://`. |
+| Vercel build fails but it works on your laptop | Open that deployment's **Build Logs** and read the red lines — it's usually a missing setting, not broken code. On your laptop, `npm run lint` and `npm run build` should both finish cleanly before you push. |
