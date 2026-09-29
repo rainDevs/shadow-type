@@ -1279,6 +1279,7 @@ html[data-reduced-motion='true'] .announce-hint {
 }
 
 .score-form {
+  display: block;
   margin-bottom: 18px;
 }
 
