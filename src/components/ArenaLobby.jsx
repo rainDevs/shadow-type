@@ -19,19 +19,6 @@ export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
       <div className="panel">
         <h2>Arena — PVP</h2>
         <p className="lede">Same passage. Same window. Faster typing wins.</p>
-        <label className="score-form" htmlFor="arena-name">
-          <span style={{ display: 'block', marginBottom: 8 }}>Fighter name</span>
-          <span className="score-form-row">
-            <input
-              id="arena-name"
-              value={name}
-              onChange={(e) => setName(e.target.value.slice(0, 12))}
-              maxLength={12}
-              autoComplete="off"
-              placeholder="SHADOW"
-            />
-          </span>
-        </label>
         <div className="diff-list" role="radiogroup" aria-label="Arena mode">
           {MODE_IDS.map((id) => {
             const m = MODES[id];
@@ -50,6 +37,19 @@ export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
             );
           })}
         </div>
+        <label className="score-form" htmlFor="arena-name">
+          <span style={{ display: 'block', marginBottom: 8 }}>Fighter name</span>
+          <span className="score-form-row">
+            <input
+              id="arena-name"
+              value={name}
+              onChange={(e) => setName(e.target.value.slice(0, 12))}
+              maxLength={12}
+              autoComplete="off"
+              placeholder="SHADOW"
+            />
+          </span>
+        </label>
         <div className="btn-row">
           <button
             type="button"
