@@ -5,9 +5,11 @@
 // from reported wpm with sanity caps so clients can't invent numbers.
 
 /* global process */
+import http from 'node:http';
 import { WebSocketServer } from 'ws';
 
-const PORT = Number(process.env.ARENA_PORT ?? 8787);
+// Render injects PORT; local dev can use ARENA_PORT. Binds 0.0.0.0.
+const PORT = Number(process.env.PORT ?? process.env.ARENA_PORT ?? 8787);
 const MAX_HP = 100;
 const TURN_GRACE_MS = 2500;
 const COUNTDOWN_MS = 3200;
@@ -37,8 +39,18 @@ function makeId(prefix) {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-const wss = new WebSocketServer({ port: PORT });
-console.log(`[arena] listening on :${PORT}`);
+const server = http.createServer((req, res) => {
+  if (req.url === '/healthz') {
+    res.writeHead(200, { 'content-type': 'text/plain' });
+    res.end('ok');
+    return;
+  }
+  res.writeHead(426, { 'content-type': 'text/plain' });
+  res.end('arena websocket only');
+});
+
+const wss = new WebSocketServer({ server });
+server.listen(PORT, () => console.log(`[arena] listening on :${PORT}`));
 
 // clientId -> { ws, name, heroId, modeId }
 const clients = new Map();

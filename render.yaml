@@ -1,0 +1,12 @@
+# Render blueprint: one-click Arena WS backend.
+# Dashboard: New > Blueprint > select repo. Or New > Web Service manually
+# with Build `npm install`, Start `node server/arena-server.js`.
+services:
+  - type: web
+    name: shadow-type-arena
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server/arena-server.js
+    healthCheckPath: /healthz
+    autoDeploy: true
