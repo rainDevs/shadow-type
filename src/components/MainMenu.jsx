@@ -25,7 +25,7 @@ export function MainMenu({ onNavigate }) {
           High Scores
         </button>
       </nav>
-      <p className="st-footer">Every keystroke is an attack</p>
+      <p className="st-footer">developed by: _rainDevs</p>
     </div>
   );
 }

@@ -9,10 +9,15 @@ export function HowToPlay({ onBack }) {
         <p className="lede">Type fast. Strike hard. Survive.</p>
         <ul className="howto-list">
           <li>
-            Fights run in <strong>timed turns</strong> — pick 15, 30, or 60
-            seconds per turn. A flowing river of words appears; type straight
-            through it like Monkeytype.
-            The text extends on its own, so never stop.
+            Two ways to fight: <strong>Training</strong> duels the computer
+            (mode → difficulty → fighter), <strong>Arena</strong> duels a real
+            rival online (mode → name → room → fighter).
+          </li>
+          <li>
+            Pick a typing window: <strong>BLITZ</strong> 15 seconds,{' '}
+            <strong>RAPID</strong> 30 seconds, <strong>MARATHON</strong> 60
+            seconds. A flowing river of words appears; type straight through
+            it like Monkeytype. The text extends on its own, so never stop.
           </li>
           <li>
             Correct characters glow cyan, mistakes burn red. <strong>Mistakes never block
@@ -24,12 +29,14 @@ export function HowToPlay({ onBack }) {
             for bigger hits.
           </li>
           <li>
-            Then the enemy answers with a quick strike of its own. Empty its health bar
-            before it empties yours.
+            In Training the enemy answers with a quick strike of its own. In
+            Arena both fighters type the same passage at once and strike
+            together. Empty the other health bar first.
           </li>
           <li>
-            Click the text if you lose focus. <span className="kbd">ESC</span> pauses the
-            fight. Copy/paste is disabled in the arena.
+            Click the text if you lose focus. <span className="kbd">ESC</span> pauses
+            Training, or asks to forfeit in the Arena (quitting hands your
+            rival the win). Copy/paste is disabled in the arena.
           </li>
         </ul>
         <div className="btn-row">
