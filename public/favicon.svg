@@ -1,14 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Shadow Type icon">
   <rect x="2" y="2" width="60" height="60" rx="12" fill="#04193f"/>
   <rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="#94a0ba" stroke-width="3" opacity="0.6"/>
-  <!-- crossed dagger blades -->
-  <polygon points="47,12 27,38 23.5,34.5" fill="#fda216"/>
-  <polygon points="17,12 37,38 40.5,34.5" fill="#0feffb"/>
-  <!-- keycap -->
-  <rect x="22" y="24" width="20" height="18" rx="4" fill="#fcfefe" stroke="#94a0ba" stroke-width="2"/>
-  <rect x="27" y="29" width="10" height="3" fill="#d840fb"/>
-  <rect x="30.5" y="29" width="3" height="8" fill="#d840fb"/>
-  <!-- pommels -->
-  <circle cx="22" cy="42" r="2.6" fill="#f489f6"/>
-  <circle cx="42" cy="42" r="2.6" fill="#f489f6"/>
+  <!-- crossed dagger blades tucking behind the keys -->
+  <polygon points="56,6 24,40 20,36" fill="#fda216"/>
+  <polygon points="8,6 40,40 44,36" fill="#0feffb"/>
+  <!-- S + T mini keycaps -->
+  <rect x="14" y="26" width="17" height="16" rx="3" fill="#fcfefe" stroke="#94a0ba" stroke-width="2"/>
+  <rect x="33" y="26" width="17" height="16" rx="3" fill="#fcfefe" stroke="#94a0ba" stroke-width="2"/>
+  <g fill="#d840fb">
+    <rect x="20" y="30" width="5" height="1"/>
+    <rect x="20" y="31" width="1" height="1"/>
+    <rect x="20" y="32" width="1" height="1"/>
+    <rect x="20" y="33" width="5" height="1"/>
+    <rect x="24" y="34" width="1" height="1"/>
+    <rect x="24" y="35" width="1" height="1"/>
+    <rect x="20" y="36" width="5" height="1"/>
+    <rect x="39" y="30" width="5" height="1"/>
+    <rect x="41" y="31" width="1" height="1"/>
+    <rect x="41" y="32" width="1" height="1"/>
+    <rect x="41" y="33" width="1" height="1"/>
+    <rect x="41" y="34" width="1" height="1"/>
+    <rect x="41" y="35" width="1" height="1"/>
+    <rect x="41" y="36" width="1" height="1"/>
+  </g>
 </svg>
