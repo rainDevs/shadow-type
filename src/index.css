@@ -590,7 +590,7 @@ html[data-reduced-motion='true'] .hero-card.selected .hero-preview {
   color: var(--muted);
   font-size: 12px;
   letter-spacing: 0.2em;
-  text-transform: uppercase;
+  text-transform: none;
   z-index: 1;
 }
 
