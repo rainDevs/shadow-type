@@ -48,6 +48,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
   const [results, setResults] = useState(null);
   const [liveWpm, setLiveWpm] = useState(0);
   const [liveAcc, setLiveAcc] = useState(100);
+  const [countdown, setCountdown] = useState('');
   const [error, setError] = useState(null);
   const [oppWpm, setOppWpm] = useState(0);
 
@@ -73,6 +74,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
   const matchWordsRef = useRef(0);
   const aliveRef = useRef(true);
   const sentRef = useRef(0);
+  const countdownTimers = useRef([]);
 
   const setStatusBoth = useCallback((s) => {
     statusRef.current = s;
@@ -258,6 +260,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
     let ws = null;
     let closed = false;
     let retryTimer = null;
+    const cdTimers = countdownTimers.current;
 
     const handshake = (sock) => {
       sendJson(sock, { t: 'hello', name, heroId, modeId: modeKey });
@@ -270,6 +273,31 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
       if (closed || !aliveRef.current) return;
       if (retryTimer) clearTimeout(retryTimer);
       retryTimer = setTimeout(() => connect(), 4000);
+    };
+
+    // "Match Found!" → 3 · 2 · 1 · Type! over ~3.2s, synced to the
+    // server's startsAt so both clients count down together.
+    const runMatchCountdown = (startsAt) => {
+      for (const t of countdownTimers.current) clearTimeout(t);
+      countdownTimers.current.length = 0;
+      const now = Date.now();
+      const end = Number(startsAt) || now + 3200;
+      const steps = [
+        { value: 'Match Found!', at: 0, freq: 660 },
+        { value: '3', at: Math.max(0, end - now - 2300), freq: 440 },
+        { value: '2', at: Math.max(0, end - now - 1700), freq: 440 },
+        { value: '1', at: Math.max(0, end - now - 1100), freq: 440 },
+        { value: 'Type!', at: Math.max(0, end - now - 500), freq: 880 },
+      ];
+      for (const s of steps) {
+        countdownTimers.current.push(
+          setTimeout(() => {
+            if (!aliveRef.current || closed) return;
+            setCountdown(s.value);
+            audio.blip({ freq: s.freq, type: 'square', duration: 0.12, volume: 0.3 });
+          }, s.at),
+        );
+      }
     };
 
     const onMessage = (ev) => {
@@ -297,6 +325,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
         setHpOpp(MAX_HP);
         hpMeRef.current = MAX_HP;
         hpOppRef.current = MAX_HP;
+        runMatchCountdown(msg.startsAt);
         setStatusBoth('countdown');
       } else if (msg.t === 'window') {
         if (statusRef.current === 'countdown') setStatusBoth('playing');
@@ -415,6 +444,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
       aliveRef.current = false;
       if (timerRef.current) clearInterval(timerRef.current);
       if (retryTimer) clearTimeout(retryTimer);
+      for (const t of cdTimers) clearTimeout(t);
       try {
         ws?.close();
       } catch {
@@ -436,6 +466,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
   return useMemo(
     () => ({
       status,
+      countdown,
       roomCode,
       you,
       opponent,
@@ -464,6 +495,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
     }),
     [
       status,
+      countdown,
       roomCode,
       you,
       opponent,

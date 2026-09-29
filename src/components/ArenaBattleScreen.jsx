@@ -194,8 +194,18 @@ export function ArenaBattleScreen({
           </div>
         )}
         {status === 'countdown' && (
-          <div className="countdown-overlay" aria-live="polite">
-            <span className="countdown-num go">Get ready — {game.opponent?.name ?? 'RIVAL'}</span>
+          <div className="countdown-overlay" aria-live="polite" aria-label={game.countdown}>
+            <div style={{ textAlign: 'center' }}>
+              <span
+                key={game.countdown}
+                className={`countdown-num ${game.countdown === 'Match Found!' || game.countdown === 'Type!' ? 'go' : ''}`}
+              >
+                {game.countdown || 'Get ready'}
+              </span>
+              {game.countdown === 'Match Found!' && game.opponent && (
+                <p className="announce-hint" style={{ opacity: 1 }}>vs {game.opponent.name}</p>
+              )}
+            </div>
           </div>
         )}
         {status === 'announce' && results && (
