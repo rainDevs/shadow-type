@@ -86,6 +86,7 @@ export function ArenaBattleScreen({
   const containerRef = useRef(null);
   const gameRef = useRef(null);
   const [rendererFailed, setRendererFailed] = useState(false);
+  const [confirmExit, setConfirmExit] = useState(false);
   const myHero = HEROES[heroId] ? heroId : 'hero-1';
 
   const game = useNetGame({
@@ -136,9 +137,11 @@ export function ArenaBattleScreen({
     const onKey = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        game.leave();
-        onExit();
-      } else if (e.key === 'Enter' || e.key === ' ') {
+        // Never quit instantly: Esc opens a forfeit confirm instead.
+        // Don't offer it on end screens — those already have menu buttons.
+        if (status === 'won' || status === 'lost' || status === 'draw') return;
+        setConfirmExit((open) => !open);
+      } else if ((e.key === 'Enter' || e.key === ' ') && !confirmExit) {
         if (status === 'announce' && canContinue() && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'BUTTON') {
           e.preventDefault();
           game.acknowledgeEnd();
@@ -225,6 +228,32 @@ export function ArenaBattleScreen({
                 <button type="button" className="menu-btn primary" onClick={onRematch} autoFocus>Find new match</button>
                 <button type="button" className="menu-btn" onClick={onExit}>Main Menu</button>
               </div>
+            </div>
+          </div>
+        )}
+        {confirmExit && (
+          <div className="overlay" role="dialog" aria-modal="true" aria-label="Confirm forfeit">
+            <div className="panel">
+              <h2>Leave the arena?</h2>
+              <p className="lede">Quitting now forfeits the match — your rival takes the win.</p>
+              <div className="btn-row">
+                <button type="button" className="menu-btn primary" onClick={() => setConfirmExit(false)} autoFocus>
+                  Stay
+                </button>
+                <button
+                  type="button"
+                  className="menu-btn danger"
+                  onClick={() => {
+                    game.leave();
+                    onExit();
+                  }}
+                >
+                  Forfeit
+                </button>
+              </div>
+              <p className="hint-line">
+                <span className="kbd">ESC</span> stay
+              </p>
             </div>
           </div>
         )}
