@@ -1,4 +1,5 @@
-// Arena lobby: name + mode + quick match / create / join by code.
+// Arena lobby as stepped views:
+// 1. Select Mode → 2. Enter Arena (name + Find/Create/Join) → 3. Join by code.
 // No net connection here — connection happens in ArenaBattleScreen
 // once hero is picked, so heroId is known at handshake time.
 
@@ -10,42 +11,52 @@ export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
   const [name, setName] = useState(initialName ?? '');
   const [modeId, setModeId] = useState(initialMode && MODES[initialMode] ? initialMode : null);
   const [code, setCode] = useState('');
+  const [step, setStep] = useState(initialMode && MODES[initialMode] ? 'enter' : 'mode');
 
   const cleanName = name.trim().slice(0, 12) || 'SHADOW';
+  const pickMode = (id) => {
+    setModeId(id);
+    setStep('enter');
+  };
 
   return (
     <div className="st-root">
       <Embers count={14} />
       <div className="panel">
         <h2>Arena — PVP</h2>
-        <p className="lede">Same passage. Same window. Faster typing wins.</p>
-        <h3 className="lede" style={{ margin: '0 0 12px' }}>1. Select mode</h3>
-        <div className="diff-list" role="radiogroup" aria-label="Arena mode">
-          {MODE_IDS.map((id) => {
-            const m = MODES[id];
-            return (
-              <button
-                key={id}
-                type="button"
-                role="radio"
-                aria-checked={modeId === id}
-                className={`diff-card ${id} ${modeId === id ? 'selected' : ''}`}
-                onClick={() => setModeId(modeId === id ? null : id)}
-              >
-                <span className="diff-name">{m.label}</span>
-                <span className="diff-desc">{m.description}</span>
-              </button>
-            );
-          })}
-        </div>
-        {!modeId && (
-          <p className="hint-line" aria-live="polite">Pick a mode above to continue.</p>
-        )}
-        {modeId && (
+
+        {step === 'mode' && (
           <>
-            <h3 className="lede" style={{ margin: '20px 0 12px' }}>2. Enter the arena</h3>
+            <p className="lede">Select Mode:</p>
+            <div className="diff-list" role="radiogroup" aria-label="Arena mode">
+              {MODE_IDS.map((id) => {
+                const m = MODES[id];
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    role="radio"
+                    aria-checked={modeId === id}
+                    className={`diff-card ${id} ${modeId === id ? 'selected' : ''}`}
+                    onClick={() => pickMode(id)}
+                  >
+                    <span className="diff-name">{m.label}</span>
+                    <span className="diff-desc">{m.description}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <button type="button" className="back-link" onClick={onBack}>
+              ← Back
+            </button>
+          </>
+        )}
+
+        {step === 'enter' && (
+          <>
+            <p className="lede">Enter Arena:</p>
             <label className="score-form" htmlFor="arena-name">
-              <span style={{ display: 'block', marginBottom: 8 }}>Fighter name</span>
+              <span style={{ display: 'block', marginBottom: 8 }}>Enter Typer name:</span>
               <span className="score-form-row">
                 <input
                   id="arena-name"
@@ -57,7 +68,7 @@ export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
                 />
               </span>
             </label>
-            <div className="btn-row">
+            <div className="btn-col">
               <button
                 type="button"
                 className="menu-btn primary"
@@ -72,16 +83,44 @@ export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
               >
                 Create Room
               </button>
+              <button
+                type="button"
+                className="menu-btn"
+                onClick={() => setStep('join')}
+              >
+                Join Room
+              </button>
             </div>
+            <button type="button" className="back-link" onClick={() => setStep('mode')}>
+              ← Back
+            </button>
+          </>
+        )}
+
+        {step === 'join' && (
+          <>
+            <p className="lede">Enter Arena:</p>
+            <label className="score-form" htmlFor="arena-name-join">
+              <span style={{ display: 'block', marginBottom: 8 }}>Enter Typer name:</span>
+              <span className="score-form-row">
+                <input
+                  id="arena-name-join"
+                  value={name}
+                  onChange={(e) => setName(e.target.value.slice(0, 12))}
+                  maxLength={12}
+                  autoComplete="off"
+                  placeholder="SHADOW"
+                />
+              </span>
+            </label>
             <form
               className="score-form"
-              style={{ marginTop: 16 }}
               onSubmit={(e) => {
                 e.preventDefault();
                 if (code.trim()) onStart({ action: 'join', modeId, name: cleanName, code: code.trim().toUpperCase() });
               }}
             >
-              <label htmlFor="arena-code">Join by code</label>
+              <label htmlFor="arena-code">Enter Room Code</label>
               <span className="score-form-row">
                 <input
                   id="arena-code"
@@ -91,16 +130,16 @@ export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
                   autoComplete="off"
                   placeholder="AB12"
                 />
-                <button type="submit" className="menu-btn" disabled={!code.trim()}>
+                <button type="submit" className="menu-btn primary" disabled={!code.trim()}>
                   Join
                 </button>
               </span>
             </form>
+            <button type="button" className="back-link" onClick={() => setStep('enter')}>
+              ← Back
+            </button>
           </>
         )}
-        <button type="button" className="back-link" onClick={onBack}>
-          ← Back
-        </button>
       </div>
     </div>
   );

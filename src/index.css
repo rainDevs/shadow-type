@@ -446,6 +446,17 @@ html[data-reduced-motion='true'] .hero-card.selected .hero-preview {
   min-width: 150px;
 }
 
+.btn-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.btn-col .menu-btn {
+  width: 100%;
+}
+
 .howto-list {
   text-align: left;
   color: var(--text);
