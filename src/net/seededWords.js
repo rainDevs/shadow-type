@@ -39,8 +39,6 @@ export function seededPassage(seed, windowId, count = 100) {
 }
 
 export function arenaServerUrl() {
-  const fromEnv = import.meta?.env?.VITE_ARENA_URL;
-  if (fromEnv) return fromEnv;
-  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  return `${proto}://${location.hostname}:8787`;
+  // Legacy alias — prefer arenaUrl() from netClient.js.
+  return 'wss://shadow-type-arena.onrender.com';
 }

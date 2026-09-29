@@ -1,12 +1,18 @@
 // Minimal browser WebSocket client for Arena PVP.
 // Resolves to a connected socket or throws; caller handles mock fallback.
 
+// Live Render backend — used when VITE_ARENA_URL is unset and the page
+// isn't served from localhost (so Vercel previews play real PVP).
+export const LIVE_ARENA_URL = 'wss://shadow-type-arena.onrender.com';
+
 export function arenaUrl() {
   const fromEnv = import.meta?.env?.VITE_ARENA_URL;
   if (fromEnv) return fromEnv;
   if (typeof location !== 'undefined' && location.hostname) {
+    const host = location.hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1') return LIVE_ARENA_URL;
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    return `${proto}://${location.hostname}:8787`;
+    return `${proto}://${host}:8787`;
   }
   return 'ws://localhost:8787';
 }

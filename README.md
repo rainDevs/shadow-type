@@ -23,10 +23,18 @@ Your CPU opponent is a random hero from the two you didn't pick.
 
 ## Arena (PVP)
 
+Live backend: `wss://shadow-type-arena.onrender.com` (free tier — wakes
+~30–60s on first use; the game plays the spar bot meanwhile).
+
 ```bash
-npm run arena-server        # :8787  (ARENA_PORT to override)
+npm run arena-server        # :8787 locally (PORT / ARENA_PORT to override)
 # optional: VITE_ARENA_URL=ws://host:8787 npm run dev
 ```
+
+Deploy your own: Render → Web Service (or Blueprint via `render.yaml`),
+Build `npm install`, Start `node server/arena-server.js`, Health Check
+`/healthz` — then set `VITE_ARENA_URL=wss://<your-service>.onrender.com`
+in Vercel and redeploy.
 
 Main menu → **Arena (PVP)** → name + mode → Find Match / Create / Join
 by 4-letter code → pick fighter → simultaneous typing windows on an
