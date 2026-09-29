@@ -187,6 +187,34 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
     else setStatusBoth(results.won ? 'won' : 'lost');
   }, [results, setStatusBoth]);
 
+  // Forfeit: tell the server (rival gets the Victory `end`), then play
+  // out our own defeat locally so quitting records a loss, not a menu exit.
+  const forfeit = useCallback(() => {
+    sendJson(wsRef.current, { t: 'forfeit', roomId: roomIdRef.current });
+    if (statusRef.current !== 'playing' && statusRef.current !== 'countdown') return;
+    if (timerRef.current) clearInterval(timerRef.current);
+    setLocked(true);
+    const pixi = pixiRef.current;
+    pixi?.win?.(1 - youRef.current);
+    audio.playDefeat();
+    audio.stopMusic();
+    const avgWpm = turnsRef.current > 0 ? wpmSumRef.current / turnsRef.current : 0;
+    setResults({
+      won: false,
+      draw: false,
+      forfeited: true,
+      score: scoreRef.current,
+      avgWpm,
+      accuracy: calculateAccuracy(keysCorrectRef.current, keysTotalRef.current),
+      totalDamage: totalDamageRef.current,
+      turns: turnsRef.current,
+      words: matchWordsRef.current,
+      mode: modeKey,
+      opponent: opponent?.name,
+    });
+    setStatusBoth('announce');
+  }, [modeKey, opponent, pixiRef, setStatusBoth]);
+
   // --- typing input (same caret semantics as training) ---
   const typeText = useCallback(
     (value) => {
@@ -371,10 +399,14 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
           audio.playHit();
         })();
       } else if (msg.t === 'end') {
+        // Ignore server ends once we already closed out locally
+        // (e.g. our own forfeit echoing back).
+        if (statusRef.current !== 'playing' && statusRef.current !== 'countdown') return;
         const winner = msg.winner;
         const won = winner === youRef.current;
         const draw = winner === -1;
         const pixi = pixiRef.current;
+        if (msg.byForfeit && won) showFeedback('info', 'RIVAL FORFEITED');
         if (draw) setStatusBoth('announce');
         else if (won) {
           pixi?.win?.(youRef.current) ?? pixi?.victory?.();
@@ -399,6 +431,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
           opponent: opponent?.name,
         });
       } else if (msg.t === 'peer-left') {
+        if (statusRef.current !== 'playing' && statusRef.current !== 'countdown') return;
         setStatusBoth('peer-left');
         audio.stopMusic();
       } else if (msg.t === 'error') {
@@ -496,6 +529,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
       modeLabel: modeKey,
       typeText,
       acknowledgeEnd,
+      forfeit,
       leave,
     }),
     [
@@ -524,6 +558,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
       modeKey,
       typeText,
       acknowledgeEnd,
+      forfeit,
       leave,
     ],
   );

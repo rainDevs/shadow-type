@@ -308,6 +308,24 @@ wss.on('connection', (ws) => {
       beginMatch(room);
       return;
     }
+    if (t === 'forfeit') {
+      const room = rooms.get(msg.roomId);
+      if (!room || room.over) return;
+      const idx = room.players.findIndex((p) => p.clientId === id);
+      if (idx < 0) return;
+      // Leaver takes the defeat, rival takes the win (sent as a normal
+      // `end` so the opponent gets the Victory screen, not peer-left).
+      room.over = true;
+      const winner = 1 - idx;
+      for (const p of room.players) {
+        const c = clients.get(p.clientId);
+        if (c) send(c.ws, { t: 'end', roomId: room.id, winner, hp: [...room.hp], score: [...room.score], byForfeit: true });
+      }
+      setTimeout(() => {
+        if (rooms.has(room.id)) closeRoom(room);
+      }, 30000);
+      return;
+    }
     if (t === 'turn') {
       const room = rooms.get(msg.roomId);
       if (!room || room.over) return;

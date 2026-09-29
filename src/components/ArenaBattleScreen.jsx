@@ -31,7 +31,13 @@ function ArenaResult({ game, onRematch, onMenu }) {
       <div className={`panel result ${r?.won && !r?.draw ? 'won' : 'lost'}`}>
         <h2 className="result-title">{title}</h2>
         <p className="lede">
-          {r?.draw ? 'Both shadows fell together.' : r?.won ? 'Rival defeated.' : `Lost to ${game.opponent?.name ?? 'rival'}.`}
+          {r?.draw
+            ? 'Both shadows fell together.'
+            : r?.forfeited
+              ? 'You forfeited the match.'
+              : r?.won
+                ? 'Rival defeated.'
+                : `Lost to ${game.opponent?.name ?? 'rival'}.`}
         </p>
         <dl className="result-grid">
           <div>
@@ -139,7 +145,7 @@ export function ArenaBattleScreen({
         e.preventDefault();
         // Never quit instantly: Esc opens a forfeit confirm instead.
         // Don't offer it on end screens — those already have menu buttons.
-        if (status === 'won' || status === 'lost' || status === 'draw') return;
+        if (status === 'won' || status === 'lost' || status === 'draw' || status === 'announce') return;
         setConfirmExit((open) => !open);
       } else if ((e.key === 'Enter' || e.key === ' ') && !confirmExit) {
         if (status === 'announce' && canContinue() && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'BUTTON') {
@@ -244,8 +250,14 @@ export function ArenaBattleScreen({
                   type="button"
                   className="menu-btn danger"
                   onClick={() => {
-                    game.leave();
-                    onExit();
+                    setConfirmExit(false);
+                    // Mid-match: forfeit records our defeat and hands the
+                    // rival the win. Still waiting: nothing to forfeit.
+                    if (status === 'playing' || status === 'countdown') game.forfeit();
+                    else {
+                      game.leave();
+                      onExit();
+                    }
                   }}
                 >
                   Forfeit
