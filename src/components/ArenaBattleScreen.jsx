@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { PixiGame } from '../game/PixiGame.js';
 import { useNetGame } from '../net/useNetGame.js';
 import { HEROES, pickCpuHero } from '../data/heroes.js';
+import { MODES } from '../data/modes.js';
 import { BattleHUD } from './BattleHUD.jsx';
 import { TypingChallenge } from './TypingChallenge.jsx';
 
@@ -300,7 +301,7 @@ export function ArenaBattleScreen({
       )}
       {!showTyping && waiting && (
         <div className="turn-timer">
-          <div className="turn-banner player-turn">ARENA — {modeId?.toUpperCase?.() ?? ''}</div>
+          <div className="turn-banner player-turn">ARENA — {MODES[modeId]?.label ?? String(modeId ?? '').toUpperCase()}</div>
         </div>
       )}
       {over && results && <ArenaResult game={game} onRematch={onRematch} onMenu={onExit} />}
