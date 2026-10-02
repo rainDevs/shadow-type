@@ -1,4 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Shadow Type icon">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Shadow Type icon: dagger stabbed into S and T keycaps">
+  <defs>
+    <linearGradient id="st-ic-steel" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#94a0ba"/>
+      <stop offset="0.5" stop-color="#fcfefe"/>
+      <stop offset="1" stop-color="#94a0ba"/>
+    </linearGradient>
+  </defs>
   <rect x="2" y="2" width="60" height="60" rx="12" fill="#04193f"/>
   <rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="#94a0ba" stroke-width="3" opacity="0.6"/>
+
+  <!-- ST keycaps -->
+  <polygon points="17,34 27,34 30,37 30,49 27,52 17,52 14,49 14,37" fill="#fcfefe" stroke="#04193f" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="35,34 45,34 48,37 48,49 45,52 35,52 32,49 32,37" fill="#fcfefe" stroke="#04193f" stroke-width="2" stroke-linejoin="miter"/>
+  <g fill="#d840fb">
+    <rect x="19" y="39" width="5" height="1.5"/>
+    <rect x="19" y="40.5" width="1.5" height="1.5"/>
+    <rect x="19" y="42" width="1.5" height="1.5"/>
+    <rect x="19" y="43.5" width="5" height="1.5"/>
+    <rect x="22.5" y="45" width="1.5" height="1.5"/>
+    <rect x="22.5" y="46.5" width="1.5" height="1.5"/>
+    <rect x="19" y="48" width="5" height="1.5"/>
+  </g>
+  <g fill="#0696db">
+    <rect x="38" y="39" width="5" height="1.5"/>
+    <rect x="39.75" y="40.5" width="1.5" height="1.5"/>
+    <rect x="39.75" y="42" width="1.5" height="1.5"/>
+    <rect x="39.75" y="43.5" width="1.5" height="1.5"/>
+    <rect x="39.75" y="45" width="1.5" height="1.5"/>
+    <rect x="39.75" y="46.5" width="1.5" height="1.5"/>
+    <rect x="39.75" y="48" width="1.5" height="1"/>
+  </g>
+
+  <!-- dagger stabbed down into the T keycap -->
+  <circle cx="40.5" cy="10" r="2.6" fill="#f489f6"/>
+  <rect x="39" y="12.5" width="3" height="10" fill="url(#st-ic-steel)"/>
+  <polygon points="33,22 48,22 48,25 33,25" fill="#fda216"/>
+  <polygon points="37.5,34 43.5,34 42,42 39,42" fill="url(#st-ic-steel)"/>
+  <line x1="40.5" y1="25" x2="40.5" y2="33" stroke="#fcfefe" stroke-width="1"/>
 </svg>
