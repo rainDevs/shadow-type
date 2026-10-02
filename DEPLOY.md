@@ -16,7 +16,8 @@ The game has **two parts** that live on **two free websites**:
 
 Our live addresses (yours will look the same once you finish):
 
-- Game: `https://shadow-type.vercel.app/`
+- Game: `https://shadowtype.fun/` (custom domain on Hostinger DNS; the
+  `*.vercel.app` URL still works as a fallback)
 - Server: `wss://shadow-type.onrender.com`
 
 ## Before you start (accounts + code)
@@ -78,12 +79,30 @@ Our live addresses (yours will look the same once you finish):
      **Environment Variables** and add `VITE_ARENA_URL` with your
      `wss://...` address.
 4. Click **Deploy** and wait for the confetti (status **Ready**).
-   - ✅ You get a live link like `https://shadow-type.vercel.app/`.
 5. Open the link and hard-refresh (`Ctrl+Shift+R` on Windows) so your
    browser doesn't show an old saved copy. The main menu should show
    **Arena (PVP)** and **Training (vs CPU)**.
    - ✅ You see both buttons. Play one Training fight against the
      computer to prove the game works.
+   - ✅ The custom domain is `https://shadowtype.fun/`
+     (apex + `www` both point at Vercel; see "Custom domain" below).
+
+### Custom domain (Hostinger DNS → Vercel)
+
+Our domain `shadowtype.fun` stays registered at Hostinger; only the
+traffic moves to Vercel:
+
+1. **Vercel → project → Settings → Domains**: add `shadowtype.fun`,
+   then add `www.shadowtype.fun`. Copy the exact records Vercel shows
+   (usually `A @ → 76.76.21.21` and `CNAME www → cname.vercel-dns.com`).
+2. **Hostinger hPanel → Domains → DNS Zone Editor** (keep Hostinger
+   nameservers): delete the default parking `A` record(s) for `@`,
+   then add Vercel's records. There must be exactly one `@` A record.
+3. Wait for propagation; both URLs must show **Valid Configuration**
+   in Vercel. Set the apex as primary so `www` redirects to it.
+
+Gotcha we hit: the apex showed Hostinger's parking page while `www`
+worked — a leftover parking `A` record on `@`. Delete it and wait.
 
 ## Part 3 — Play a real online match (the fun test)
 
