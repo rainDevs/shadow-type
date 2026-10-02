@@ -8,6 +8,7 @@ export function TypingChallenge({ challenge, typed, disabled, onType, wordsDone,
   const inputRef = useRef(null);
   const scrollRef = useRef(null);
   const caretRef = useRef(null);
+  const composingRef = useRef(false);
   const [focused, setFocused] = useState(false);
   const pos = typed.length;
 
@@ -80,9 +81,32 @@ export function TypingChallenge({ challenge, typed, disabled, onType, wordsDone,
       <input
         ref={inputRef}
         className="typing-input-hidden"
+        type="text"
+        name="shadow-type-typing"
         value={typed}
         disabled={disabled}
-        onChange={(e) => onType(e.target.value)}
+        onChange={(e) => {
+          // IME composition (Gboard/swipe) fires intermediate onChange
+          // values — only commit once composition ends.
+          if (composingRef.current) return;
+          onType(e.target.value);
+        }}
+        onCompositionStart={() => {
+          composingRef.current = true;
+        }}
+        onCompositionEnd={(e) => {
+          composingRef.current = false;
+          onType(e.target.value);
+        }}
+        onBeforeInput={(e) => {
+          // Block mobile IME rewrites at the source: autocorrect word
+          // replacement, paste-via-IME and drop. Normal typing
+          // (insertText, deleteContentBackward) passes through.
+          const it = e.nativeEvent?.inputType;
+          if (it === 'insertReplacementText' || it === 'insertFromPaste' || it === 'insertFromDrop') {
+            e.preventDefault();
+          }
+        }}
         onPaste={(e) => e.preventDefault()}
         onCopy={(e) => e.preventDefault()}
         onCut={(e) => e.preventDefault()}
@@ -95,6 +119,8 @@ export function TypingChallenge({ challenge, typed, disabled, onType, wordsDone,
         enterKeyHint="go"
         inputMode="text"
         spellCheck={false}
+        data-lpignore="true"
+        data-1p-ignore="true"
         aria-label="Typing input"
       />
     </div>

@@ -219,27 +219,41 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
     setStatusBoth('announce');
   }, [modeKey, opponent, pixiRef, setStatusBoth]);
 
-  // --- typing input (same caret semantics as training) ---
+  // --- typing input (same caret semantics as training, mobile-hardened) ---
   const typeText = useCallback(
     (value) => {
       if (statusRef.current !== 'playing' || sentRef.current) return;
       const target = passageRef.current;
       const old = typed;
-      let next = value;
-      if (next.length > old.length) {
-        let pos = old.length;
-        let applied = old;
-        for (let i = old.length; i < next.length && pos < target.length; i++) {
-          const ch = next[i];
-          keysTotalRef.current += 1;
+      const raw = value;
+      let common = 0;
+      const maxCommon = Math.min(old.length, raw.length);
+      while (common < maxCommon && old[common] === raw[common]) common += 1;
+      const suffix = raw.slice(common);
+      let next;
+      if (suffix.length === 0) {
+        recordRef.current.length = Math.min(recordRef.current.length, raw.length);
+        next = raw;
+      } else {
+        recordRef.current.length = Math.min(recordRef.current.length, common);
+        let pos = common;
+        let applied = raw.slice(0, common);
+        for (const ch of suffix) {
+          if (pos >= target.length) break;
+          if (ch === ' ' && applied.endsWith(' ') && target[pos] !== ' ') {
+            continue; // mobile auto double-space: swallow, stay aligned
+          }
           const ok = ch === target[pos];
           recordRef.current[pos] = ok;
-          if (ok) {
-            keysCorrectRef.current += 1;
-            audio.playKey();
-          } else {
-            audio.playError();
-            showFeedback('miss', 'MISS');
+          if (pos >= old.length) {
+            keysTotalRef.current += 1;
+            if (ok) {
+              keysCorrectRef.current += 1;
+              audio.playKey();
+            } else {
+              audio.playError();
+              showFeedback('miss', 'MISS');
+            }
           }
           applied += ch;
           pos += 1;
@@ -252,11 +266,6 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
           boundsRef.current = wordBounds(grown);
           setPassage(grown);
         }
-      } else if (next.length < old.length) {
-        recordRef.current.length = next.length;
-      } else {
-        const rec = recordRef.current;
-        for (let i = 0; i < next.length && i < target.length; i++) rec[i] = next[i] === target[i];
       }
       setTyped(next);
       const pos = next.length;

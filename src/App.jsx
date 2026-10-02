@@ -1,4 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { MainMenu } from './components/MainMenu.jsx';
 import { CharacterSelector } from './components/CharacterSelector.jsx';
 import { ModeSelector } from './components/ModeSelector.jsx';
@@ -216,6 +217,7 @@ function App() {
           />
         </Suspense>
       )}
+      <Analytics />
     </>
   );
 }

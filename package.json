@@ -12,6 +12,7 @@
     "gen:warrior": "node scripts/generate-warrior.cjs"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "pixi.js": "^8.21.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
