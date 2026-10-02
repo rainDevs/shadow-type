@@ -4,7 +4,6 @@ export function MainMenu({ onNavigate }) {
   return (
     <div className="st-root">
       <Embers />
-      <img src="/logo.svg" alt="Shadow Type logo" className="st-logo" draggable={false} />
       <h1 className="st-title">
         SHADOW <span className="accent">TYPE</span>
       </h1>

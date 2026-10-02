@@ -181,7 +181,6 @@ function App() {
         <Suspense
           fallback={
             <div className="st-root">
-              <img src="/logo.svg" alt="" aria-hidden="true" className="st-logo small" draggable={false} />
               <p className="st-subtitle">Entering the arena…</p>
             </div>
           }
@@ -200,7 +199,6 @@ function App() {
         <Suspense
           fallback={
             <div className="st-root">
-              <img src="/logo.svg" alt="" aria-hidden="true" className="st-logo small" draggable={false} />
               <p className="st-subtitle">Entering the PVP arena…</p>
             </div>
           }
