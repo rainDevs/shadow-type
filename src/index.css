@@ -131,19 +131,6 @@ html[data-reduced-motion='true'] *::after {
   transition-duration: 0.01ms !important;
 }
 
-.st-logo {
-  width: clamp(96px, 18vw, 148px);
-  height: auto;
-  margin-bottom: 8px;
-  z-index: 1;
-  filter: drop-shadow(4px 4px 0 #000) drop-shadow(0 0 18px rgba(216, 64, 251, 0.45));
-}
-
-.st-logo.small {
-  width: 72px;
-  margin-bottom: 12px;
-}
-
 .st-title {
   margin: 0;
   font-family: var(--pixel);
