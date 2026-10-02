@@ -199,6 +199,9 @@ export function ArenaBattleScreen({
               <div className="countdown-num" style={{ fontSize: 'clamp(28px,6vw,54px)' }}>
                 Waiting for Opponent...
               </div>
+              <p className="announce-hint" style={{ opacity: 1 }}>
+                {game.platform === 'mobile' ? 'MOBILE' : 'DESKTOP'} POOL — {MODES[modeId]?.label ?? String(modeId ?? '').toUpperCase()}
+              </p>
               {game.roomCode && <p className="announce-hint" style={{ opacity: 1 }}>Room {game.roomCode} — share the code</p>}
             </div>
           </div>
@@ -274,7 +277,11 @@ export function ArenaBattleScreen({
           <div className="overlay" role="dialog" aria-modal="true" aria-label="Arena error">
             <div className="panel">
               <h2>Arena error</h2>
-              <p className="lede">{game.error ?? 'Could not join.'}</p>
+              <p className="lede">
+                {game.error === 'platform-mismatch'
+                  ? 'That room is in a different pool — mobile plays mobile, desktop plays desktop.'
+                  : (game.error ?? 'Could not join.')}
+              </p>
               <div className="btn-row">
                 <button type="button" className="menu-btn primary" onClick={onExit} autoFocus>Back</button>
               </div>
@@ -301,7 +308,7 @@ export function ArenaBattleScreen({
       )}
       {!showTyping && waiting && (
         <div className="turn-timer">
-          <div className="turn-banner player-turn">ARENA — {MODES[modeId]?.label ?? String(modeId ?? '').toUpperCase()}</div>
+          <div className="turn-banner player-turn">ARENA — {MODES[modeId]?.label ?? String(modeId ?? '').toUpperCase()} — {game.platform === 'mobile' ? 'MOBILE' : 'DESKTOP'}</div>
         </div>
       )}
       {over && results && <ArenaResult game={game} onRematch={onRematch} onMenu={onExit} />}

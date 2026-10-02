@@ -10,6 +10,7 @@ import { calculateCharScore, calculateWindowBonus } from '../utils/scoreCalculat
 import { audio } from '../utils/audioManager.js';
 import { connectArena, sendJson } from './netClient.js';
 import { seededPassage } from './seededWords.js';
+import { getPlatform, normalizePlatform } from '../utils/platform.js';
 
 let feedbackId = 0;
 const MAX_HP = 100;
@@ -29,6 +30,9 @@ function wordBounds(passage) {
 export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
   const modeKey = MODES[modeId] ? modeId : 'medium';
   const turnSeconds = MODES[modeKey].turnSeconds;
+  // Strict pool: mobile-vs-mobile, desktop-vs-desktop. Computed once per
+  // mount so a resize/rotation can't flip pools mid-queue.
+  const platform = useMemo(() => normalizePlatform(getPlatform()), []);
 
   const [status, setStatus] = useState('connecting'); // connecting|waiting|countdown|playing|announce|won|lost|draw|peer-left|error
   const [roomCode, setRoomCode] = useState(code ?? null);
@@ -291,10 +295,10 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
     const cdTimers = countdownTimers.current;
 
     const handshake = (sock) => {
-      sendJson(sock, { t: 'hello', name, heroId, modeId: modeKey });
-      if (action === 'create') sendJson(sock, { t: 'create', name, heroId, modeId: modeKey });
-      else if (action === 'join') sendJson(sock, { t: 'join', code, name, heroId });
-      else sendJson(sock, { t: 'queue', name, heroId, modeId: modeKey });
+      sendJson(sock, { t: 'hello', name, heroId, modeId: modeKey, platform });
+      if (action === 'create') sendJson(sock, { t: 'create', name, heroId, modeId: modeKey, platform });
+      else if (action === 'join') sendJson(sock, { t: 'join', code, name, heroId, platform });
+      else sendJson(sock, { t: 'queue', name, heroId, modeId: modeKey, platform });
     };
 
     const scheduleRetry = () => {
@@ -527,6 +531,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
       oppWpm,
       error,
       modeLabel: modeKey,
+      platform,
       typeText,
       acknowledgeEnd,
       forfeit,
@@ -556,6 +561,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
       oppWpm,
       error,
       modeKey,
+      platform,
       typeText,
       acknowledgeEnd,
       forfeit,

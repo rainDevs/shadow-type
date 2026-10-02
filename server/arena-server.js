@@ -23,6 +23,16 @@ const MODES = {
 const DAMAGE_MIN = 2;
 const DAMAGE_MAX = 24;
 
+// Strict pools: mobile-vs-mobile, desktop-vs-desktop. No fallback, no
+// cross-play. Old clients without a platform field count as desktop.
+function normalizePlatform(value) {
+  return value === 'mobile' ? 'mobile' : 'desktop';
+}
+
+function queueKey(modeId, platform) {
+  return `${modeId}:${normalizePlatform(platform)}`;
+}
+
 function damageForWpm(wpm) {
   const w = Math.max(0, Math.min(250, Number(wpm) || 0));
   return Math.min(DAMAGE_MAX, Math.max(DAMAGE_MIN, Math.round(w / 3.5)));
@@ -52,13 +62,13 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocketServer({ server });
 server.listen(PORT, () => console.log(`[arena] listening on :${PORT}`));
 
-// clientId -> { ws, name, heroId, modeId }
+// clientId -> { ws, name, heroId, modeId, platform }
 const clients = new Map();
 // roomId -> room
 const rooms = new Map();
 // code -> roomId
 const byCode = new Map();
-// modeId -> [clientId] waiting
+// "modeId:platform" -> [clientId] waiting (strict pools, no cross-play)
 const queues = new Map();
 
 function send(ws, msg) {
@@ -70,6 +80,7 @@ function roomPublic(room) {
     roomId: room.id,
     code: room.code,
     modeId: room.modeId,
+    platform: room.platform,
     seed: room.seed,
     hp: [...room.hp],
     windowId: room.windowId,
@@ -178,6 +189,7 @@ function createRoom(hostClient, { modeId, code }) {
     id,
     code: code ?? makeCode(),
     modeId: MODES[modeId] ? modeId : 'medium',
+    platform: normalizePlatform(hostClient.platform),
     seed: Math.floor(Math.random() * 2 ** 31),
     players: [{ clientId: hostClient.id, idx: 0 }],
     hp: [MAX_HP, MAX_HP],
@@ -237,7 +249,7 @@ function dequeue(clientId) {
 
 wss.on('connection', (ws) => {
   const id = makeId('c');
-  const client = { id, ws, name: 'RIVAL', heroId: 'hero-1', modeId: 'medium', roomId: null };
+  const client = { id, ws, name: 'RIVAL', heroId: 'hero-1', modeId: 'medium', platform: 'desktop', roomId: null };
   clients.set(id, client);
   send(ws, { t: 'welcome', clientId: id });
 
@@ -253,6 +265,7 @@ wss.on('connection', (ws) => {
       client.name = String(msg.name ?? 'RIVAL').slice(0, 12) || 'RIVAL';
       client.heroId = String(msg.heroId ?? 'hero-1');
       client.modeId = MODES[msg.modeId] ? msg.modeId : 'medium';
+      client.platform = normalizePlatform(msg.platform);
       return;
     }
     if (t === 'ping') return send(ws, { t: 'pong', at: msg.at ?? null, now: Date.now() });
@@ -261,24 +274,26 @@ wss.on('connection', (ws) => {
       client.heroId = String(msg.heroId ?? client.heroId);
       const modeId = MODES[msg.modeId] ? msg.modeId : 'medium';
       client.modeId = modeId;
+      client.platform = normalizePlatform(msg.platform ?? client.platform);
       dequeue(id);
       // leave old room if any
       if (client.roomId && rooms.has(client.roomId)) {
         const old = rooms.get(client.roomId);
         closeRoom(old, 'peer-left');
       }
-      const q = queues.get(modeId) ?? [];
+      const key = queueKey(modeId, client.platform);
+      const q = queues.get(key) ?? [];
       const waitingId = q.find((cid) => cid !== id && clients.has(cid));
       if (waitingId) {
-        queues.set(modeId, q.filter((cid) => cid !== waitingId && cid !== id));
+        queues.set(key, q.filter((cid) => cid !== waitingId && cid !== id));
         const host = clients.get(waitingId);
         const room = createRoom(host, { modeId });
         joinRoom(client, room);
         beginMatch(room);
       } else {
         q.push(id);
-        queues.set(modeId, q);
-        send(ws, { t: 'queued', modeId });
+        queues.set(key, q);
+        send(ws, { t: 'queued', modeId, platform: client.platform });
       }
       return;
     }
@@ -290,6 +305,7 @@ wss.on('connection', (ws) => {
       client.name = String(msg.name ?? client.name).slice(0, 12) || 'RIVAL';
       client.heroId = String(msg.heroId ?? client.heroId);
       const modeId = MODES[msg.modeId] ? msg.modeId : 'medium';
+      client.platform = normalizePlatform(msg.platform ?? client.platform);
       dequeue(id);
       const room = createRoom(client, { modeId });
       return send(ws, { t: 'room-created', ...roomPublic(room) });
@@ -297,12 +313,16 @@ wss.on('connection', (ws) => {
     if (t === 'join') {
       client.name = String(msg.name ?? client.name).slice(0, 12) || 'RIVAL';
       client.heroId = String(msg.heroId ?? client.heroId);
+      client.platform = normalizePlatform(msg.platform ?? client.platform);
       const code = String(msg.code ?? '').toUpperCase().trim();
       const roomId = byCode.get(code);
       const room = roomId ? rooms.get(roomId) : null;
       if (!room) return send(ws, { t: 'error', message: 'room-not-found' });
       if (room.players.length >= 2) return send(ws, { t: 'error', message: 'room-full' });
       if (room.over) return send(ws, { t: 'error', message: 'room-closed' });
+      if (normalizePlatform(room.platform) !== client.platform) {
+        return send(ws, { t: 'error', message: 'platform-mismatch' });
+      }
       dequeue(id);
       joinRoom(client, room);
       beginMatch(room);
