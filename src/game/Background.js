@@ -135,14 +135,14 @@ export async function buildBackground(width, height, groundY, opts = {}) {
         if (rand() < litP) {
           const c = LIT[Math.floor(rand() * LIT.length)];
           windows.rect(wx, wy, 4, 5);
-          windows.fill({ color: c, alpha: 0.45 + rand() * 0.4 });
+          windows.fill({ color: c, alpha: 0.18 + rand() * 0.25 });
         }
       }
     }
     // Red aircraft-warning beacon on the tallest towers.
     if (bh >= 112) {
       beacons.rect(bx + Math.floor(bw / 2) - 1, groundY - bh - 8, 3, 3);
-      beacons.fill({ color: 0xe7333b, alpha: 0.9 });
+      beacons.fill({ color: 0xe7333b, alpha: 0.65 });
       beacons.rect(bx + Math.floor(bw / 2) - 1, groundY - bh - 5, 1, 5);
       beacons.fill({ color: STEEL, alpha: 0.5 });
     }
