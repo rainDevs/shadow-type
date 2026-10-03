@@ -110,16 +110,47 @@ export async function buildBackground(width, height, groundY, opts = {}) {
     }));
   }
 
-  // Distant blocky ridge (dark silhouette two tones).
+  // Distant city skyline: blocky towers with lit pixel windows.
   const ridge = new Graphics();
   ridge.rect(0, groundY - 64, width, 64);
   ridge.fill({ color: RIDGE, alpha: 0.9 });
-  for (let x = 0; x < width; x += 32) {
-    const h = 8 + Math.floor(rand() * 5) * 8;
-    ridge.rect(x, groundY - 64 - h, 32, h);
+  const windows = new Graphics();
+  const beacons = new Graphics();
+  const LIT = [0xfda216, 0xfda216, 0xfcfefe, 0x0feffb];
+  const litP = mobile ? 0.3 : 0.45;
+  const winStepX = mobile ? 14 : 10;
+  const winStepY = mobile ? 14 : 12;
+  let bx = 0;
+  while (bx < width) {
+    const bw = 48 + Math.floor(rand() * 4) * 16;
+    const bh = 64 + Math.floor(rand() * 5) * 16;
+    ridge.rect(bx, groundY - bh, bw, bh);
     ridge.fill({ color: RIDGE, alpha: 0.9 });
+    // Rooftop lip catching moonlight.
+    ridge.rect(bx, groundY - bh, bw, 3);
+    ridge.fill({ color: STEEL, alpha: 0.25 });
+    // Lit windows grid; most stay dark (silhouette shows through).
+    for (let wy = groundY - bh + 10; wy < groundY - 14; wy += winStepY) {
+      for (let wx = bx + 6; wx < bx + bw - 6; wx += winStepX) {
+        if (rand() < litP) {
+          const c = LIT[Math.floor(rand() * LIT.length)];
+          windows.rect(wx, wy, 4, 5);
+          windows.fill({ color: c, alpha: 0.45 + rand() * 0.4 });
+        }
+      }
+    }
+    // Red aircraft-warning beacon on the tallest towers.
+    if (bh >= 112) {
+      beacons.rect(bx + Math.floor(bw / 2) - 1, groundY - bh - 8, 3, 3);
+      beacons.fill({ color: 0xe7333b, alpha: 0.9 });
+      beacons.rect(bx + Math.floor(bw / 2) - 1, groundY - bh - 5, 1, 5);
+      beacons.fill({ color: STEEL, alpha: 0.5 });
+    }
+    bx += bw;
   }
   root.addChild(ridge);
+  root.addChild(windows);
+  root.addChild(beacons);
 
   // Ground slab the fighters stand on.
   const slabH = height - groundY;
