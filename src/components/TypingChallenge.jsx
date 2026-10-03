@@ -13,7 +13,13 @@ export function TypingChallenge({ challenge, typed, disabled, onType, wordsDone,
   const pos = typed.length;
 
   const focusInput = useCallback(() => {
-    if (!disabled) inputRef.current?.focus();
+    if (disabled) return;
+    try {
+      // preventScroll avoids iOS jumping the 1px hidden input into view.
+      inputRef.current?.focus({ preventScroll: true });
+    } catch {
+      inputRef.current?.focus();
+    }
   }, [disabled]);
 
   useEffect(() => {
@@ -64,7 +70,7 @@ export function TypingChallenge({ challenge, typed, disabled, onType, wordsDone,
         </div>
         {showReminder && (
           <button type="button" className="focus-reminder" onClick={focusInput}>
-            Click here to focus
+            Tap to focus
           </button>
         )}
         {enemyTurn && !locked && !showReminder && (

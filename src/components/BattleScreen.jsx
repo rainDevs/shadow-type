@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { PixiGame } from '../game/PixiGame.js';
 import { useTypingGame } from '../hooks/useTypingGame.js';
+import { useVisualViewportKeyboard } from '../hooks/useVisualViewportKeyboard.js';
 import { HEROES } from '../data/heroes.js';
 import { BattleHUD, TurnTimer } from './BattleHUD.jsx';
 import { TypingChallenge } from './TypingChallenge.jsx';
@@ -36,6 +37,7 @@ export function BattleScreen({
     pixiRef: gameRef,
   });
   const { status, results } = game;
+  useVisualViewportKeyboard();
 
   // End-of-fight banner: Victory!/Defeat! over the death animation, with
   // "click anywhere to continue" appearing after a beat (CSS-delayed).
@@ -156,7 +158,7 @@ export function BattleScreen({
             <span className={`announce-title ${results.won ? 'won' : 'lost'}`}>
               {results.won ? 'Victory!' : 'Defeat!'}
             </span>
-            <span className="announce-hint">click anywhere to continue</span>
+            <span className="announce-hint">tap anywhere to continue</span>
           </div>
         )}
       </div>

@@ -47,9 +47,14 @@ function makeCloud(rand, w) {
   return { g, w: w + 8, h: h + 18 };
 }
 
-export async function buildBackground(width, height, groundY) {
+export async function buildBackground(width, height, groundY, opts = {}) {
   const root = new Container();
   const rand = hashRand(1337);
+  const mobile = opts.mobile ?? false;
+  // Mobile: fewer one-time rects to cut fill-rate and overdraw.
+  const starCount = mobile ? 60 : 110;
+  const gritCount = mobile ? 100 : 220;
+  const laneCount = mobile ? 3 : 5;
 
   // Sky: flat ink with slightly lighter top band (blocky, 8px steps).
   const sky = new Graphics();
@@ -61,7 +66,7 @@ export async function buildBackground(width, height, groundY) {
 
   // Star pixels in steel/paper/pink, denser near the top.
   const stars = new Graphics();
-  for (let i = 0; i < 110; i++) {
+  for (let i = 0; i < starCount; i++) {
     const x = Math.floor(rand() * (width / 4)) * 4;
     const y = Math.floor(rand() * ((groundY - 140) / 4)) * 4;
     const s = rand() < 0.85 ? 2 : 3;
@@ -72,11 +77,14 @@ export async function buildBackground(width, height, groundY) {
   root.addChild(stars);
 
   // Moon: soft glow, pale body, steel craters.
+  // Mobile skips the two large translucent glow discs (overdraw).
   const moon = new Graphics();
-  moon.circle(MOON.x, MOON.y, MOON.r + 26);
-  moon.fill({ color: PAPER, alpha: 0.1 });
-  moon.circle(MOON.x, MOON.y, MOON.r + 10);
-  moon.fill({ color: PAPER, alpha: 0.1 });
+  if (!mobile) {
+    moon.circle(MOON.x, MOON.y, MOON.r + 26);
+    moon.fill({ color: PAPER, alpha: 0.1 });
+    moon.circle(MOON.x, MOON.y, MOON.r + 10);
+    moon.fill({ color: PAPER, alpha: 0.1 });
+  }
   moon.circle(MOON.x, MOON.y, MOON.r);
   moon.fill({ color: PAPER });
   moon.circle(MOON.x - 18, MOON.y - 12, 12);
@@ -91,7 +99,7 @@ export async function buildBackground(width, height, groundY) {
 
   // Drifting clouds (animated by PixiGame).
   const clouds = [];
-  const lanes = [90, 150, 220, 300, 180];
+  const lanes = [90, 150, 220, 300, 180].slice(0, laneCount);
   for (let i = 0; i < lanes.length; i++) {
     const w = 110 + Math.floor(rand() * 5) * 22;
     const { g, w: full } = makeCloud(rand, w);
@@ -126,7 +134,7 @@ export async function buildBackground(width, height, groundY) {
 
   // Ground speckles: steel + skin pixel grit.
   const grit = new Graphics();
-  for (let i = 0; i < 220; i++) {
+  for (let i = 0; i < gritCount; i++) {
     const x = Math.floor(rand() * (width / 4)) * 4;
     const y = groundY + 10 + Math.floor(rand() * ((slabH - 14) / 4)) * 4;
     const c = rand() < 0.7 ? STEEL : SKIN;

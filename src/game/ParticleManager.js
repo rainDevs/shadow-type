@@ -3,18 +3,43 @@
 
 import { Container, Graphics } from 'pixi.js';
 
-const MAX_PARTICLES = 400;
+const MAX_PARTICLES_DESKTOP = 400;
+const MAX_PARTICLES_MOBILE = 130;
+
+function detectMobileParticles() {
+  try {
+    if (typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '')) return true;
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
+      const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+      const touch = (navigator.maxTouchPoints ?? 0) > 0;
+      if (coarse && touch) return true;
+    }
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
 
 export class ParticleManager {
-  constructor() {
+  constructor({ maxParticles } = {}) {
     this.root = new Container();
     this.particles = [];
     this.pool = [];
+    this.maxParticles =
+      typeof maxParticles === 'number'
+        ? maxParticles
+        : detectMobileParticles()
+          ? MAX_PARTICLES_MOBILE
+          : MAX_PARTICLES_DESKTOP;
+  }
+
+  setMaxParticles(n) {
+    this.maxParticles = Math.max(1, Math.floor(n));
   }
 
   burst(x, y, { color = 0x22d3ee, count = 24, speed = 320, life = 0.6, size = 4, gravity = 500 } = {}) {
     for (let i = 0; i < count; i++) {
-      if (this.particles.length >= MAX_PARTICLES) break;
+      if (this.particles.length >= this.maxParticles) break;
       const p = this.pool.pop() ?? this.createParticle();
       const angle = Math.random() * Math.PI * 2;
       const vel = speed * (0.35 + Math.random() * 0.85);
@@ -40,7 +65,7 @@ export class ParticleManager {
 
   // Slow ambient motes drifting upward.
   ambient(x, y, color) {
-    if (this.particles.length >= MAX_PARTICLES) return;
+    if (this.particles.length >= this.maxParticles) return;
     const p = this.pool.pop() ?? this.createParticle();
     p.x = x + (Math.random() - 0.5) * 60;
     p.y = y;
@@ -63,7 +88,7 @@ export class ParticleManager {
 
   // Falling leaf/spore with a gentle sideways sway.
   petal(x, y, color = 0x9fd66e) {
-    if (this.particles.length >= MAX_PARTICLES) return;
+    if (this.particles.length >= this.maxParticles) return;
     const p = this.pool.pop() ?? this.createParticle();
     p.x = x;
     p.y = y;
@@ -115,5 +140,25 @@ export class ParticleManager {
       this.pool.push(p);
     }
     this.particles.length = 0;
+  }
+
+  destroy() {
+    for (const p of this.particles) {
+      try {
+        this.root.removeChild(p.g);
+        p.g.destroy();
+      } catch {
+        /* already destroyed */
+      }
+    }
+    for (const p of this.pool) {
+      try {
+        p.g.destroy();
+      } catch {
+        /* already destroyed */
+      }
+    }
+    this.particles.length = 0;
+    this.pool.length = 0;
   }
 }

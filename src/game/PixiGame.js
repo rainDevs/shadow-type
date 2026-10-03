@@ -12,6 +12,7 @@ import { Fighter } from './Fighter.js';
 import { heroAccent, heroGlow } from '../data/heroes.js';
 import { ParticleManager } from './ParticleManager.js';
 import { buildBackground, EMBER_VENTS, EMBER_COLOR } from './Background.js';
+import { getCappedDPR, isMobilePlatform } from '../utils/platform.js';
 
 export const ARENA_WIDTH = 1280;
 export const ARENA_HEIGHT = 720;
@@ -46,25 +47,87 @@ export class PixiGame {
     this.cpuAccent = heroAccent(cpuHero);
     this.playerGlow = heroGlow(playerHero);
     this.cpuGlow = heroGlow(cpuHero);
+    this.isMobile = isMobilePlatform();
+    // Mobile: slower ember cadence to cut steady-state particle churn.
+    this.emberInterval = this.isMobile ? 440 : 220;
+    this.ambientInterval = 350;
+    this.sparkleInterval = 550;
+    this.container = null;
+    this.onVisibility = null;
+    this.onPageHide = null;
+    this.runId = 0;
+  }
+
+  cancelTweens() {
+    const pending = this.tweens.splice(0);
+    for (const tw of pending) {
+      try {
+        tw.resolve();
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  destroyFxChildren() {
+    if (!this.fxLayer) return;
+    for (const child of [...this.fxLayer.children]) {
+      try {
+        this.fxLayer.removeChild(child);
+        child.destroy();
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   async init(container) {
+    this.container = container ?? null;
     this.app = new Application();
+    const resolution = getCappedDPR(2, 2);
     await this.app.init({
       width: ARENA_WIDTH,
       height: ARENA_HEIGHT,
-      backgroundAlpha: 0,
-      antialias: true,
+      // Opaque canvas avoids alpha compositing over page gradients every frame.
+      background: 0x04193f,
+      // MSAA is wasted on pixel art and costly on tiled mobile GPUs.
+      antialias: !this.isMobile,
+      resolution,
+      autoDensity: true,
+      roundPixels: true,
+      powerPreference: this.isMobile ? 'low-power' : 'high-performance',
     });
+    // Cap 120Hz phones to 60fps; minFPS avoids huge jumps after tab switch.
+    try {
+      if (this.isMobile && this.app.ticker) {
+        this.app.ticker.maxFPS = 60;
+        this.app.ticker.minFPS = 20;
+      }
+    } catch {
+      /* ticker caps are best-effort */
+    }
     if (this.destroyed) {
-      this.app.destroy(true);
+      try {
+        this.app.destroy(true);
+      } catch {
+        /* ignore */
+      }
       return;
     }
     this.app.canvas.classList.add('arena-canvas');
+    // autoDensity sets inline 1280px/720px style; clear it so CSS
+    // `.arena-mount canvas{width:100%;height:auto}` responsive scaling wins.
+    try {
+      this.app.canvas.style.width = '100%';
+      this.app.canvas.style.height = 'auto';
+    } catch {
+      /* ignore */
+    }
     container.appendChild(this.app.canvas);
 
     // Hero sprite sheets must load before fighters are built.
     await Fighter.loadHero(this.playerHero);
+    if (this.destroyed) return;
     if (this.cpuHero !== this.playerHero) await Fighter.loadHero(this.cpuHero);
     if (this.destroyed) return;
 
@@ -72,7 +135,8 @@ export class PixiGame {
     this.world = new Container();
     this.app.stage.addChild(this.world);
 
-    const bg = await buildBackground(ARENA_WIDTH, ARENA_HEIGHT, GROUND_Y);
+    const bg = await buildBackground(ARENA_WIDTH, ARENA_HEIGHT, GROUND_Y, { mobile: this.isMobile });
+    if (this.destroyed) return;
     this.world.addChild(bg.root);
     this.fog = bg.fog;
     this.clouds = bg.clouds ?? [];
@@ -85,17 +149,50 @@ export class PixiGame {
     this.cpu.setBasePosition(CPU_HOME.x, CPU_HOME.y);
     this.world.addChild(this.cpu.root);
 
-    this.particles = new ParticleManager();
+    this.particles = new ParticleManager({ maxParticles: this.isMobile ? 130 : 400 });
     this.world.addChild(this.particles.root);
 
     this.fxLayer = new Container();
     this.world.addChild(this.fxLayer);
+
+    // Backup auto-pause: React already pauses game logic on hidden, but the
+    // renderer keeps ticking in countdown/announce states without this.
+    this.onVisibility = () => {
+      if (!this.app || this.destroyed) return;
+      if (document.hidden) {
+        try {
+          this.app.ticker.stop();
+        } catch {
+          /* ignore */
+        }
+      } else if (!this.paused) {
+        try {
+          this.app.ticker.start();
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+    this.onPageHide = () => {
+      try {
+        this.app?.ticker.stop();
+      } catch {
+        /* ignore */
+      }
+    };
+    try {
+      document.addEventListener('visibilitychange', this.onVisibility);
+      window.addEventListener('pagehide', this.onPageHide);
+    } catch {
+      /* non-browser */
+    }
 
     this.app.ticker.add((ticker) => this.tick(ticker));
   }
 
   // --- main loop -----------------------------------------------------------
   tick(ticker) {
+    if (this.destroyed || !this.app || !this.player || !this.cpu || !this.particles) return;
     const dt = Math.min(ticker.deltaMS / 1000, 0.05);
     this.elapsed += ticker.deltaMS;
 
@@ -139,7 +236,7 @@ export class PixiGame {
     // Ambient motes in each hero's glow color.
     this.ambientTimer -= ticker.deltaMS;
     if (this.ambientTimer <= 0) {
-      this.ambientTimer = 350;
+      this.ambientTimer = this.ambientInterval;
       const playerSide = Math.random() < 0.5;
       this.particles.ambient(
         playerSide ? PLAYER_HOME.x : CPU_HOME.x,
@@ -149,18 +246,21 @@ export class PixiGame {
     }
 
     // Drifting pixel sparkles in rotating hero light tones.
+    // Skipped in reduced motion to save battery.
     this.sparkleTimer -= ticker.deltaMS;
     if (this.sparkleTimer <= 0) {
-      this.sparkleTimer = 550;
-      const color = SPARKLES[this.sparkleColor % SPARKLES.length];
-      this.sparkleColor += 1;
-      this.particles.petal(Math.random() * ARENA_WIDTH, -12 - Math.random() * 120, color);
+      this.sparkleTimer = this.sparkleInterval;
+      if (!this.reducedMotion) {
+        const color = SPARKLES[this.sparkleColor % SPARKLES.length];
+        this.sparkleColor += 1;
+        this.particles.petal(Math.random() * ARENA_WIDTH, -12 - Math.random() * 120, color);
+      }
     }
 
     // Warm grit rising from the ground slab.
     this.emberTimer -= ticker.deltaMS;
     if (this.emberTimer <= 0) {
-      this.emberTimer = 220;
+      this.emberTimer = this.emberInterval;
       const vx = EMBER_VENTS[Math.floor(Math.random() * EMBER_VENTS.length)];
       this.particles.ambient(vx + (Math.random() - 0.5) * 50, GROUND_Y + 10, EMBER_COLOR);
     }
@@ -175,7 +275,7 @@ export class PixiGame {
         const wy = fx.fighter.root.y - 116 + (Math.random() - 0.5) * 60;
         this.particles.burst(wx, wy, {
           color: fx.color,
-          count: 8,
+          count: this.isMobile ? 4 : 8,
           speed: 170,
           size: 3,
           life: 0.7,
@@ -188,6 +288,7 @@ export class PixiGame {
   }
 
   tween(duration, update) {
+    if (this.destroyed) return Promise.resolve();
     return new Promise((resolve) => {
       this.tweens.push({ elapsed: 0, duration, update, resolve });
     });
@@ -200,6 +301,7 @@ export class PixiGame {
   // --- effects ---------------------------------------------------------------
   // Shooting star: bright head with a cyan trail, streaking down-left.
   shootStar() {
+    if (this.destroyed || !this.app || !this.fxLayer) return Promise.resolve();
     const g = new Graphics();
     const sx = 250 + Math.random() * 850;
     const sy = 40 + Math.random() * 160;
@@ -230,6 +332,7 @@ export class PixiGame {
 
   shake(strength = 10) {
     if (this.reducedMotion || strength <= 0) return Promise.resolve();
+    if (this.destroyed || !this.app || !this.world) return Promise.resolve();
     const duration = 220;
     return this.tween(duration, (k) => {
       const decay = 1 - k;
@@ -246,6 +349,7 @@ export class PixiGame {
   // riding the leading tip. Each side has explicit angles (no mirrored
   // negative scale): player sweeps down the right side, CPU down the left.
   slash(x, y, color, big = false, dir = 1) {
+    if (this.destroyed || !this.app || !this.fxLayer) return Promise.resolve();
     const g = new Graphics();
     const r = big ? 78 : 58;
     // Player (dir +1, strikes right): start upper-left, sweep clockwise down
@@ -303,6 +407,7 @@ export class PixiGame {
   }
 
   damageText(x, y, text, color, big = false) {
+    if (this.destroyed || !this.app || !this.fxLayer) return Promise.resolve();
     const t = new Text({
       text,
       style: {
@@ -330,13 +435,17 @@ export class PixiGame {
   }
 
   impact(x, y, color, big = false) {
+    if (this.destroyed || !this.particles) return;
+    // Mobile halves burst counts to stay under the particle cap.
+    const main = big ? (this.isMobile ? 30 : 60) : this.isMobile ? 15 : 30;
+    const white = this.isMobile ? 5 : 10;
     this.particles.burst(x, y, {
       color,
-      count: big ? 60 : 30,
+      count: main,
       speed: big ? 460 : 320,
       size: big ? 5 : 4,
     });
-    this.particles.burst(x, y, { color: 0xffffff, count: 10, speed: 200, size: 3, life: 0.4 });
+    this.particles.burst(x, y, { color: 0xffffff, count: white, speed: 200, size: 3, life: 0.4 });
   }
 
   // --- combat sequences --------------------------------------------------------
@@ -346,6 +455,8 @@ export class PixiGame {
   async playerAttack({ damage }) {
     if (!this.app || this.destroyed || this.busy) return;
     this.busy = true;
+    const run = this.runId;
+    const aborted = () => this.destroyed || this.runId !== run || !this.app;
     try {
       const step = this.reducedMotion ? 0.4 : 1;
       const fromX = this.player.root.x;
@@ -355,6 +466,7 @@ export class PixiGame {
       await this.tween(220 * step, (k) => {
         this.player.root.x = fromX + (touchX - fromX) * k;
       });
+      if (aborted()) return;
       // Strike on contact: sword slash, impact burst, shake, damage number, knockback.
       this.player.playAttack(damage);
       const target = this.cpu.hitPoint();
@@ -368,11 +480,13 @@ export class PixiGame {
       await this.tween(140 * step, (k) => {
         this.cpu.root.x = cx + k * 26;
       });
+      if (aborted()) return;
       // Recover.
       await this.tween(200 * step, (k) => {
         this.cpu.root.x = cx + 26 * (1 - k);
         this.player.root.x = touchX + (fromX - touchX) * k;
       });
+      if (aborted()) return;
       this.cpu.root.x = CPU_HOME.x;
       this.player.root.x = fromX;
     } finally {
@@ -383,6 +497,8 @@ export class PixiGame {
   async cpuAttack({ damage }) {
     if (!this.app || this.destroyed || this.busy) return;
     this.busy = true;
+    const run = this.runId;
+    const aborted = () => this.destroyed || this.runId !== run || !this.app;
     try {
       const step = this.reducedMotion ? 0.4 : 1;
       const fromX = this.cpu.root.x;
@@ -391,6 +507,7 @@ export class PixiGame {
       await this.tween(220 * step, (k) => {
         this.cpu.root.x = fromX + (touchX - fromX) * k;
       });
+      if (aborted()) return;
       this.cpu.playAttack(damage);
       const target = this.player.hitPoint();
       const px = this.player.root.x;
@@ -403,10 +520,12 @@ export class PixiGame {
       await this.tween(140 * step, (k) => {
         this.player.root.x = px - k * 26;
       });
+      if (aborted()) return;
       await this.tween(200 * step, (k) => {
         this.player.root.x = px - 26 * (1 - k);
         this.cpu.root.x = touchX + (fromX - touchX) * k;
       });
+      if (aborted()) return;
       this.player.root.x = PLAYER_HOME.x;
       this.cpu.root.x = fromX;
     } finally {
@@ -415,6 +534,7 @@ export class PixiGame {
   }
 
   victory() {
+    if (this.destroyed || !this.app) return;
     this.cpu.playDefeat();
     this.player.playVictoryPose();
     this.winFx = { fighter: this.player, color: this.playerGlow, t: 0 };
@@ -424,6 +544,7 @@ export class PixiGame {
   }
 
   defeat() {
+    if (this.destroyed || !this.app) return;
     this.player.playDefeat();
     this.cpu.playVictoryPose();
     this.winFx = { fighter: this.cpu, color: this.cpuGlow, t: 0 };
@@ -447,12 +568,14 @@ export class PixiGame {
   }
 
   reset() {
-    this.tweens.length = 0;
+    this.runId += 1;
+    this.cancelTweens();
+    this.destroyFxChildren();
     this.winFx = null;
-    this.world.position.set(0, 0);
-    this.particles.clear();
-    this.player.reset();
-    this.cpu.reset();
+    if (this.world) this.world.position.set(0, 0);
+    this.particles?.clear();
+    this.player?.reset();
+    this.cpu?.reset();
     this.busy = false;
   }
 
@@ -465,15 +588,46 @@ export class PixiGame {
 
   destroy() {
     this.destroyed = true;
-    this.tweens.length = 0;
+    this.runId += 1;
+    this.cancelTweens();
+    try {
+      if (this.onVisibility) document.removeEventListener('visibilitychange', this.onVisibility);
+    } catch {
+      /* ignore */
+    }
+    try {
+      if (this.onPageHide) window.removeEventListener('pagehide', this.onPageHide);
+    } catch {
+      /* ignore */
+    }
+    this.onVisibility = null;
+    this.onPageHide = null;
     if (this.app) {
       try {
         this.app.ticker.stop();
-        this.app.destroy(true, { children: true, texture: true });
+        // Keep textures alive: Fighter.textureCache is global and reused
+        // across remounts. Destroying them here yields black sprites next init.
+        this.app.destroy(true, { children: true, texture: false });
       } catch {
         /* already destroyed */
       }
       this.app = null;
     }
+    try {
+      this.particles?.destroy();
+    } catch {
+      /* ignore */
+    }
+    this.particles = null;
+    // Remove the canvas we appended in init; otherwise remounts leak DOM nodes.
+    try {
+      const canvas = this.container?.querySelector?.('.arena-canvas');
+      if (canvas) canvas.remove();
+    } catch {
+      /* ignore */
+    }
+    this.container = null;
+    this.world = null;
+    this.fxLayer = null;
   }
 }

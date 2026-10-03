@@ -5,13 +5,44 @@
 import { AnimatedSprite, Assets, Container, Graphics, Rectangle, Texture } from 'pixi.js';
 import { FRAME_H, FRAME_W, HERO_SCALE, HERO_SHEETS, HEROES } from '../data/heroes.js';
 
-// Ground-anchored impact height in world px (fighter is 42*4.5 = 189px tall).
-const HIT_OFFSET = 116;
+// Mobile uses integer 4x scale for even pixels (4.5x shimmers under CSS upscale).
+function effectiveScale() {
+  try {
+    if (typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '')) return 4;
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
+      const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+      const touch = (navigator.maxTouchPoints ?? 0) > 0;
+      if (coarse && touch) return 4;
+    }
+  } catch {
+    /* fall through */
+  }
+  return HERO_SCALE;
+}
+
+// Ground-anchored impact height scales with the effective sprite scale.
+function hitOffset() {
+  return Math.round(116 * (effectiveScale() / 4.5));
+}
 
 const FACTION_TINT = { player: 0xffffff, cpu: 0xffffff };
 
 // heroId -> { stateKey: Texture[] }
 const textureCache = {};
+
+export function clearFighterCache() {
+  for (const key of Object.keys(textureCache)) {
+    try {
+      const states = textureCache[key];
+      for (const textures of Object.values(states)) {
+        for (const t of textures) t.destroy(false);
+      }
+    } catch {
+      /* best-effort */
+    }
+    delete textureCache[key];
+  }
+}
 
 function heroKey(heroId) {
   return HEROES[heroId] ? heroId : 'hero-1';
@@ -81,6 +112,8 @@ export class Fighter {
     this.dir = side === 'player' ? 1 : -1;
     this.accent = accent;
     this.heroId = key;
+    this.spriteScale = effectiveScale();
+    this.hitOffset = hitOffset();
     this.textures = textureCache[key];
     this.factionTint = FACTION_TINT[side];
     this.root = new Container();
@@ -99,7 +132,8 @@ export class Fighter {
     sprite.animationSpeed = meta.fps / 60;
     sprite.loop = meta.loop;
     sprite.anchor.set(0.5, 1);
-    sprite.scale.set(HERO_SCALE * this.dir, HERO_SCALE);
+    const s = this.spriteScale ?? effectiveScale();
+    sprite.scale.set(s * this.dir, s);
     sprite.position.set(0, 0);
     sprite.visible = false;
     return sprite;
@@ -180,7 +214,7 @@ export class Fighter {
 
   // Mid-torso impact point in world space.
   hitPoint() {
-    return { x: this.root.x, y: this.root.y - HIT_OFFSET };
+    return { x: this.root.x, y: this.root.y - (this.hitOffset ?? 116) };
   }
 
   setBasePosition(x, y) {

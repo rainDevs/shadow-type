@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { PixiGame } from '../game/PixiGame.js';
 import { useNetGame } from '../net/useNetGame.js';
+import { useVisualViewportKeyboard } from '../hooks/useVisualViewportKeyboard.js';
 import { HEROES, pickCpuHero } from '../data/heroes.js';
 import { MODES } from '../data/modes.js';
 import { BattleHUD } from './BattleHUD.jsx';
@@ -105,6 +106,7 @@ export function ArenaBattleScreen({
     pixiRef: gameRef,
   });
   const { status, results } = game;
+  useVisualViewportKeyboard();
   const oppHero = game.opponent?.heroId && HEROES[game.opponent.heroId] ? game.opponent.heroId : pickCpuHero(myHero);
   const ready = status !== 'connecting' && (game.opponent || status === 'waiting' || status === 'error');
 
@@ -226,7 +228,7 @@ export function ArenaBattleScreen({
             <span className={`announce-title ${results.won && !results.draw ? 'won' : 'lost'}`}>
               {results.draw ? 'Draw!' : results.won ? 'Victory!' : 'Defeat!'}
             </span>
-            <span className="announce-hint">click anywhere to continue</span>
+            <span className="announce-hint">tap anywhere to continue</span>
           </div>
         )}
         {status === 'peer-left' && (
