@@ -1423,39 +1423,44 @@ button {
 
   .hud-overlay {
     padding:
-      calc(8px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) 18px
+      calc(6px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) 14px
       calc(10px + env(safe-area-inset-left));
   }
 
   .battle-hud {
-    gap: 8px;
+    gap: 6px;
+  }
+
+  .hud-id {
+    gap: 6px;
   }
 
   .hud-portrait {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
   }
 
   .hud-portrait img {
-    width: 32px;
-    height: 32px;
+    width: 26px;
+    height: 26px;
   }
 
   .hud-name {
-    font-size: 11px;
+    font-size: 10px;
+    margin-bottom: 2px;
   }
 
   .health-track {
-    height: 16px;
+    height: 13px;
   }
 
   .health-pct {
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .hud-stats {
-    gap: 10px;
-    font-size: 11px;
+    gap: 8px;
+    font-size: 10px;
   }
 
   .turn-timer {
@@ -1463,7 +1468,7 @@ button {
   }
 
   .turn-banner {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .typing-panel {
