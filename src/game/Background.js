@@ -16,7 +16,7 @@ const PAPER = 0xfcfefe;
 export const EMBER_VENTS = [300, 640, 980];
 export const EMBER_COLOR = 0xe59b6a; // shared skin tone rising from the ground
 
-export const MOON = { x: 1050, y: 150, r: 55 };
+export const MOON = { x: 1050, y: 250, r: 55 };
 
 function hashRand(seed) {
   let s = seed >>> 0;
@@ -99,7 +99,7 @@ export async function buildBackground(width, height, groundY, opts = {}) {
 
   // Drifting clouds (animated by PixiGame).
   const clouds = [];
-  const lanes = [90, 150, 220, 300, 180].slice(0, laneCount);
+  const lanes = [210, 260, 320, 380, 290].slice(0, laneCount);
   for (let i = 0; i < lanes.length; i++) {
     const w = 110 + Math.floor(rand() * 5) * 22;
     const { g, w: full } = makeCloud(rand, w);
