@@ -1,9 +1,9 @@
-import { Embers } from './Embers.jsx';
+import { Keycaps } from './Keycaps.jsx';
 
 export function HowToPlay({ onBack }) {
   return (
     <div className="st-root">
-      <Embers count={14} />
+      <Keycaps count={22} />
       <div className="panel">
         <h2>How to Play</h2>
         <p className="lede">Type fast. Strike hard. Survive.</p>

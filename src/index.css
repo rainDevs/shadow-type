@@ -58,7 +58,7 @@ body {
   flex-direction: column;
 }
 
-/* Drifting ember background on menu screens. */
+/* Drifting keycap background on menu screens. */
 .st-root {
   position: relative;
   flex: 1;
@@ -71,54 +71,14 @@ body {
   overflow: hidden;
 }
 
-.st-embers {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.st-embers i {
-  position: absolute;
-  bottom: -12px;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--cyan);
-  opacity: 0;
-  animation: ember-rise linear infinite;
-}
-
-.st-embers i:nth-child(3n) {
-  background: var(--gold);
-}
-
-.st-embers i:nth-child(4n) {
-  background: var(--pink);
-}
-
-@keyframes ember-rise {
-  0% {
-    transform: translateY(0) translateX(0);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.8;
-  }
-  100% {
-    transform: translateY(-105vh) translateX(40px);
-    opacity: 0;
-  }
-}
-
+/* Floating keyboard keycaps on menu screens. */
 @media (prefers-reduced-motion: reduce) {
-  .st-embers,
   .st-keycaps {
     display: none;
   }
 }
 
-/* Floating keyboard keycaps on the main menu. */
+/* Floating keyboard keycaps. */
 .st-keycaps {
   position: absolute;
   inset: 0;
@@ -161,7 +121,6 @@ body {
 }
 
 /* In-game reduced-motion setting (set via <html data-reduced-motion>). */
-html[data-reduced-motion='true'] .st-embers,
 html[data-reduced-motion='true'] .st-keycaps,
 html[data-reduced-motion='true'] .combat-feedback {
   display: none;

@@ -1,11 +1,11 @@
-import { Embers } from './Embers.jsx';
+import { Keycaps } from './Keycaps.jsx';
 
 export function Settings({ settings, onChange, onBack }) {
   const update = (patch) => onChange({ ...settings, ...patch });
 
   return (
     <div className="st-root">
-      <Embers count={14} />
+      <Keycaps count={22} />
       <div className="panel">
         <h2>Settings</h2>
         <p className="lede">Saved automatically to this browser.</p>

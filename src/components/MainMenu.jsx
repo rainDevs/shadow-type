@@ -8,7 +8,7 @@ export function MainMenu({ onNavigate }) {
   }, []);
   return (
     <div className="st-root">
-      <Keycaps />
+      <Keycaps count={28} />
       <h1 className="st-title">
         SHADOW <span className="accent">TYPE</span>
       </h1>

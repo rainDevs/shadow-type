@@ -1,16 +1,18 @@
 import { useMemo } from 'react';
 
-// Decorative floating keyboard keycaps for the main menu (CSS-animated).
+// Decorative floating keyboard keycaps for menu screens (CSS-animated).
+// Covers the full keyboard: letters, digits, symbols and named keys.
 // Deterministic pseudo-random layout; hidden from assistive tech;
-// honors prefers-reduced-motion via CSS like Embers.
-const GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+// honors prefers-reduced-motion via CSS.
+const SINGLES = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789~!@#$%^&*()_+-=[]{}|;:\'",./<>?';
+const NAMED = ['ESC', 'TAB', 'SHIFT', 'ENTER', 'BACK', 'CTRL', 'ALT', 'SPACE', 'DEL', '↑', '↓', '←', '→'];
 
-export function Keycaps({ count = 18 }) {
+export function Keycaps({ count = 24 }) {
   const caps = useMemo(
     () =>
       Array.from({ length: count }, (_, i) => ({
         id: i,
-        glyph: GLYPHS[(i * 7 + 3) % GLYPHS.length],
+        glyph: i % 5 === 0 ? NAMED[i % NAMED.length] : SINGLES[(i * 7 + 3) % SINGLES.length],
         left: `${(i * 53 + 11) % 100}%`,
         duration: `${9 + ((i * 37) % 9)}s`,
         delay: `${-((i * 61) % 16)}s`,

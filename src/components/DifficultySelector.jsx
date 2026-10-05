@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DIFFICULTIES, DIFFICULTY_IDS } from '../data/difficulty.js';
-import { Embers } from './Embers.jsx';
+import { Keycaps } from './Keycaps.jsx';
 
 export function DifficultySelector({ initial, onStart, onBack }) {
   const fallback = DIFFICULTIES[initial] ? initial : 'medium';
@@ -8,7 +8,7 @@ export function DifficultySelector({ initial, onStart, onBack }) {
 
   return (
     <div className="st-root">
-      <Embers count={14} />
+      <Keycaps count={22} />
       <div className="panel">
         <h2>Select Difficulty</h2>
         <p className="lede">Enemy strike power. Your typing is your defense.</p>

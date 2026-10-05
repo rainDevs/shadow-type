@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { HEROES, HERO_IDS, heroSpriteUrl, heroTheme } from '../data/heroes.js';
-import { Embers } from './Embers.jsx';
+import { Keycaps } from './Keycaps.jsx';
 
 export function CharacterSelector({ onSelect, onBack }) {
   const [selected, setSelected] = useState(null);
@@ -15,7 +15,7 @@ export function CharacterSelector({ onSelect, onBack }) {
 
   return (
     <div className="st-root">
-      <Embers count={14} />
+      <Keycaps count={22} />
       <div className="panel">
         <h2>Choose Your Fighter</h2>
         <p className="lede">Three heroes. Same moves, different claws.</p>
