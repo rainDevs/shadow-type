@@ -22,7 +22,7 @@ export function MainMenu({ onNavigate }) {
           Settings
         </button>
         <button type="button" className="menu-btn" onClick={() => onNavigate('scores')}>
-          High Scores
+          About
         </button>
       </nav>
       <p className="st-footer">developed by: _rainDevs</p>

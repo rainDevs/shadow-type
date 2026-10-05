@@ -7,7 +7,7 @@ import { DifficultySelector } from './components/DifficultySelector.jsx';
 import { ArenaLobby } from './components/ArenaLobby.jsx';
 import { HowToPlay } from './components/HowToPlay.jsx';
 import { Settings } from './components/Settings.jsx';
-import { HighScores } from './components/HighScores.jsx';
+import { About } from './components/About.jsx';
 import { useLocalStorage } from './hooks/useLocalStorage.js';
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from './utils/storage.js';
 import { HEROES } from './data/heroes.js';
@@ -24,7 +24,7 @@ const ArenaBattleScreen = lazy(() =>
   import('./components/ArenaBattleScreen.jsx').then((m) => ({ default: m.ArenaBattleScreen ?? m.default })),
 );
 
-// Screens: menu | mode | difficulty | hero | battle | arena-lobby | arena-hero | arena-battle | howto | settings | scores
+// Screens: menu | mode | difficulty | hero | battle | arena-lobby | arena-hero | arena-battle | howto | settings | scores (about)
 function normalize(id, table, fallback) {
   return table[id] ? id : fallback;
 }
@@ -177,7 +177,7 @@ function App() {
       {screen === 'settings' && (
         <Settings settings={settings} onChange={setSettings} onBack={() => navigate('menu')} />
       )}
-      {screen === 'scores' && <HighScores onBack={() => navigate('menu')} />}
+      {screen === 'scores' && <About onBack={() => navigate('menu')} />}
       {screen === 'battle' && (
         <Suspense
           fallback={
