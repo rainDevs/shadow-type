@@ -5,7 +5,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MODES } from '../data/modes.js';
 import { calculateWPM, calculateAccuracy } from '../utils/typingMetrics.js';
-import { tierForWpm } from '../utils/damageCalculator.js';
 import { calculateCharScore, calculateWindowBonus } from '../utils/scoreCalculator.js';
 import { audio } from '../utils/audioManager.js';
 import { connectArena, sendJson } from './netClient.js';
@@ -393,7 +392,6 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
         // Each strike applies its victim's HP + announce text, then animates —
         // so bars and text land one after the other, not simultaneously.
         const seq = (strikeSeqRef.current += 1);
-        const sum = msg.summary ?? [{}, {}];
         const strikes = [0, 1]
           .map((by) => ({ by, dmg: dmgBy[by] ?? 0 }))
           .filter((s) => s.dmg > 0)
@@ -420,8 +418,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
                 setHpMe(me);
               }
               const foeStrike = s.by !== youRef.current;
-              const { label } = tierForWpm(sum[s.by]?.wpm ?? 0);
-              showFeedback('attack', foeStrike ? `FOE ${label} -${s.dmg}` : `${label} -${s.dmg}`);
+              showFeedback(foeStrike ? 'cpu' : 'info', foeStrike ? `FOE -${s.dmg}` : `-${s.dmg}`);
               audio.playAttack();
               // player 0 strikes from the left, player 1 from the right
               if (s.by === 0) await pixi?.leftAttack?.({ damage: s.dmg });

@@ -211,8 +211,8 @@ export class PixiGame {
 
     this.player.update(this.elapsed, this.paused, ticker);
     this.cpu.update(this.elapsed, this.paused, ticker);
-    this.player.fadeFlash(dt * 4);
-    this.cpu.fadeFlash(dt * 4);
+    this.player.fadeFlash(dt * 2.5);
+    this.cpu.fadeFlash(dt * 2.5);
 
     // Fog drift.
     for (const f of this.fog) {
@@ -333,7 +333,7 @@ export class PixiGame {
   shake(strength = 10) {
     if (this.reducedMotion || strength <= 0) return Promise.resolve();
     if (this.destroyed || !this.app || !this.world) return Promise.resolve();
-    const duration = 220;
+    const duration = 350;
     return this.tween(duration, (k) => {
       const decay = 1 - k;
       this.world.position.set(
@@ -363,7 +363,7 @@ export class PixiGame {
     const bladeW = big ? 7 : 5;
     g.position.set(x, y);
     this.fxLayer.addChild(g);
-    const duration = this.reducedMotion ? 60 : big ? 180 : 150;
+    const duration = this.reducedMotion ? 120 : big ? 300 : 260;
     const easeOut = (t) => 1 - (1 - t) * (1 - t);
     const lerpAngle = (t) => S + (E - S) * t;
     return this.tween(duration, (k) => {
@@ -422,7 +422,7 @@ export class PixiGame {
     t.anchor.set(0.5);
     t.position.set(x, y);
     this.fxLayer.addChild(t);
-    const duration = 750;
+    const duration = 1000;
     const fallthrough = this.tween(duration, (k) => {
       t.position.y = y - k * 70;
       t.alpha = 1 - k * k;
@@ -463,7 +463,7 @@ export class PixiGame {
       const touchX = this.cpu.root.x - TOUCH_GAP;
       this.player.playDash();
       // Close in until touching the defender.
-      await this.tween(220 * step, (k) => {
+      await this.tween(380 * step, (k) => {
         this.player.root.x = fromX + (touchX - fromX) * k;
       });
       if (aborted()) return;
@@ -479,14 +479,14 @@ export class PixiGame {
       this.cpu.showFlash(big ? 1 : 0.7);
       this.damageText(cx, target.y - 70, `-${damage}`, 0xffffff, false);
       // Hit-stop: frozen beat on impact so the strike registers.
-      await this.wait(big ? 140 : 100);
+      await this.wait((big ? 220 : 160) * step);
       if (aborted()) return;
-      await this.tween(140 * step, (k) => {
+      await this.tween(260 * step, (k) => {
         this.cpu.root.x = cx + k * 26;
       });
       if (aborted()) return;
       // Recover.
-      await this.tween(200 * step, (k) => {
+      await this.tween(340 * step, (k) => {
         this.cpu.root.x = cx + 26 * (1 - k);
         this.player.root.x = touchX + (fromX - touchX) * k;
       });
@@ -508,7 +508,7 @@ export class PixiGame {
       const fromX = this.cpu.root.x;
       const touchX = this.player.root.x + TOUCH_GAP;
       this.cpu.playDash();
-      await this.tween(220 * step, (k) => {
+      await this.tween(380 * step, (k) => {
         this.cpu.root.x = fromX + (touchX - fromX) * k;
       });
       if (aborted()) return;
@@ -523,13 +523,13 @@ export class PixiGame {
       this.player.showFlash(big ? 1 : 0.7);
       this.damageText(px, target.y - 70, `-${damage}`, 0xffffff, false);
       // Hit-stop: frozen beat on impact so the strike registers.
-      await this.wait(big ? 140 : 100);
+      await this.wait((big ? 220 : 160) * step);
       if (aborted()) return;
-      await this.tween(140 * step, (k) => {
+      await this.tween(260 * step, (k) => {
         this.player.root.x = px - k * 26;
       });
       if (aborted()) return;
-      await this.tween(200 * step, (k) => {
+      await this.tween(340 * step, (k) => {
         this.player.root.x = px - 26 * (1 - k);
         this.cpu.root.x = touchX + (fromX - touchX) * k;
       });
