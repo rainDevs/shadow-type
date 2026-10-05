@@ -638,6 +638,39 @@ html[data-reduced-motion='true'] .hero-card.selected .hero-preview {
   pointer-events: none;
 }
 
+/* Touch-accessible match menu (no ESC key on mobile). Docked bottom-right
+   of the arena so it never covers the HUD or the fighters. */
+.arena-menu-btn {
+  position: absolute;
+  right: calc(6px + env(safe-area-inset-right));
+  bottom: 6px;
+  z-index: 7;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--pixel);
+  font-size: 18px;
+  color: var(--text);
+  background: rgba(4, 25, 63, 0.85);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.8);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.arena-menu-btn:hover {
+  border-color: var(--pink);
+}
+
+.arena-menu-btn:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
 .hud-fighter {
   flex: 1;
   min-width: 0;

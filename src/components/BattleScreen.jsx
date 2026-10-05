@@ -106,6 +106,8 @@ export function BattleScreen({
 
   const over = status === 'won' || status === 'lost';
   const typingHidden = over || status === 'announce';
+  // Touch players have no ESC key: same pause toggle via button.
+  const showMenuBtn = status === 'playing' || status === 'paused';
 
   return (
     <div className="battle-root">
@@ -126,6 +128,16 @@ export function BattleScreen({
             cpuHeroId={enemyHero}
           />
         </div>
+        {showMenuBtn && (
+          <button
+            type="button"
+            className="arena-menu-btn"
+            onClick={game.togglePause}
+            aria-label={status === 'paused' ? 'Resume game' : 'Pause game'}
+          >
+            ☰
+          </button>
+        )}
         {rendererFailed && (
           <div className="arena-fallback" role="alert">
             <p>Could not start the arena renderer.</p>

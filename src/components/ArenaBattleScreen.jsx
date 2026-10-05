@@ -164,6 +164,8 @@ export function ArenaBattleScreen({
   const over = status === 'won' || status === 'lost' || status === 'draw';
   const showTyping = status === 'playing';
   const waiting = status === 'connecting' || status === 'waiting' || status === 'countdown';
+  // Touch players have no ESC key: offer the same forfeit dialog via button.
+  const showMenuBtn = !over && status !== 'announce' && status !== 'error' && status !== 'peer-left';
 
   return (
     <div className="battle-root">
@@ -184,6 +186,16 @@ export function ArenaBattleScreen({
             cpuHeroId={oppHero}
           />
         </div>
+        {showMenuBtn && (
+          <button
+            type="button"
+            className="arena-menu-btn"
+            onClick={() => setConfirmExit(true)}
+            aria-label="Open match menu"
+          >
+            ☰
+          </button>
+        )}
         {rendererFailed && (
           <div className="arena-fallback" role="alert">
             <p>Could not start the arena renderer.</p>
