@@ -1456,16 +1456,16 @@ button {
 
   .hud-overlay {
     padding:
-      calc(6px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) 14px
+      calc(4px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) 10px
       calc(10px + env(safe-area-inset-left));
   }
 
   .battle-hud {
-    gap: 6px;
+    gap: 4px;
   }
 
   .hud-id {
-    gap: 6px;
+    gap: 4px;
   }
 
   .hud-portrait {
@@ -1479,21 +1479,27 @@ button {
   }
 
   .hud-name {
-    font-size: 10px;
+    font-size: 9px;
     margin-bottom: 2px;
   }
 
   .health-track {
-    height: 13px;
+    height: 10px;
   }
 
   .health-pct {
-    font-size: 10px;
+    font-size: 9px;
   }
 
   .hud-stats {
-    gap: 8px;
-    font-size: 10px;
+    gap: 6px;
+    font-size: 9px;
+  }
+
+  .arena-menu-btn {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
   }
 
   .turn-timer {
@@ -1501,7 +1507,7 @@ button {
   }
 
   .turn-banner {
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .typing-panel {
