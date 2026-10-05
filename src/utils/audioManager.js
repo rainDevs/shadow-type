@@ -121,15 +121,17 @@ class AudioManager {
 
   playAttack(big = false) {
     if (big) {
-      // Heavy: metallic clash (detuned squares) + low thump.
-      this.noise({ duration: 0.3, volume: 0.5, filterFreq: 900 });
-      this.blip({ freq: 620, type: 'square', duration: 0.22, volume: 0.16 });
-      this.blip({ freq: 655, type: 'square', duration: 0.22, volume: 0.16 });
-      this.blip({ freq: 160, freqEnd: 55, type: 'sine', duration: 0.28, volume: 0.5 });
+      // Heavy slash: bright steel shing over a deep cleave thump.
+      this.noise({ duration: 0.28, volume: 0.45, filterFreq: 2800, type: 'bandpass' });
+      this.noise({ duration: 0.16, volume: 0.3, filterFreq: 5500, type: 'highpass' });
+      this.blip({ freq: 4500, freqEnd: 600, type: 'sawtooth', duration: 0.2, volume: 0.24 });
+      this.blip({ freq: 1244, type: 'square', duration: 0.16, volume: 0.1 });
+      this.blip({ freq: 1864, type: 'square', duration: 0.14, volume: 0.08 });
+      this.blip({ freq: 150, freqEnd: 50, type: 'sine', duration: 0.3, volume: 0.5 });
     } else {
-      // Light: airy whoosh + quick slash bite.
-      this.noise({ duration: 0.22, volume: 0.4, filterFreq: 3500, type: 'highpass' });
-      this.blip({ freq: 300, freqEnd: 900, type: 'sawtooth', duration: 0.16, volume: 0.22 });
+      // Light slash: quick steel whistle.
+      this.noise({ duration: 0.2, volume: 0.38, filterFreq: 5000, type: 'highpass' });
+      this.blip({ freq: 3500, freqEnd: 700, type: 'sawtooth', duration: 0.14, volume: 0.2 });
     }
   }
 
