@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { Keycaps } from './Keycaps.jsx';
 import { audio } from '../utils/audioManager.js';
 
 export function MainMenu({ onNavigate }) {
@@ -8,7 +7,6 @@ export function MainMenu({ onNavigate }) {
   }, []);
   return (
     <div className="st-root">
-      <Keycaps count={28} />
       <h1 className="st-title">
         SHADOW <span className="accent">TYPE</span>
       </h1>

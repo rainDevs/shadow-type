@@ -1,9 +1,6 @@
-import { Keycaps } from './Keycaps.jsx';
-
 export function About({ onBack }) {
   return (
     <div className="st-root">
-      <Keycaps count={22} />
       <div className="panel">
         <h2>About</h2>
         <p className="lede">Type fast, strike hard, survive.</p>

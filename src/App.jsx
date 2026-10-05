@@ -8,6 +8,7 @@ import { ArenaLobby } from './components/ArenaLobby.jsx';
 import { HowToPlay } from './components/HowToPlay.jsx';
 import { Settings } from './components/Settings.jsx';
 import { About } from './components/About.jsx';
+import { Keycaps } from './components/Keycaps.jsx';
 import { useLocalStorage } from './hooks/useLocalStorage.js';
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from './utils/storage.js';
 import { HEROES } from './data/heroes.js';
@@ -160,6 +161,7 @@ function App() {
 
   return (
     <>
+      <Keycaps count={28} />
       {screen === 'menu' && <MainMenu onNavigate={navigate} />}
       {screen === 'mode' && (
         <ModeSelector

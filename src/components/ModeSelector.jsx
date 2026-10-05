@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { MODES, MODE_IDS } from '../data/modes.js';
-import { Keycaps } from './Keycaps.jsx';
 
 export function ModeSelector({ initial, onSelect, onBack }) {
   const [selected, setSelected] = useState(
@@ -9,7 +8,6 @@ export function ModeSelector({ initial, onSelect, onBack }) {
 
   return (
     <div className="st-root">
-      <Keycaps count={22} />
       <div className="panel">
         <h2>Select Mode</h2>
         <p className="lede">Turn length sets the typing window.</p>

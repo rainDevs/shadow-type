@@ -80,6 +80,9 @@ body {
 
 /* Floating keyboard keycaps. */
 .st-keycaps {
+  z-index: 0;
+}
+.st-keycaps {
   position: absolute;
   inset: 0;
   pointer-events: none;

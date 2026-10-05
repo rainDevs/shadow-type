@@ -5,7 +5,6 @@
 
 import { useState } from 'react';
 import { MODES, MODE_IDS } from '../data/modes.js';
-import { Keycaps } from './Keycaps.jsx';
 
 export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
   const [name, setName] = useState(initialName ?? '');
@@ -21,7 +20,6 @@ export function ArenaLobby({ initialMode, initialName, onStart, onBack }) {
 
   return (
     <div className="st-root">
-      <Keycaps count={22} />
       <div className="panel">
         <h2>Arena — PVP</h2>
 
