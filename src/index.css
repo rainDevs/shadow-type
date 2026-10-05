@@ -1463,6 +1463,11 @@ button {
 
   .battle-hud {
     gap: 4px;
+    justify-content: space-between;
+  }
+
+  .hud-fighter {
+    flex: 0 1 37%;
   }
 
   .hud-id {
@@ -1498,8 +1503,13 @@ button {
   }
 
   .arena-menu-btn {
+    position: absolute;
+    left: 50%;
+    top: calc(4px + env(safe-area-inset-top));
+    transform: translateX(-50%);
     width: 36px;
     height: 36px;
+    margin-top: 0;
     font-size: 14px;
   }
 

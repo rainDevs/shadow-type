@@ -51,6 +51,10 @@ class AudioManager {
     return !!this.ctx;
   }
 
+  get musicPlaying() {
+    return !!this.musicTimer;
+  }
+
   now() {
     return this.ctx.currentTime;
   }
@@ -140,8 +144,7 @@ class AudioManager {
   }
 
   playWarning() {
-    this.blip({ freq: 520, type: 'square', duration: 0.09, volume: 0.25 });
-    this.blip({ freq: 780, type: 'square', duration: 0.12, volume: 0.25, delay: 0.11 });
+    this.blip({ freq: 660, type: 'square', duration: 0.15, volume: 0.25 });
   }
 
   playVictory() {

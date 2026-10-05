@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { MainMenu } from './components/MainMenu.jsx';
 import { CharacterSelector } from './components/CharacterSelector.jsx';
@@ -36,8 +36,7 @@ function migrateDifficulty(d) {
 }
 
 function App() {
-  const [screen, setScreen] = useState('menu');
-  const [settings, setSettings] = useLocalStorage(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
+  const [screen, setScreen] = useState('menu');  const [settings, setSettings] = useLocalStorage(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
   const [heroId, setHeroId] = useState(() =>
     normalize(settings.hero, HEROES, 'hero-1'),
   );
@@ -63,6 +62,25 @@ function App() {
   useEffect(() => {
     document.documentElement.dataset.reducedMotion = settings.reducedMotion ? 'true' : 'false';
   }, [settings.reducedMotion]);
+
+  // Browsers block audio before the first gesture: unlock on any
+  // interaction and kick the menu music if we're still on the menu.
+  const screenRef = useRef(screen);
+  useEffect(() => {
+    screenRef.current = screen;
+  }, [screen]);
+  useEffect(() => {
+    const kick = () => {
+      audio.unlock();
+      if (screenRef.current === 'menu' && !audio.musicPlaying) audio.startMusic('menu');
+    };
+    window.addEventListener('pointerdown', kick);
+    window.addEventListener('keydown', kick);
+    return () => {
+      window.removeEventListener('pointerdown', kick);
+      window.removeEventListener('keydown', kick);
+    };
+  }, []);
 
   const navigate = useCallback((next) => {
     audio.unlock();
