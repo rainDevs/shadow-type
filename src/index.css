@@ -137,25 +137,13 @@ body {
   padding: 0 0.35em 0.15em;
   font-family: var(--mono);
   font-weight: 700;
-  color: var(--steel);
+  color: #fcfefe;
   background: rgba(10, 32, 80, 0.85);
   border: 1px solid var(--border);
   border-bottom-width: 3px;
   border-radius: 6px;
   opacity: 0;
   animation: keycap-drift linear infinite;
-}
-
-.st-keycaps .keycap:nth-child(3n) {
-  color: var(--gold);
-}
-
-.st-keycaps .keycap:nth-child(4n) {
-  color: var(--pink);
-}
-
-.st-keycaps .keycap:nth-child(5n) {
-  color: var(--cyan);
 }
 
 @keyframes keycap-drift {
