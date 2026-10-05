@@ -1,6 +1,11 @@
+import { useEffect } from 'react';
 import { Embers } from './Embers.jsx';
+import { audio } from '../utils/audioManager.js';
 
 export function MainMenu({ onNavigate }) {
+  useEffect(() => {
+    audio.startMusic('menu');
+  }, []);
   return (
     <div className="st-root">
       <Embers />

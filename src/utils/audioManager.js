@@ -10,8 +10,6 @@ class AudioManager {
     this.musicTimer = null;
     this.musicStep = 0;
     this.musicMode = null;
-    this.keyStreak = 0;
-    this.lastKeyAt = 0;
     this.settings = { musicVolume: 0.5, sfxVolume: 0.7, muted: false };
   }
 
@@ -110,17 +108,10 @@ class AudioManager {
   }
 
   playKey() {
-    // Pitch ladder: steady typing climbs a pentatonic run; errors reset it.
-    const t = this.ctx ? this.now() : 0;
-    this.keyStreak = t - this.lastKeyAt < 0.9 ? Math.min(this.keyStreak + 1, 14) : 0;
-    this.lastKeyAt = t;
-    const scale = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24, 26, 28, 31, 33];
-    const semis = scale[this.keyStreak] ?? 24;
-    this.blip({ freq: 523.25 * Math.pow(2, semis / 12), type: 'triangle', duration: 0.05, volume: 0.2 });
+    this.blip({ freq: 520 + Math.random() * 120, type: 'triangle', duration: 0.05, volume: 0.22 });
   }
 
   playError() {
-    this.keyStreak = 0;
     this.blip({ freq: 180, freqEnd: 120, type: 'sawtooth', duration: 0.15, volume: 0.3 });
   }
 
@@ -173,10 +164,30 @@ class AudioManager {
     );
   }
 
-  // --- Background music: two synthesized tracks, no audio files ---
-  // battle (training): brooding Am-F-G-Em drone + sparse arp + light pulse.
-  // arena (PVP): faster Em drone + driving four-on-the-floor drums.
+  // --- Background music: chiptune tracks, still zero audio files ---
+  // Square-wave lead + triangle bassline + noise drums (NES-style voices).
+  // battle (training): brooding Am-F-G-Em at 2s bars. arena (PVP): faster
+  // Em loop with driving four-on-the-floor drums.
   static TRACKS = {
+    menu: {
+      bar: 2.0,
+      progression: [
+        [130.81, 164.81, 196.0], // C
+        [98.0, 123.47, 146.83], // G
+        [110.0, 130.81, 164.81], // Am
+        [87.31, 110.0, 174.61], // F
+      ],
+      arp: [523.25, 659.25, 783.99, 1046.5, 783.99, 659.25, 587.33, 523.25],
+      arpAt: [0.25, 1.0],
+      kickAt: [0, 1.0],
+      snareAt: [],
+      hatEvery: 0.5,
+      hatVol: 0.05,
+      bassVol: 0.14,
+      leadVol: 0.06,
+      bassSteps: 4,
+      bassPattern: [0, 1, 2, 1],
+    },
     battle: {
       bar: 2.0,
       progression: [
@@ -191,8 +202,10 @@ class AudioManager {
       snareAt: [],
       hatEvery: 0.5,
       hatVol: 0.06,
-      droneVol: 0.05,
-      filterFreq: 320,
+      bassVol: 0.16,
+      leadVol: 0.06,
+      bassSteps: 8,
+      bassPattern: [0, 0, 2, 0, 1, 0, 2, 1],
     },
     arena: {
       bar: 1.6,
@@ -208,8 +221,10 @@ class AudioManager {
       snareAt: [0.4, 1.2],
       hatEvery: 0.2,
       hatVol: 0.09,
-      droneVol: 0.055,
-      filterFreq: 420,
+      bassVol: 0.18,
+      leadVol: 0.07,
+      bassSteps: 8,
+      bassPattern: [0, 0, 2, 0, 1, 0, 2, 1],
     },
   };
 
@@ -243,29 +258,18 @@ class AudioManager {
       if (!this.ctx) return;
       try {
         const chord = track.progression[this.musicStep % track.progression.length];
-        const t0 = this.now() + 0.05;
-        // Drone pad.
-        chord.forEach((freq) => {
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.value = freq / 2;
-          const filter = this.ctx.createBiquadFilter();
-          filter.type = 'lowpass';
-          filter.frequency.value = track.filterFreq;
-          gain.gain.setValueAtTime(0.0001, t0);
-          gain.gain.linearRampToValueAtTime(track.droneVol, t0 + 0.4);
-          gain.gain.linearRampToValueAtTime(0.0001, t0 + BAR);
-          osc.connect(filter);
-          filter.connect(gain);
-          gain.connect(this.musicGain);
-          osc.start(t0);
-          osc.stop(t0 + BAR + 0.05);
-        });
-        // Arp notes.
+        // Chiptune bassline: triangle notes pumping root/fifth/third.
+        const steps = track.bassSteps ?? 8;
+        const stepDur = BAR / steps;
+        const pattern = track.bassPattern ?? [0, 0, 2, 0, 1, 0, 2, 1];
+        for (let i = 0; i < steps; i++) {
+          const freq = chord[pattern[i] % chord.length];
+          this.blip({ freq, type: 'triangle', duration: stepDur * 0.9, volume: track.bassVol, delay: 0.05 + i * stepDur, out: this.musicGain });
+        }
+        // Square-wave lead arp.
         track.arpAt.forEach((at, i) => {
           const note = track.arp[(this.musicStep * track.arpAt.length + i) % track.arp.length];
-          this.blip({ freq: note, type: 'sine', duration: 0.5, volume: 0.08, delay: 0.05 + at, out: this.musicGain });
+          this.blip({ freq: note, type: 'square', duration: 0.18, volume: track.leadVol, delay: 0.05 + at, out: this.musicGain });
         });
         // Drums.
         track.kickAt.forEach((at) => this.kick(0.05 + at));
