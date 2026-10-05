@@ -69,7 +69,7 @@ function ArenaResult({ game, onRematch, onMenu }) {
         </dl>
         <div className="btn-row">
           <button type="button" className="menu-btn primary" onClick={onRematch} autoFocus>
-            Rematch
+            Next Match
           </button>
           <button type="button" className="menu-btn" onClick={onMenu}>
             Main Menu

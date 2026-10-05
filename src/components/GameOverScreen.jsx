@@ -50,11 +50,12 @@ export function GameOverScreen({ results, onSubmitScore, onRematch, onMenu }) {
             <span className="score-form-row">
               <input
                 id="score-name"
+                className="mixed-case"
                 value={name}
                 onChange={(e) => setName(e.target.value.slice(0, 12))}
                 maxLength={12}
                 autoComplete="off"
-                placeholder="SHADOW"
+                placeholder="Shadow"
                 autoFocus
               />
               <button type="submit" className="menu-btn primary">
@@ -70,14 +71,14 @@ export function GameOverScreen({ results, onSubmitScore, onRematch, onMenu }) {
         )}
         <div className="btn-row">
           <button type="button" className="menu-btn primary" onClick={onRematch}>
-            {won ? 'Rematch' : 'Try Again'}
+            {won ? 'Next Match' : 'Try Again'}
           </button>
           <button type="button" className="menu-btn" onClick={onMenu}>
             Main Menu
           </button>
         </div>
         <p className="hint-line">
-          <span className="kbd">ENTER</span> rematch
+          <span className="kbd">ENTER</span> next match
         </p>
       </div>
     </div>
