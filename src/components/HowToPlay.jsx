@@ -27,12 +27,13 @@ export function HowToPlay({ onBack }) {
           </li>
           <li>
             In Training the enemy answers with a quick strike of its own. In
-            Arena both fighters type the same passage at once and strike
-            together. Empty the other health bar first.
+            Arena both fighters type the same passage at once, then strike one
+            after the other — highest damage first. Empty the other health bar
+            first.
           </li>
           <li>
-            Click the text if you lose focus. <span className="kbd">ESC</span> pauses
-            Training, or asks to forfeit in the Arena (quitting hands your
+            Tap (or click) the text if you lose focus. <span className="kbd">ESC</span> or the
+            ☰ button pauses Training, or asks to forfeit in the Arena (quitting hands your
             rival the win). Copy/paste is disabled in the arena.
           </li>
         </ul>
