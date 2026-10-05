@@ -202,7 +202,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
     const pixi = pixiRef.current;
     pixi?.win?.(1 - youRef.current);
     audio.playDefeat();
-    audio.stopMusic();
+    audio.startMusic('defeat');
     const avgWpm = turnsRef.current > 0 ? wpmSumRef.current / turnsRef.current : 0;
     setResults({
       won: false,
@@ -439,17 +439,20 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
         const draw = winner === -1;
         const pixi = pixiRef.current;
         if (msg.byForfeit && won) showFeedback('info', 'RIVAL FORFEITED');
-        if (draw) setStatusBoth('announce');
-        else if (won) {
+        if (draw) {
+          setStatusBoth('announce');
+          audio.stopMusic();
+        } else if (won) {
           pixi?.win?.(youRef.current) ?? pixi?.victory?.();
           audio.playVictory();
+          audio.startMusic('victory');
           setStatusBoth('announce');
         } else {
           pixi?.win?.(winner) ?? pixi?.defeat?.();
           audio.playDefeat();
+          audio.startMusic('defeat');
           setStatusBoth('announce');
         }
-        audio.stopMusic();
         setResults({
           won,
           draw,

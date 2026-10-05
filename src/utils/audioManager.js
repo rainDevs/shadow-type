@@ -212,6 +212,44 @@ class AudioManager {
       bassSteps: 8,
       bassPattern: [0, 0, 2, 0, 1, 0, 2, 1],
     },
+    victory: {
+      bar: 2.0,
+      progression: [
+        [130.81, 164.81, 196.0], // C
+        [110.0, 130.81, 164.81], // Am
+        [87.31, 110.0, 174.61], // F
+        [98.0, 123.47, 146.83], // G
+      ],
+      arp: [523.25, 659.25, 783.99, 1046.5, 783.99, 880.0, 783.99, 659.25],
+      arpAt: [0.25, 0.75, 1.25],
+      kickAt: [0, 1.0],
+      snareAt: [0.5, 1.5],
+      hatEvery: 0.25,
+      hatVol: 0.07,
+      bassVol: 0.15,
+      leadVol: 0.07,
+      bassSteps: 4,
+      bassPattern: [0, 0, 1, 2],
+    },
+    defeat: {
+      bar: 2.4,
+      progression: [
+        [110.0, 130.81, 164.81], // Am
+        [82.41, 98.0, 123.47], // Em
+        [87.31, 110.0, 130.81], // F
+        [82.41, 103.83, 164.81], // E (major, unresolved)
+      ],
+      arp: [440, 523.25, 659.25, 523.25, 392, 329.63, 329.63, 311.13],
+      arpAt: [0.6, 1.6],
+      kickAt: [],
+      snareAt: [],
+      hatEvery: 99,
+      hatVol: 0.04,
+      bassVol: 0.15,
+      leadVol: 0.06,
+      bassSteps: 2,
+      bassPattern: [0, 0],
+    },
   };
 
   kick(delay = 0) {

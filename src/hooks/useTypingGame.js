@@ -178,11 +178,12 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
       if (won) {
         pixi?.victory();
         audio.playVictory();
+        audio.startMusic('victory');
       } else {
         pixi?.defeat();
         audio.playDefeat();
+        audio.startMusic('defeat');
       }
-      audio.stopMusic();
       const avgWpm = turnsRef.current > 0 ? wpmSumRef.current / turnsRef.current : 0;
       const accuracy = calculateAccuracy(keysCorrectRef.current, keysTotalRef.current);
       const finalScore = scoreRef.current;
