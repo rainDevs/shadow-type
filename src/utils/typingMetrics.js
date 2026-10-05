@@ -17,7 +17,3 @@ export function calculateAccuracy(correctChars, totalTyped) {
   if (totalTyped <= 0) return 100;
   return (correctChars / totalTyped) * 100;
 }
-
-export function round1(value) {
-  return Math.round(value * 10) / 10;
-}

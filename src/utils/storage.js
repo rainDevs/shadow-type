@@ -33,12 +33,3 @@ export const DEFAULT_SETTINGS = {
   mode: 'medium',
   difficulty: 'medium',
 };
-
-export function loadSettings() {
-  const stored = loadJSON(STORAGE_KEYS.SETTINGS, {});
-  return { ...DEFAULT_SETTINGS, ...(stored ?? {}) };
-}
-
-export function saveSettings(settings) {
-  return saveJSON(STORAGE_KEYS.SETTINGS, settings);
-}

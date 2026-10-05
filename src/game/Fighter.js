@@ -30,20 +30,6 @@ const FACTION_TINT = { player: 0xffffff, cpu: 0xffffff };
 // heroId -> { stateKey: Texture[] }
 const textureCache = {};
 
-export function clearFighterCache() {
-  for (const key of Object.keys(textureCache)) {
-    try {
-      const states = textureCache[key];
-      for (const textures of Object.values(states)) {
-        for (const t of textures) t.destroy(false);
-      }
-    } catch {
-      /* best-effort */
-    }
-    delete textureCache[key];
-  }
-}
-
 function heroKey(heroId) {
   return HEROES[heroId] ? heroId : 'hero-1';
 }

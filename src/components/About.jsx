@@ -15,7 +15,9 @@ export function About({ onBack }) {
           </li>
           <li>
             <strong>Arena (PVP):</strong> face a live rival online. Both players type the same
-            passage — the faster typer strikes first.
+            passage — the faster typer strikes first. Matchmaking is strictly
+            desktop-vs-desktop and mobile-vs-mobile, so touch typists never face
+            mechanical keyboards.
           </li>
           <li>
             <strong>Scoring:</strong> speed is measured Monkeytype-style — gross WPM

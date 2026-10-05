@@ -27,14 +27,6 @@ export function isMobilePlatform() {
   return getPlatform() === 'mobile';
 }
 
-export function isCoarsePointer() {
-  try {
-    return !!window.matchMedia?.('(pointer: coarse)').matches;
-  } catch {
-    return false;
-  }
-}
-
 // Capped DPR for canvas backing stores. Mobile caps lower to save fill-rate.
 export function getCappedDPR(mobileCap = 2, desktopCap = 2) {
   try {

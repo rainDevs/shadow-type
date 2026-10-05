@@ -33,10 +33,6 @@ export class ParticleManager {
           : MAX_PARTICLES_DESKTOP;
   }
 
-  setMaxParticles(n) {
-    this.maxParticles = Math.max(1, Math.floor(n));
-  }
-
   burst(x, y, { color = 0x22d3ee, count = 24, speed = 320, life = 0.6, size = 4, gravity = 500 } = {}) {
     for (let i = 0; i < count; i++) {
       if (this.particles.length >= this.maxParticles) break;

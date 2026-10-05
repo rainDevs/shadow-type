@@ -566,11 +566,6 @@ html[data-reduced-motion='true'] .hero-card.selected .hero-preview {
   color: var(--gold);
 }
 
-.scores-empty {
-  color: var(--muted);
-  padding: 24px 0;
-}
-
 .back-link {
   background: none;
   border: none;
@@ -602,10 +597,6 @@ html[data-reduced-motion='true'] .hero-card.selected .hero-preview {
   font-size: 12px;
   letter-spacing: 0.2em;
   text-transform: none;
-  z-index: 1;
-}
-
-.battle-stub {
   z-index: 1;
 }
 
@@ -954,20 +945,6 @@ html[data-reduced-motion='true'] .hero-card.selected .hero-preview {
   color: var(--pink);
 }
 
-.typing-coming {
-  color: var(--muted);
-  margin: 0 0 14px;
-}
-
-.challenge-text {
-  margin: 6px 0 12px;
-  font-family: var(--mono);
-  font-size: clamp(19px, 3vw, 27px);
-  line-height: 1.7;
-  letter-spacing: 0.02em;
-  overflow-wrap: break-word;
-}
-
 /* Monkeytype-style flowing passage. */
 .passage-box {
   position: relative;
@@ -1077,39 +1054,10 @@ html[data-reduced-motion='true'] .hero-card.selected .hero-preview {
   text-underline-offset: 4px;
 }
 
-.ch-current {
-  color: #fff;
-  border-bottom: 2px solid var(--cyan);
-  animation: caret-blink 1s steps(2) infinite;
-}
-
 @keyframes caret-blink {
   50% {
     border-bottom-color: transparent;
   }
-}
-
-.typing-input {
-  width: 100%;
-  font: inherit;
-  font-family: var(--mono);
-  font-size: 16px;
-  color: var(--text);
-  background: rgba(4, 25, 63, 0.6);
-  border: 2px solid var(--border);
-  border-radius: 6px;
-  padding: 10px 14px;
-  text-align: center;
-}
-
-.typing-input:focus {
-  outline: none;
-  border-color: var(--cyan);
-  box-shadow: 0 0 14px rgba(15, 239, 251, 0.3);
-}
-
-.typing-input:disabled {
-  opacity: 0.5;
 }
 
 /* End-of-fight banner over the death animation. */
@@ -1369,12 +1317,6 @@ html[data-reduced-motion='true'] .announce-hint {
   text-transform: none;
 }
 
-.rank-line {
-  color: var(--gold);
-  font-family: var(--mono);
-  margin: 0 0 18px;
-}
-
 .hint-line {
   margin: 14px 0 0;
   color: var(--muted);
@@ -1411,7 +1353,6 @@ button {
   touch-action: pan-y;
 }
 
-.typing-input,
 .score-form-row input {
   font-size: 16px;
 }

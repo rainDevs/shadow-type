@@ -161,7 +161,7 @@ function App() {
 
   return (
     <>
-      <Keycaps count={28} />
+      {screen !== 'battle' && screen !== 'arena-battle' && <Keycaps count={28} />}
       {screen === 'menu' && <MainMenu onNavigate={navigate} />}
       {screen === 'mode' && (
         <ModeSelector
