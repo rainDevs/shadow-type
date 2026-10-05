@@ -541,14 +541,15 @@ html[data-reduced-motion='true'] .hero-card.selected .hero-preview {
 .scores-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: var(--pixel);
-  font-weight: 700;
+  font-family: var(--sans);
+  font-weight: 600;
   font-size: 15px;
   margin-bottom: 20px;
 }
 
 .scores-table th {
   color: var(--muted);
+  font-family: var(--sans);
   font-weight: 600;
   font-size: 11px;
   letter-spacing: 0.2em;
