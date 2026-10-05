@@ -283,6 +283,7 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
     struckRef.current = false;
     setLocked(true);
     showFeedback('info', 'TIME!', 0);
+    audio.playWarning();
     if (strikeTimeoutRef.current) clearTimeout(strikeTimeoutRef.current);
     strikeDueAtRef.current = Date.now() + STRIKE_DELAY_MS;
     strikeTimeoutRef.current = setTimeout(() => doStrikeRef.current?.(), STRIKE_DELAY_MS);
@@ -304,7 +305,7 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
     setScore(scoreRef.current);
 
     showFeedback('attack', `${tier} +${bonus}  -${damage} DMG`, damage);
-    audio.playAttack();
+    audio.playAttack(damage >= 10);
     const myGen = matchGenRef.current;
     setTimeout(() => {
       if (!aliveRef.current || myGen !== matchGenRef.current) return;
@@ -323,7 +324,7 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
           busyRef.current = false;
           return;
         }
-        audio.playHit();
+        audio.playHit(damage >= 10);
         if (cpuHpRef.current <= 0 && statusRef.current === 'playing') {
           endMatch(true);
           return;
@@ -345,7 +346,7 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
         setPlayerHp(playerHpRef.current);
         showFeedback('cpu', `ENEMY STRIKE -${damage}`, damage);
       }, 220);
-      audio.playAttack();
+      audio.playAttack(damage >= 10);
       const strike = pixi?.cpuAttack({ damage }) ?? Promise.resolve();
       strike
         .catch(() => {
@@ -353,7 +354,7 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
         })
         .finally(() => {
           if (!aliveRef.current || myGen !== matchGenRef.current || statusRef.current !== 'playing') return;
-          audio.playHit();
+          audio.playHit(damage >= 10);
           if (playerHpRef.current <= 0) {
             endMatch(false);
           } else {
@@ -558,7 +559,7 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
     setLiveAcc(100);
     pixiRef.current?.setPaused(false);
     pixiRef.current?.reset();
-    audio.startMusic();
+    audio.startMusic('battle');
     runCountdown();
   }, [maxHp, pixiRef, runCountdown]);
 
@@ -581,7 +582,7 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
   // --- lifecycle ------------------------------------------------------------------------------------------
   useEffect(() => {
     aliveRef.current = true;
-    audio.startMusic();
+    audio.startMusic('battle');
     // Countdown drives its own timers; initial state already matches step 1.
     const t = setTimeout(() => runCountdown(), 0);
     return () => {

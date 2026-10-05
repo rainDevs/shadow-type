@@ -175,6 +175,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
     sentRef.current = 1;
     setLocked(true);
     showFeedback('info', 'TIME!');
+    audio.playWarning();
     sendTurn();
   }, [sendTurn, showFeedback]);
 
@@ -297,7 +298,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
   // --- connection lifecycle (stays on "Waiting for Opponent..." until live) ---
   useEffect(() => {
     aliveRef.current = true;
-    audio.startMusic();
+    audio.startMusic('arena');
     let ws = null;
     let closed = false;
     let retryTimer = null;
@@ -419,11 +420,11 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
               }
               const foeStrike = s.by !== youRef.current;
               showFeedback(foeStrike ? 'cpu' : 'info', foeStrike ? `FOE -${s.dmg}` : `-${s.dmg}`);
-              audio.playAttack();
+              audio.playAttack(s.dmg >= 10);
               // player 0 strikes from the left, player 1 from the right
               if (s.by === 0) await pixi?.leftAttack?.({ damage: s.dmg });
               else await pixi?.rightAttack?.({ damage: s.dmg });
-              audio.playHit();
+              audio.playHit(s.dmg >= 10);
             }
           } catch {
             /* arena unavailable */
