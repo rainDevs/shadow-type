@@ -26,6 +26,40 @@ export function About({ onBack }) {
             (2–24 per window), so clean speed hits hardest.
           </li>
         </ul>
+        <table className="scores-table" aria-label="Adjusted WPM to damage table">
+          <thead>
+            <tr>
+              <th>Adj. WPM</th>
+              <th>Damage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>0–20</td>
+              <td>2–6</td>
+            </tr>
+            <tr>
+              <td>20–35</td>
+              <td>6–10</td>
+            </tr>
+            <tr>
+              <td>35–50</td>
+              <td>10–14</td>
+            </tr>
+            <tr>
+              <td>50–70</td>
+              <td>14–20</td>
+            </tr>
+            <tr>
+              <td>70–90</td>
+              <td>20–24</td>
+            </tr>
+            <tr>
+              <td>90+</td>
+              <td>24</td>
+            </tr>
+          </tbody>
+        </table>
         <p className="st-footer">developed by: _rainDevs</p>
         <div className="btn-row">
           <button type="button" className="menu-btn primary" onClick={onBack} autoFocus>

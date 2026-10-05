@@ -559,7 +559,7 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
     setLiveAcc(100);
     pixiRef.current?.setPaused(false);
     pixiRef.current?.reset();
-    audio.startMusic('battle');
+    audio.startMusic('arena');
     runCountdown();
   }, [maxHp, pixiRef, runCountdown]);
 
@@ -582,7 +582,7 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
   // --- lifecycle ------------------------------------------------------------------------------------------
   useEffect(() => {
     aliveRef.current = true;
-    audio.startMusic('battle');
+    audio.startMusic('arena');
     // Countdown drives its own timers; initial state already matches step 1.
     const t = setTimeout(() => runCountdown(), 0);
     return () => {

@@ -191,25 +191,6 @@ class AudioManager {
       bassSteps: 4,
       bassPattern: [0, 1, 2, 1],
     },
-    battle: {
-      bar: 2.0,
-      progression: [
-        [110.0, 130.81, 164.81], // Am
-        [87.31, 110.0, 146.83], // F
-        [98.0, 123.47, 146.83], // G/D
-        [82.41, 110.0, 138.59], // Em
-      ],
-      arp: [440, 523.25, 659.25, 587.33, 392, 523.25, 440, 329.63],
-      arpAt: [0.5],
-      kickAt: [0, 1.0],
-      snareAt: [],
-      hatEvery: 0.5,
-      hatVol: 0.06,
-      bassVol: 0.16,
-      leadVol: 0.06,
-      bassSteps: 8,
-      bassPattern: [0, 0, 2, 0, 1, 0, 2, 1],
-    },
     arena: {
       bar: 1.6,
       progression: [
@@ -246,8 +227,8 @@ class AudioManager {
     this.noise({ duration: 0.11, volume: 0.28, filterFreq: 1800, type: 'bandpass', delay, out: this.musicGain });
   }
 
-  startMusic(mode = 'battle') {
-    const track = AudioManager.TRACKS[mode] ?? AudioManager.TRACKS.battle;
+  startMusic(mode = 'arena') {
+    const track = AudioManager.TRACKS[mode] ?? AudioManager.TRACKS.arena;
     if (this.ctx && this.musicTimer && this.musicMode === mode) return;
     this.stopMusic();
     if (!this.ctx) {
