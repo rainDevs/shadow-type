@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Embers } from './Embers.jsx';
+import { Keycaps } from './Keycaps.jsx';
 import { audio } from '../utils/audioManager.js';
 
 export function MainMenu({ onNavigate }) {
@@ -8,7 +8,7 @@ export function MainMenu({ onNavigate }) {
   }, []);
   return (
     <div className="st-root">
-      <Embers />
+      <Keycaps />
       <h1 className="st-title">
         SHADOW <span className="accent">TYPE</span>
       </h1>

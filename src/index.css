@@ -112,13 +112,69 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .st-embers {
+  .st-embers,
+  .st-keycaps {
     display: none;
+  }
+}
+
+/* Floating keyboard keycaps on the main menu. */
+.st-keycaps {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.st-keycaps .keycap {
+  position: absolute;
+  bottom: -48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.9em;
+  height: 1.9em;
+  padding: 0 0.35em 0.15em;
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--steel);
+  background: rgba(10, 32, 80, 0.85);
+  border: 1px solid var(--border);
+  border-bottom-width: 3px;
+  border-radius: 6px;
+  opacity: 0;
+  animation: keycap-drift linear infinite;
+}
+
+.st-keycaps .keycap:nth-child(3n) {
+  color: var(--gold);
+}
+
+.st-keycaps .keycap:nth-child(4n) {
+  color: var(--pink);
+}
+
+.st-keycaps .keycap:nth-child(5n) {
+  color: var(--cyan);
+}
+
+@keyframes keycap-drift {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateY(-110vh) translateX(var(--drift, 30px)) rotate(var(--spin, 12deg));
+    opacity: 0;
   }
 }
 
 /* In-game reduced-motion setting (set via <html data-reduced-motion>). */
 html[data-reduced-motion='true'] .st-embers,
+html[data-reduced-motion='true'] .st-keycaps,
 html[data-reduced-motion='true'] .combat-feedback {
   display: none;
 }

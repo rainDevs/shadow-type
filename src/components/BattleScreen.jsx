@@ -192,9 +192,9 @@ export function BattleScreen({
       )}
       {over && results &&
         (results.won ? (
-          <VictoryScreen results={results} onSubmitScore={game.submitScore} onRematch={game.restart} onMenu={onExit} />
+          <VictoryScreen results={results} onRematch={game.restart} onMenu={onExit} />
         ) : (
-          <DefeatScreen results={results} onSubmitScore={game.submitScore} onRematch={game.restart} onMenu={onExit} />
+          <DefeatScreen results={results} onRematch={game.restart} onMenu={onExit} />
         ))}
       {status === 'paused' && (
         <PauseMenu onResume={game.resume} onRestart={game.restart} onMenu={onExit} />

@@ -11,7 +11,6 @@ import { calculateWPM, calculateAccuracy } from '../utils/typingMetrics.js';
 import { calculateWindowDamage, tierForWpm } from '../utils/damageCalculator.js';
 import { calculateCharScore, calculateWindowBonus } from '../utils/scoreCalculator.js';
 import { randomInt } from '../utils/random.js';
-import { qualifiesForHighScores, addHighScore } from '../utils/storage.js';
 import { audio } from '../utils/audioManager.js';
 
 let feedbackId = 0;
@@ -197,7 +196,6 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
         words: matchWordsRef.current,
         difficulty: difficultyLabel,
         mode: modeLabel,
-        qualifies: qualifiesForHighScores(finalScore),
       });
       // Announce first (fighters play defeat/victory in full view), then the
       // player clicks anywhere to reveal the results screen.
@@ -564,22 +562,6 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
     runCountdown();
   }, [maxHp, pixiRef, runCountdown]);
 
-  const submitScore = useCallback(
-    (name) => {
-      if (!results) return -1;
-      const rank = addHighScore({
-        name,
-        score: results.score,
-        wpm: results.avgWpm,
-        accuracy: results.accuracy,
-        difficulty: results.difficulty,
-      });
-      setResults((r) => (r ? { ...r, qualifies: false } : r));
-      return rank;
-    },
-    [results],
-  );
-
   // --- lifecycle ------------------------------------------------------------------------------------------
   useEffect(() => {
     aliveRef.current = true;
@@ -624,6 +606,5 @@ export function useTypingGame({ modeId, mode, difficultyId, difficulty, pixiRef 
     resume,
     restart,
     acknowledgeEnd,
-    submitScore,
   };
 }

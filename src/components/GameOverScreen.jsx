@@ -1,17 +1,7 @@
-// Shared game-over screen (PLAN.md sections 17, 18, 45).
+// Shared game-over screen: final score + stats, then next match or menu.
 
-import { useState } from 'react';
-
-export function GameOverScreen({ results, onSubmitScore, onRematch, onMenu }) {
-  const [name, setName] = useState('');
-  const [rank, setRank] = useState(null);
+export function GameOverScreen({ results, onRematch, onMenu }) {
   const won = results.won;
-
-  const submit = (e) => {
-    e.preventDefault();
-    const r = onSubmitScore(name.trim() || 'SHADOW');
-    setRank(r);
-  };
 
   return (
     <div className="overlay" role="dialog" aria-modal="true" aria-label={won ? 'Victory' : 'Defeat'}>
@@ -44,31 +34,6 @@ export function GameOverScreen({ results, onSubmitScore, onRematch, onMenu }) {
             <dd>{results.words}</dd>
           </div>
         </dl>
-        {results.qualifies && rank == null && (
-          <form className="score-form" onSubmit={submit}>
-            <label htmlFor="score-name">New high score — enter your name</label>
-            <span className="score-form-row">
-              <input
-                id="score-name"
-                className="mixed-case"
-                value={name}
-                onChange={(e) => setName(e.target.value.slice(0, 12))}
-                maxLength={12}
-                autoComplete="off"
-                placeholder="Shadow"
-                autoFocus
-              />
-              <button type="submit" className="menu-btn primary">
-                Save
-              </button>
-            </span>
-          </form>
-        )}
-        {rank != null && (
-          <p className="rank-line" aria-live="polite">
-            {rank >= 0 ? `Ranked #${rank + 1} in the hall of legends!` : 'Score saved.'}
-          </p>
-        )}
         <div className="btn-row">
           <button type="button" className="menu-btn primary" onClick={onRematch}>
             {won ? 'Next Match' : 'Try Again'}
