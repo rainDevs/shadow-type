@@ -474,9 +474,13 @@ export class PixiGame {
       const big = (damage ?? 0) >= 10;
       this.slash(target.x, target.y, this.playerGlow, big, 1);
       this.impact(target.x, target.y, this.playerGlow, false);
-      this.shake(8);
+      this.shake(big ? 12 : 8);
       this.cpu.playHit();
+      this.cpu.showFlash(big ? 1 : 0.7);
       this.damageText(cx, target.y - 70, `-${damage}`, 0xffffff, false);
+      // Hit-stop: frozen beat on impact so the strike registers.
+      await this.wait(big ? 140 : 100);
+      if (aborted()) return;
       await this.tween(140 * step, (k) => {
         this.cpu.root.x = cx + k * 26;
       });
@@ -514,9 +518,13 @@ export class PixiGame {
       const big = (damage ?? 0) >= 10;
       this.slash(target.x, target.y, this.cpuGlow, big, -1);
       this.impact(target.x, target.y, this.cpuGlow, false);
-      this.shake(8);
+      this.shake(big ? 12 : 8);
       this.player.playHit();
+      this.player.showFlash(big ? 1 : 0.7);
       this.damageText(px, target.y - 70, `-${damage}`, 0xffffff, false);
+      // Hit-stop: frozen beat on impact so the strike registers.
+      await this.wait(big ? 140 : 100);
+      if (aborted()) return;
       await this.tween(140 * step, (k) => {
         this.player.root.x = px - k * 26;
       });

@@ -78,6 +78,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
   const matchWordsRef = useRef(0);
   const aliveRef = useRef(true);
   const sentRef = useRef(0);
+  const strikeSeqRef = useRef(0);
   const countdownTimers = useRef([]);
 
   const setStatusBoth = useCallback((s) => {
@@ -380,36 +381,56 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
       } else if (msg.t === 'hp') {
         const me = youRef.current === 0 ? msg.hp[0] : msg.hp[1];
         const opp = youRef.current === 0 ? msg.hp[1] : msg.hp[0];
-        const myDmg = youRef.current === 0 ? msg.dmg[0] : msg.dmg[1];
-        const foeDmg = youRef.current === 0 ? msg.dmg[1] : msg.dmg[0];
-        hpMeRef.current = me;
-        hpOppRef.current = opp;
-        setHpMe(me);
-        setHpOpp(opp);
+        const dmgBy = [msg.dmg?.[0] ?? 0, msg.dmg?.[1] ?? 0];
+        const myDmg = dmgBy[youRef.current] ?? 0;
         const mine = msg.summary?.[youRef.current];
         if (mine) {
           setOppWpm(msg.summary?.[1 - youRef.current]?.wpm ?? 0);
           totalDamageRef.current += myDmg;
           wpmSumRef.current += mine.wpm ?? 0;
-          const { label } = tierForWpm(mine.wpm ?? 0);
-          showFeedback('attack', `${label} -${myDmg}  FOE -${foeDmg}`);
         }
-        audio.playAttack();
+        // Sequential strikes: higher damage lands first (ties: left/player 0).
+        // Each strike applies its victim's HP + announce text, then animates —
+        // so bars and text land one after the other, not simultaneously.
+        const seq = (strikeSeqRef.current += 1);
+        const sum = msg.summary ?? [{}, {}];
+        const strikes = [0, 1]
+          .map((by) => ({ by, dmg: dmgBy[by] ?? 0 }))
+          .filter((s) => s.dmg > 0)
+          .sort((a, b) => b.dmg - a.dmg || a.by - b.by);
+        // Sides that dealt no damage take none; sync HP now (no visual change).
+        if ((dmgBy[youRef.current] ?? 0) <= 0) {
+          hpMeRef.current = me;
+          setHpMe(me);
+        }
+        if ((dmgBy[1 - youRef.current] ?? 0) <= 0) {
+          hpOppRef.current = opp;
+          setHpOpp(opp);
+        }
         const pixi = pixiRef.current;
         (async () => {
           try {
-            // my strike is left if I'm player 0, else right — map to sides
-            if (youRef.current === 0) {
-              if (myDmg > 0) await pixi?.leftAttack?.({ damage: myDmg });
-              if (foeDmg > 0) await pixi?.rightAttack?.({ damage: foeDmg });
-            } else {
-              if (foeDmg > 0) await pixi?.rightAttack?.({ damage: foeDmg });
-              if (myDmg > 0) await pixi?.leftAttack?.({ damage: myDmg });
+            for (const s of strikes) {
+              if (seq !== strikeSeqRef.current || !aliveRef.current) return;
+              if (s.by === youRef.current) {
+                hpOppRef.current = opp;
+                setHpOpp(opp);
+              } else {
+                hpMeRef.current = me;
+                setHpMe(me);
+              }
+              const foeStrike = s.by !== youRef.current;
+              const { label } = tierForWpm(sum[s.by]?.wpm ?? 0);
+              showFeedback('attack', foeStrike ? `FOE ${label} -${s.dmg}` : `${label} -${s.dmg}`);
+              audio.playAttack();
+              // player 0 strikes from the left, player 1 from the right
+              if (s.by === 0) await pixi?.leftAttack?.({ damage: s.dmg });
+              else await pixi?.rightAttack?.({ damage: s.dmg });
+              audio.playHit();
             }
           } catch {
             /* arena unavailable */
           }
-          audio.playHit();
         })();
       } else if (msg.t === 'end') {
         // Ignore server ends once we already closed out locally
