@@ -11,19 +11,19 @@ export const HEROES = {
     id: 'hero-1',
     folder: '1',
     name: 'PINK BLADE',
-    description: 'Pink fighter, purple mane. Balanced striker.',
+    description: 'Pink fighter, purple mane.',
   },
   'hero-2': {
     id: 'hero-2',
     folder: '2',
     name: 'EMBER FANG',
-    description: 'White fighter, orange mane. Swift striker.',
+    description: 'White fighter, orange mane.',
   },
   'hero-3': {
     id: 'hero-3',
     folder: '3',
     name: 'TIDE CLAW',
-    description: 'Blue fighter, red mane. Heavy striker.',
+    description: 'Blue fighter, red mane.',
   },
 };
 
