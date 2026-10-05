@@ -1484,7 +1484,7 @@ button {
   }
 
   .hud-name {
-    font-size: 9px;
+    font-size: 8px;
     margin-bottom: 2px;
   }
 
@@ -1493,12 +1493,12 @@ button {
   }
 
   .health-pct {
-    font-size: 9px;
+    font-size: 8px;
   }
 
   .hud-stats {
-    gap: 6px;
-    font-size: 9px;
+    gap: 4px;
+    font-size: 8px;
   }
 
   .arena-menu-btn {
@@ -1507,6 +1507,9 @@ button {
     top: calc(4px + env(safe-area-inset-top));
     bottom: auto;
     transform: translateX(-50%);
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
   }
 
   .turn-timer {
@@ -1514,7 +1517,7 @@ button {
   }
 
   .turn-banner {
-    font-size: 10px;
+    font-size: 9px;
   }
 
   .typing-panel {
