@@ -1462,6 +1462,11 @@ button {
 
   .battle-hud {
     gap: 4px;
+    justify-content: space-between;
+  }
+
+  .hud-fighter {
+    flex: 0 1 37%;
   }
 
   .hud-id {
@@ -1484,7 +1489,7 @@ button {
   }
 
   .health-track {
-    height: 10px;
+    height: 13px;
   }
 
   .health-pct {
@@ -1499,6 +1504,8 @@ button {
   .arena-menu-btn {
     left: 50%;
     right: auto;
+    top: calc(4px + env(safe-area-inset-top));
+    bottom: auto;
     transform: translateX(-50%);
   }
 
