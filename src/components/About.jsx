@@ -20,6 +20,11 @@ export function About({ onBack }) {
             <strong>Arena (PVP):</strong> face a live rival online. Both players type the same
             passage — the faster typer strikes first.
           </li>
+          <li>
+            <strong>Scoring:</strong> speed is measured Monkeytype-style — gross WPM
+            (keystrokes ÷ 5 per minute) scaled by accuracy. Damage equals that rate ÷ 3.5
+            (2–24 per window), so clean speed hits hardest.
+          </li>
         </ul>
         <p className="st-footer">developed by: _rainDevs</p>
         <div className="btn-row">
