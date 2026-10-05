@@ -126,18 +126,20 @@ export function BattleScreen({
             cpuName={HEROES[enemyHero]?.name ?? 'CPU'}
             playerHeroId={playerHero}
             cpuHeroId={enemyHero}
+            menuButton={
+              showMenuBtn && (
+                <button
+                  type="button"
+                  className="arena-menu-btn"
+                  onClick={game.togglePause}
+                  aria-label={status === 'paused' ? 'Resume game' : 'Pause game'}
+                >
+                  ☰
+                </button>
+              )
+            }
           />
         </div>
-        {showMenuBtn && (
-          <button
-            type="button"
-            className="arena-menu-btn"
-            onClick={game.togglePause}
-            aria-label={status === 'paused' ? 'Resume game' : 'Pause game'}
-          >
-            ☰
-          </button>
-        )}
         {rendererFailed && (
           <div className="arena-fallback" role="alert">
             <p>Could not start the arena renderer.</p>

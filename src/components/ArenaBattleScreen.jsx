@@ -184,18 +184,20 @@ export function ArenaBattleScreen({
             cpuName={game.opponent?.name ?? 'RIVAL'}
             playerHeroId={myHero}
             cpuHeroId={oppHero}
+            menuButton={
+              showMenuBtn && (
+                <button
+                  type="button"
+                  className="arena-menu-btn"
+                  onClick={() => setConfirmExit(true)}
+                  aria-label="Open match menu"
+                >
+                  ☰
+                </button>
+              )
+            }
           />
         </div>
-        {showMenuBtn && (
-          <button
-            type="button"
-            className="arena-menu-btn"
-            onClick={() => setConfirmExit(true)}
-            aria-label="Open match menu"
-          >
-            ☰
-          </button>
-        )}
         {rendererFailed && (
           <div className="arena-fallback" role="alert">
             <p>Could not start the arena renderer.</p>

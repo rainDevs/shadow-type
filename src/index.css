@@ -638,18 +638,16 @@ html[data-reduced-motion='true'] .hero-card.selected .hero-preview {
   pointer-events: none;
 }
 
-/* Touch-accessible match menu (no ESC key on mobile). Docked bottom-right
-   of the arena so it never covers the HUD or the fighters. */
+/* Match menu/pause button: lives in the HUD center row (the overlay
+   itself is pointer-transparent, so the button re-enables pointer). */
 .arena-menu-btn {
-  position: absolute;
-  right: calc(6px + env(safe-area-inset-right));
-  bottom: 6px;
-  z-index: 7;
-  width: 44px;
-  height: 44px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-top: 6px;
+  pointer-events: auto;
   font-family: var(--pixel);
   font-size: 18px;
   color: var(--text);
@@ -803,14 +801,17 @@ html[data-reduced-motion='true'] .hero-card.selected .hero-preview {
 .hud-center {
   flex: 1.2;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .hud-stats {
   display: flex;
   justify-content: center;
-  gap: 18px;
+  gap: 12px;
   flex-wrap: wrap;
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--muted);
 }
@@ -1462,11 +1463,6 @@ button {
 
   .battle-hud {
     gap: 4px;
-    justify-content: space-between;
-  }
-
-  .hud-fighter {
-    flex: 0 1 37%;
   }
 
   .hud-id {
@@ -1502,11 +1498,6 @@ button {
   }
 
   .arena-menu-btn {
-    left: 50%;
-    right: auto;
-    top: calc(4px + env(safe-area-inset-top));
-    bottom: auto;
-    transform: translateX(-50%);
     width: 36px;
     height: 36px;
     font-size: 14px;

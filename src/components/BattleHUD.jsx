@@ -34,7 +34,7 @@ function HealthBar({ side, hp, maxHp, name, heroId }) {
   );
 }
 
-export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, wordsDone, playerName, cpuName, playerHeroId, cpuHeroId }) {
+export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, wordsDone, playerName, cpuName, playerHeroId, cpuHeroId, menuButton }) {
   return (
     <div className="battle-hud">
       <HealthBar side="player" hp={playerHp} maxHp={maxHp} name={playerName} heroId={playerHeroId} />
@@ -53,6 +53,7 @@ export function BattleHUD({ playerHp, cpuHp, maxHp, wpm, accuracy, score, wordsD
             SCORE <strong>{score.toLocaleString()}</strong>
           </span>
         </div>
+        {menuButton}
       </div>
       <HealthBar side="cpu" hp={cpuHp} maxHp={maxHp} name={cpuName} heroId={cpuHeroId} />
     </div>
