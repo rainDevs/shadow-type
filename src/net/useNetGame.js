@@ -78,6 +78,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
   const aliveRef = useRef(true);
   const sentRef = useRef(0);
   const strikeSeqRef = useRef(0);
+  const strikePromiseRef = useRef(null);
   const countdownTimers = useRef([]);
 
   const setStatusBoth = useCallback((s) => {
@@ -407,7 +408,9 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
           setHpOpp(opp);
         }
         const pixi = pixiRef.current;
-        (async () => {
+        // Tracked so a match-ending `end` can wait for the killing
+        // strike(s) to finish before playing the win/lose poses.
+        strikePromiseRef.current = (async () => {
           try {
             for (const s of strikes) {
               if (seq !== strikeSeqRef.current || !aliveRef.current) return;
@@ -439,22 +442,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
         const won = winner === youRef.current;
         const draw = winner === -1;
         const pixi = pixiRef.current;
-        if (msg.byForfeit && won) showFeedback('info', 'RIVAL FORFEITED');
-        if (draw) {
-          setStatusBoth('announce');
-          audio.stopMusic();
-        } else if (won) {
-          pixi?.win?.(0) ?? pixi?.victory?.();
-          audio.playVictory();
-          audio.startMusic('victory');
-          setStatusBoth('announce');
-        } else {
-          pixi?.win?.(1) ?? pixi?.defeat?.();
-          audio.playDefeat();
-          audio.startMusic('defeat');
-          setStatusBoth('announce');
-        }
-        setResults({
+        const resultsPayload = {
           won,
           draw,
           score: scoreRef.current,
@@ -465,7 +453,42 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
           words: matchWordsRef.current,
           mode: modeKey,
           opponent: opponent?.name,
-        });
+        };
+        if (msg.byForfeit && won) showFeedback('info', 'RIVAL FORFEITED');
+        // The server sends `end` in the same tick as the final `hp`, while
+        // the killing strike is still animating. Playing the win/lose pose
+        // now would be trampled by the strike's attack/hit clips (only
+        // defeat is protected via Fighter.defeated) — so wait for the
+        // strikes to land first, with a cap so results can't hang.
+        (async () => {
+          try {
+            await Promise.race([
+              strikePromiseRef.current ?? Promise.resolve(),
+              new Promise((resolve) => setTimeout(resolve, 4000)),
+            ]);
+          } catch {
+            /* strike aborted — pose anyway */
+          }
+          if (!aliveRef.current) return;
+          if (statusRef.current !== 'playing' && statusRef.current !== 'countdown') return;
+          if (draw) {
+            setStatusBoth('announce');
+            audio.stopMusic();
+          } else if (won) {
+            if (pixi?.win) pixi.win(0);
+            else pixi?.victory?.();
+            audio.playVictory();
+            audio.startMusic('victory');
+            setStatusBoth('announce');
+          } else {
+            if (pixi?.win) pixi.win(1);
+            else pixi?.defeat?.();
+            audio.playDefeat();
+            audio.startMusic('defeat');
+            setStatusBoth('announce');
+          }
+          setResults(resultsPayload);
+        })();
       } else if (msg.t === 'peer-left') {
         if (statusRef.current !== 'playing' && statusRef.current !== 'countdown') return;
         setStatusBoth('peer-left');
