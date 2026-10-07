@@ -200,7 +200,7 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
     if (timerRef.current) clearInterval(timerRef.current);
     setLocked(true);
     const pixi = pixiRef.current;
-    pixi?.win?.(1 - youRef.current);
+    pixi?.win?.(1);
     audio.playDefeat();
     audio.startMusic('defeat');
     const avgWpm = turnsRef.current > 0 ? wpmSumRef.current / turnsRef.current : 0;
@@ -421,8 +421,9 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
               const foeStrike = s.by !== youRef.current;
               showFeedback(foeStrike ? 'cpu' : 'info', foeStrike ? `FOE -${s.dmg}` : `-${s.dmg}`);
               audio.playAttack(s.dmg >= 10);
-              // player 0 strikes from the left, player 1 from the right
-              if (s.by === 0) await pixi?.leftAttack?.({ damage: s.dmg });
+              // Left fighter is always you on your screen: your strike is
+              // leftAttack, the foe's is rightAttack.
+              if (s.by === youRef.current) await pixi?.leftAttack?.({ damage: s.dmg });
               else await pixi?.rightAttack?.({ damage: s.dmg });
               audio.playHit(s.dmg >= 10);
             }
@@ -443,12 +444,12 @@ export function useNetGame({ modeId, heroId, name, action, code, pixiRef }) {
           setStatusBoth('announce');
           audio.stopMusic();
         } else if (won) {
-          pixi?.win?.(youRef.current) ?? pixi?.victory?.();
+          pixi?.win?.(0) ?? pixi?.victory?.();
           audio.playVictory();
           audio.startMusic('victory');
           setStatusBoth('announce');
         } else {
-          pixi?.win?.(winner) ?? pixi?.defeat?.();
+          pixi?.win?.(1) ?? pixi?.defeat?.();
           audio.playDefeat();
           audio.startMusic('defeat');
           setStatusBoth('announce');

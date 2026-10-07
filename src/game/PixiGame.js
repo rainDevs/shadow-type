@@ -561,7 +561,7 @@ export class PixiGame {
     this.shake(12);
   }
 
-  // PVP aliases: left side is player 0, right side is player 1.
+  // PVP aliases: left side is always you on your screen, right is the foe.
   leftAttack(opts) {
     return this.playerAttack(opts);
   }
