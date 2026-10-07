@@ -1,0 +1,23 @@
+{
+  "name": "Shadow Type — Type. Strike. Survive.",
+  "short_name": "Shadow Type",
+  "description": "An arcade typing fighting game. Type fast, strike hard, survive.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#04193f",
+  "theme_color": "#04193f",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
