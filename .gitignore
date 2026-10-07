@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Ship assets (pitch screenshots/captions, not part of the game)
+FOR_SHIP/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
