@@ -144,8 +144,24 @@ function resolveWindow(room) {
     summary[i] = { wpm: Math.round(wpmRaw), acc: total ? Math.round((correct / total) * 100) : 0, words, damage: dmgs[i] };
     room.score[i] += Math.max(0, Math.min(5000, Number(r.scoreGain) || 0));
   }
-  room.hp[0] = Math.max(0, room.hp[0] - dmgs[1]);
-  room.hp[1] = Math.max(0, room.hp[1] - dmgs[0]);
+  // Strike-first: higher damage lands first (ties: player 0), same order
+  // as the client animation. A lethal first strike cancels the second,
+  // so a dead fighter never hits back. `dmg` reports applied damage so
+  // the client animates only strikes that actually landed.
+  const order = [0, 1].sort((a, b) => dmgs[b] - dmgs[a] || a - b);
+  const applied = [0, 0];
+  const hpNext = [...room.hp];
+  for (const attacker of order) {
+    if (dmgs[attacker] <= 0) continue;
+    const victim = 1 - attacker;
+    hpNext[victim] = Math.max(0, hpNext[victim] - dmgs[attacker]);
+    applied[attacker] = dmgs[attacker];
+    if (hpNext[victim] <= 0) break;
+  }
+  for (let i = 0; i < 2; i++) {
+    if (summary[i]) summary[i].damage = applied[i];
+  }
+  room.hp = hpNext;
   for (const p of room.players) {
     const c = clients.get(p.clientId);
     if (c) {
@@ -154,7 +170,7 @@ function resolveWindow(room) {
         roomId: room.id,
         windowId: room.windowId,
         hp: [...room.hp],
-        dmg: [...dmgs],
+        dmg: [...applied],
         summary,
         score: [...room.score],
       });
